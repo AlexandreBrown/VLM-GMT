@@ -69,20 +69,11 @@ class DistanceToTarget(Metric):
         bodies_state = env.simulator.get_bodies_state()
         link_pos = bodies_state.rigid_body_pos[:, self._link_index, :]  # (num_envs, 3)
 
-        # Object world position: local translation + scene offset (env tiling)
-        # _object_translations stores local coords; _scene_offsets stores per-env (x, y) offset
-        obj_local = scene_lib._object_translations[self.object_index].clone()  # (3,)
+        # _object_translations stores local scene coords; add per-env scene offset for world position
+        obj_pos = scene_lib._object_translations[self.object_index].clone().to(link_pos.device)  # (3,)
         scene_offset = scene_lib._scene_offsets[0]  # (x, y) for env 0
-        obj_pos = obj_local.to(link_pos.device)
-        obj_pos[0] += scene_offset[0]
-        obj_pos[1] += scene_offset[1]
-
-        # Diagnostic — printed once per episode on first step
-        if not self._distances:
-            print(f"[DistanceToTarget] link_pos[0]     : {link_pos[0].tolist()}")
-            print(f"[DistanceToTarget] obj_local       : {obj_local.tolist()}")
-            print(f"[DistanceToTarget] scene_offset    : {scene_offset}")
-            print(f"[DistanceToTarget] obj_pos (world) : {obj_pos.tolist()}")
+        obj_pos[0] += float(scene_offset[0])
+        obj_pos[1] += float(scene_offset[1])
 
         dist = torch.norm(link_pos - obj_pos, dim=-1)  # (num_envs,)
         self._distances.append(dist[0].item())         # env 0

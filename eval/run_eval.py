@@ -236,12 +236,19 @@ def main():
             "n_episodes": len(results),
         }
 
+    def to_relative(path_str):
+        """Make path relative to protomotions_root or output_dir parent if possible."""
+        try:
+            return str(Path(path_str).resolve().relative_to(Path(args.protomotions_root).resolve().parent))
+        except ValueError:
+            return Path(path_str).name  # fallback: just filename
+
     output = {
         "task": args.task,
         "condition": args.condition,
-        "checkpoint": str(checkpoint),
-        "motion_file": args.motion_file,
-        "scenes_file": args.scenes_file,
+        "checkpoint": to_relative(str(checkpoint)),
+        "motion_file": to_relative(args.motion_file),
+        "scenes_file": to_relative(args.scenes_file),
         "num_episodes": args.num_episodes,
         "summary": summary,
         "episodes": all_results,
