@@ -52,31 +52,31 @@ def generate_csv(
     seed: int = SEED,
     model_name: str = KIMODO_MODEL,
 ):
-    """Generate G1 CSV via Kimodo Python API."""
-    import json
-    from kimodo import load_model
+    """
+    Generate G1 CSV via Kimodo CLI (kimodo_gen).
+    Uses CLI to avoid undocumented Python API kwargs.
+    """
+    output_csv.parent.mkdir(parents=True, exist_ok=True)
 
-    print(f"[generate_motion] Loading Kimodo model '{model_name}'...")
-    model = load_model(model_name, device="cuda")
+    # kimodo_gen writes <stem>.csv — we control the stem
+    output_stem = str(output_csv.parent / output_csv.stem)
 
-    kwargs = dict(
-        prompt=prompt,
-        num_frames=NUM_FRAMES,
-        num_denoising_steps=DENOISING_STEPS,
-        seed=seed,
-    )
+    cmd = [
+        "kimodo_gen", prompt,
+        "--model", model_name,
+        "--duration", str(MOTION_DURATION),
+        "--diffusion_steps", str(DENOISING_STEPS),
+        "--seed", str(seed),
+        "--output", output_stem,
+    ]
     if constraints_json is not None and constraints_json.exists():
-        with open(constraints_json) as f:
-            kwargs["constraints"] = json.load(f)
+        cmd += ["--constraints", str(constraints_json)]
         print(f"[generate_motion] Using constraints: {constraints_json}")
     else:
         print("[generate_motion] No constraints (text only).")
 
     print(f"[generate_motion] Generating: '{prompt}'")
-    output = model(**kwargs)
-
-    output_csv.parent.mkdir(parents=True, exist_ok=True)
-    output.save_csv(str(output_csv))
+    subprocess.run(cmd, check=True)
     print(f"[generate_motion] CSV saved: {output_csv}")
 
 
