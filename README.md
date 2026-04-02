@@ -26,7 +26,12 @@ Requires IsaacLab + ProtoMotions. Follow the [ProtoMotions installation guide](h
 
 ```bash
 git clone https://github.com/AlexandreBrown/VLM-GMT.git
+
+# Add ProtoMotions to PYTHONPATH so VLM-GMT scripts can import it
+export PYTHONPATH=$PYTHONPATH:/path/to/ProtoMotions
 ```
+
+All VLM-GMT commands below assume you run from the `VLM-GMT/` directory with `PYTHONPATH` set.
 
 ### Cluster (motion generation with Kimodo)
 
@@ -128,13 +133,30 @@ python examples/env_kinematic_playback.py \
     --scenes-file VLM-GMT/outputs/reach_obj_scene.pt
 ```
 
-**GMT inference:**
+**GMT inference (visualize):**
 ```bash
-python protomotions/inference_agent.py \
-    --checkpoint data/pretrained_models/motion_tracker/g1-bones-deploy/last.ckpt \
-    --motion-file VLM-GMT/outputs/reach_obj/baseline/motion.pt \
+# From VLM-GMT/ with PYTHONPATH set
+export PYTHONPATH=$PYTHONPATH:/path/to/ProtoMotions
+
+python -m protomotions.inference_agent \
+    --checkpoint /path/to/ProtoMotions/data/pretrained_models/motion_tracker/g1-bones-deploy/last.ckpt \
+    --motion-file outputs/reach_obj/baseline/motion.pt \
     --simulator isaaclab --num-envs 1 \
-    --scenes-file VLM-GMT/outputs/reach_obj_scene.pt
+    --scenes-file outputs/reach_obj_scene.pt
+```
+
+**Eval (metrics + results JSON):**
+```bash
+# From VLM-GMT/
+python eval/run_eval.py \
+    --checkpoint /path/to/ProtoMotions/data/pretrained_models/motion_tracker/g1-bones-deploy/last.ckpt \
+    --motion-file outputs/reach_obj/baseline/motion.pt \
+    --scenes-file outputs/reach_obj_scene.pt \
+    --task reach_obj \
+    --condition baseline \
+    --num-episodes 20 \
+    --simulator isaaclab \
+    --output-dir outputs/reach_obj/results
 ```
 
 ## Adding a New Task
