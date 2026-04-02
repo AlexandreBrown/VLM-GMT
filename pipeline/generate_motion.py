@@ -42,7 +42,7 @@ MOTION_DURATION = 3.0
 NUM_FRAMES = int(MOTION_DURATION * 30)  # 90 frames @ 30fps
 DENOISING_STEPS = 100
 SEED = 42
-KIMODO_MODEL = "kimodo-g1"
+KIMODO_MODEL = "kimodo-g1-rp"
 
 
 def generate_csv(
@@ -80,15 +80,16 @@ def generate_csv(
     print(f"[generate_motion] CSV saved: {output_csv}")
 
 
-def convert_and_package(csv_path: Path, output_dir: Path) -> Path:
-    """Convert CSV → .motion → .pt. Must be run from ProtoMotions root."""
-    proto_dir = output_dir / "proto"
-    pt_path = output_dir / "motion.pt"
+def convert_and_package(csv_path: Path, output_dir: Path, protomotions_root: Path) -> Path:
+    """Convert CSV → .motion → .pt."""
+    proto_dir = output_dir.resolve() / "proto"
+    pt_path = output_dir.resolve() / "motion.pt"
+    proto_dir.mkdir(parents=True, exist_ok=True)
 
     print("[generate_motion] Converting CSV → .motion...")
     subprocess.run([
-        sys.executable, "data/scripts/convert_g1_csv_to_proto.py",
-        "--input-dir", str(csv_path.parent),
+        sys.executable, str(protomotions_root / "data/scripts/convert_g1_csv_to_proto.py"),
+        "--input-dir", str(csv_path.parent.resolve()),
         "--output-dir", str(proto_dir),
         "--input-fps", "30", "--output-fps", "30",
         "--pos-units", "m",
@@ -97,14 +98,14 @@ def convert_and_package(csv_path: Path, output_dir: Path) -> Path:
         "--no-has-header",
         "--no-has-frame-column",
         "--force-remake",
-    ], check=True)
+    ], check=True, cwd=str(protomotions_root))
 
     print("[generate_motion] Packaging .motion → .pt...")
     subprocess.run([
-        sys.executable, "protomotions/components/motion_lib.py",
+        sys.executable, str(protomotions_root / "protomotions/components/motion_lib.py"),
         "--motion-path", str(proto_dir),
         "--output-file", str(pt_path),
-    ], check=True)
+    ], check=True, cwd=str(protomotions_root))
 
     print(f"[generate_motion] MotionLib: {pt_path}")
     return pt_path
@@ -117,6 +118,15 @@ def main():
     parser.add_argument("--prompt", default=DEFAULT_PROMPT)
     parser.add_argument("--seed", type=int, default=SEED)
     parser.add_argument("--kimodo-model", default=KIMODO_MODEL)
+    parser.add_argument(
+        "--protomotions-root", required=True,
+        help="Path to ProtoMotions root directory.",
+    )
+    parser.add_argument(
+        "--csv-path",
+        default=None,
+        help="Skip Kimodo generation and use this existing CSV directly (for testing).",
+    )
 
     # GT
     parser.add_argument("--cube-world-pos", nargs=3, type=float, metavar=("X", "Y", "Z"))
@@ -136,6 +146,7 @@ def main():
     args = parser.parse_args()
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+    protomotions_root = Path(args.protomotions_root).resolve()
 
     constraints_json = output_dir / "constraints.json"
     csv_path = output_dir / "reach.csv"
@@ -169,19 +180,25 @@ def main():
                 "--object-description", args.object_description,
                 "--vlm-name", args.vlm_name,
             ]
-        subprocess.run(constraint_cmd, check=True)
+        subprocess.run(constraint_cmd, check=True, cwd=str(protomotions_root))
 
     # --- Generate motion ---
-    generate_csv(
-        prompt=args.prompt,
-        output_csv=csv_path,
-        constraints_json=constraints_json if args.condition != "baseline" else None,
-        seed=args.seed,
-        model_name=args.kimodo_model,
-    )
+    if args.csv_path is not None:
+        import shutil
+        csv_path = (output_dir / "reach.csv").resolve()
+        shutil.copy(Path(args.csv_path).resolve(), csv_path)
+        print(f"[generate_motion] Skipping Kimodo, using existing CSV: {args.csv_path}")
+    else:
+        generate_csv(
+            prompt=args.prompt,
+            output_csv=csv_path,
+            constraints_json=constraints_json if args.condition != "baseline" else None,
+            seed=args.seed,
+            model_name=args.kimodo_model,
+        )
 
     # --- Convert + package ---
-    pt_path = convert_and_package(csv_path, output_dir)
+    pt_path = convert_and_package(csv_path, output_dir, protomotions_root)
 
     scenes_file = str(vlm_gmt_root / "outputs" / "reach_obj_scene.pt")
 
