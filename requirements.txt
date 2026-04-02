@@ -1,0 +1,22 @@
+# Core
+torch>=2.0.0
+numpy
+
+# VLM
+transformers>=4.50.0
+accelerate
+qwen-vl-utils
+Pillow
+
+# IK
+# pyroki: install separately (JAX dependency conflicts)
+# git clone https://github.com/chungmin99/pyroki && pip install -e pyroki
+yourdfpy
+jax
+jaxlie
+jaxls
+
+# ProtoMotions: install separately
+# git clone https://github.com/NVlabs/ProtoMotions && pip install -e ProtoMotions
+
+# Kimodo: install separately (NVIDIA internal)
