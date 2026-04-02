@@ -35,7 +35,7 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 # G1 config
 # ---------------------------------------------------------------------------
-G1_URDF_DEFAULT = "protomotions/data/assets/urdf/for_retargeting/g1_29dof.urdf"
+G1_URDF_DEFAULT = "protomotions/data/assets/urdf/for_retargeting/g1.urdf"
 G1_RIGHT_WRIST_LINK = "right_wrist_yaw_link"
 G1_ROOT_HEIGHT = 0.793       # default standing pelvis height (meters)
 CONSTRAINT_FRAME = 45        # keyframe index (30fps → 1.5s into a 3s motion)
@@ -52,47 +52,60 @@ def solve_ik_right_wrist(
 ) -> onp.ndarray:
     """
     Single-frame IK: find G1 joint angles so right wrist reaches target_world_pos.
+    Uses pyroki_snippets.solve_ik (from PyRoki examples) which uses the correct API.
 
     Returns:
         joint_angles: (n_actuated_dofs,) float32 array.
     """
+    import sys
+    import os
+    import jax
     import jax.numpy as jnp
     import jaxlie
     import jaxls
-    import pyroki as pk
+    import jax_dataclasses as jdc
     from yourdfpy import URDF
 
+    # Import pyroki internals directly to avoid viser import
+    from pyroki._robot import Robot
+    import pyroki.costs as pk_costs
+
     urdf_obj = URDF.load(urdf_path)
-    robot = pk.Robot.from_urdf(urdf_obj)
+    robot = Robot.from_urdf(urdf_obj)
 
     link_names = list(robot.links.names)
     ee_idx = link_names.index(G1_RIGHT_WRIST_LINK)
 
-    # Target relative to robot root
     target_root_rel = jnp.array(target_world_pos - root_world_pos, dtype=jnp.float32)
 
-    var_joints = robot.joint_var_cls(0)
+    # Identity orientation (we only care about position)
+    target_wxyz = jnp.array([1.0, 0.0, 0.0, 0.0])
 
-    @jaxls.Cost.factory
-    def ee_position_cost(var_values, var_joints):
-        cfg = var_values[var_joints]
-        fk = jaxlie.SE3(robot.forward_kinematics(cfg=cfg))
-        ee_pos = fk[ee_idx].translation()
-        return ee_pos - target_root_rel
-
-    solution = (
-        jaxls.LeastSquaresProblem(
-            costs=[
-                ee_position_cost(var_joints),
-                pk.costs.limit_constraint(robot, var_joints),
-            ],
-            variables=[var_joints],
+    @jdc.jit
+    def _solve(robot: Robot) -> jax.Array:
+        joint_var = robot.joint_var_cls(0)
+        costs = [
+            pk_costs.pose_cost_analytic_jac(
+                robot,
+                joint_var,
+                jaxlie.SE3.from_rotation_and_translation(
+                    jaxlie.SO3(target_wxyz), target_root_rel
+                ),
+                jnp.array(ee_idx),
+                pos_weight=50.0,
+                ori_weight=0.1,  # low weight: we only care about position
+            ),
+            pk_costs.limit_constraint(robot, joint_var),
+        ]
+        sol = (
+            jaxls.LeastSquaresProblem(costs=costs, variables=[joint_var])
+            .analyze()
+            .solve(verbose=False, linear_solver="dense_cholesky")
         )
-        .analyze()
-        .solve()
-    )
+        return sol[joint_var]
 
-    return onp.array(solution[var_joints])
+    cfg = _solve(robot)
+    return onp.array(cfg)
 
 
 def build_right_hand_constraint(

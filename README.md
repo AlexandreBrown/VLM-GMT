@@ -51,15 +51,26 @@ uv pip install dm_control easydict
 git clone https://github.com/AlexandreBrown/VLM-GMT.git
 ```
 
-### Constraint generation (PyRoki IK, optional — gt/vlm conditions only)
+### Constraint generation (PyRoki IK, required for gt/vlm conditions)
 
-PyRoki requires a separate env due to JAX conflicts:
+PyRoki has JAX dependencies that conflict with IsaacLab. Use a separate uv env:
 
 ```bash
-conda create -n pyroki python=3.10
-conda activate pyroki
-git clone https://github.com/chungmin99/pyroki && pip install -e pyroki
+uv venv /path/to/pyroki_env
+source /path/to/pyroki_env/bin/activate
+
+# Install viser (required by pyroki)
+uv pip install viser
+
+# Install pyroki
+git clone https://github.com/chungmin99/pyroki.git
+uv pip install -e pyroki
+
+# Install remaining deps
+uv pip install jax jaxlib jaxls jaxlie yourdfpy
 ```
+
+Note: The correct URDF for G1 IK is `protomotions/data/assets/urdf/for_retargeting/g1.urdf` (not `g1_29dof.urdf`).
 
 ### VLM deps (vlm condition only)
 
