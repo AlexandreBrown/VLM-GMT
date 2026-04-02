@@ -20,23 +20,46 @@ Motion tracking policies are inherently limited to following a reference traject
 
 ## Setup
 
+### Local (simulation + GMT inference)
+
+Requires IsaacLab + ProtoMotions. Follow the [ProtoMotions installation guide](https://nvlabs.github.io/ProtoMotions/getting_started/installation.html).
+
 ```bash
-# 1. Clone this repo
 git clone https://github.com/AlexandreBrown/VLM-GMT.git
-cd VLM-GMT
+```
 
-# 2. Install ProtoMotions (follow their install guide)
-# https://github.com/NVlabs/ProtoMotions
+### Cluster (motion generation with Kimodo)
 
-# 3. Install PyRoki in a separate env (JAX conflicts with ProtoMotions)
+IsaacLab is **not** needed on the cluster. Only Kimodo + ProtoMotions conversion scripts are required.
+
+```bash
+# 1. Install Kimodo (follow Kimodo docs)
+
+# 2. Clone ProtoMotions (no LFS needed, conversion scripts are pure Python)
+git clone https://github.com/NVlabs/ProtoMotions.git
+
+# 3. Install ProtoMotions and missing deps into your Kimodo env
+uv pip install -e ProtoMotions
+uv pip install dm_control easydict
+
+# 4. Clone this repo
+git clone https://github.com/AlexandreBrown/VLM-GMT.git
+```
+
+### Constraint generation (PyRoki IK, optional — gt/vlm conditions only)
+
+PyRoki requires a separate env due to JAX conflicts:
+
+```bash
 conda create -n pyroki python=3.10
 conda activate pyroki
 git clone https://github.com/chungmin99/pyroki && pip install -e pyroki
+```
 
-# 4. Install VLM deps
+### VLM deps (vlm condition only)
+
+```bash
 pip install transformers>=4.50.0 accelerate qwen-vl-utils Pillow
-
-# 5. Install Kimodo (see Kimodo docs)
 ```
 
 ## Repository Structure
