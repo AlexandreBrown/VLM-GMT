@@ -157,7 +157,6 @@ def main():
             sys.executable, str(vlm_gmt_root / "pipeline" / "generate_constraints.py"),
             "--output", str(constraints_json),
             "--frame-index", str(args.frame_index),
-            "--urdf", args.urdf,
         ]
         if args.condition == "gt":
             if constraints_json.exists():
