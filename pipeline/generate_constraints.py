@@ -243,10 +243,12 @@ def main():
         print(f"[generate_constraints] Unprojected world pos: {target_pos}")
 
     # --- Build constraints ---
-    print("[generate_constraints] Running IK (PyRoki)...")
+    # Note: right-hand constraint requires Kimodo's internal 34-joint G1 skeleton format
+    # which is not publicly documented. For now we use root2d only (walk root toward target).
+    # The arm reach is handled by the text prompt.
+    print("[generate_constraints] Building root2d constraint (locomotion toward target)...")
     constraints = [
         build_root2d_constraint(target_pos, args.frame_index),
-        build_right_hand_constraint(target_pos, args.frame_index, args.urdf, root_world_pos),
     ]
 
     out = Path(args.output)
