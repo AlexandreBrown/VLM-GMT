@@ -1,10 +1,10 @@
 """
-pipeline/generate_constraints.py — Generate Kimodo FullBody constraints.
+pipeline/generate_constraints.py — Generate Kimodo EndEffector constraints.
 
-Uses FullBodyConstraintSet for all tasks. The caller (gt/vlm) specifies a list
-of (frame_index, joint_name, world_position) keyframes. Kimodo handles IK internally.
+Uses EndEffectorConstraintSet with explicit joint_names for all tasks.
+Kimodo only constrains the specified joints, leaving everything else free.
+Max 20 keyframes per constraint type (Kimodo limit).
 
-Kimodo limits: max 20 keyframes per constraint type.
 Available G1 joint names: see G1_JOINT_NAMES below.
 
 Three modes:
@@ -61,40 +61,48 @@ def _load_skeleton(model_name: str = "kimodo-g1-rp"):
     return load_model(model_name, device="cpu").skeleton
 
 
-def build_fullbody_constraints(
+def build_end_effector_constraints(
     keyframes: list[dict],
     root_height: float = G1_ROOT_HEIGHT,
 ) -> list:
     """
-    Build a list of Kimodo FullBodyConstraintSet objects from keyframes.
+    Build Kimodo EndEffectorConstraintSet from keyframes.
+
+    Kimodo only constrains the joints listed in each keyframe's "joints" dict.
+    Everything else is left free (no zero-position artifacts).
 
     Args:
-        keyframes: list of dicts, each with:
+        keyframes: list of dicts, each:
             {
                 "frame_index": int,
                 "joints": {joint_name: [x, y, z], ...}  # world positions
             }
-            pelvis_skel is always set to (0, root_height, 0) unless overridden.
-            All unspecified joints default to (0, 0, 0).
+            All keyframes must specify the same set of joint names.
             If empty, returns [].
             If > 20, first 20 are used.
 
     Returns:
-        List containing a single FullBodyConstraintSet, or [] if no keyframes.
+        List containing a single EndEffectorConstraintSet, or [] if no keyframes.
     """
     import torch
-    from kimodo.constraints import FullBodyConstraintSet
+    from kimodo.constraints import EndEffectorConstraintSet
 
     if not keyframes:
         return []
 
     if len(keyframes) > MAX_CONSTRAINT_FRAMES:
-        print(f"[build_fullbody_constraints] {len(keyframes)} keyframes exceeds limit {MAX_CONSTRAINT_FRAMES}, using first {MAX_CONSTRAINT_FRAMES}.")
+        print(f"[build_end_effector_constraints] {len(keyframes)} keyframes exceeds limit {MAX_CONSTRAINT_FRAMES}, using first {MAX_CONSTRAINT_FRAMES}.")
         keyframes = keyframes[:MAX_CONSTRAINT_FRAMES]
 
     skeleton = _load_skeleton()
     n_joints = len(G1_JOINT_NAMES)
     T = len(keyframes)
+
+    # Collect constrained joint names (must be consistent across keyframes)
+    constrained_joint_names = list(keyframes[0].get("joints", {}).keys())
+    for joint_name in constrained_joint_names:
+        if joint_name not in G1_JOINT_NAMES:
+            raise ValueError(f"Unknown joint: '{joint_name}'. Valid names: {G1_JOINT_NAMES}")
 
     global_positions = torch.zeros(T, n_joints, 3)
     global_rots = torch.eye(3).unsqueeze(0).unsqueeze(0).expand(T, n_joints, 3, 3).clone()
@@ -103,24 +111,23 @@ def build_fullbody_constraints(
     for t, kf in enumerate(keyframes):
         frame_indices.append(kf["frame_index"])
 
-        # Always set pelvis to standing height by default
+        # Set pelvis to standing height (needed for root_positions field)
         pelvis_idx = G1_JOINT_NAMES.index("pelvis_skel")
         global_positions[t, pelvis_idx] = torch.tensor([0.0, root_height, 0.0])
 
         for joint_name, world_pos in kf.get("joints", {}).items():
-            if joint_name not in G1_JOINT_NAMES:
-                raise ValueError(f"Unknown joint: '{joint_name}'. Valid names: {G1_JOINT_NAMES}")
             idx = G1_JOINT_NAMES.index(joint_name)
             global_positions[t, idx] = torch.tensor(world_pos, dtype=torch.float32)
 
     smooth_root_2d = global_positions[:, G1_JOINT_NAMES.index("pelvis_skel"), [0, 2]]  # (T, 2)
 
-    return [FullBodyConstraintSet(
+    return [EndEffectorConstraintSet(
         skeleton=skeleton,
         frame_indices=frame_indices,
         global_joints_positions=global_positions,
         global_joints_rots=global_rots,
         smooth_root_2d=smooth_root_2d,
+        joint_names=constrained_joint_names,
     )]
 
 
@@ -219,7 +226,7 @@ def main():
 
     from kimodo.constraints import save_constraints_lst
 
-    constraints = build_fullbody_constraints(keyframes, root_height=args.root_height)
+    constraints = build_end_effector_constraints(keyframes, root_height=args.root_height)
 
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
