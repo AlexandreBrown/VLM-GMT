@@ -150,12 +150,22 @@ def build_end_effector_constraints(
 EE_JOINT_NAMES = ["LeftFoot", "RightFoot", "LeftHand", "RightHand", "Hips"]
 
 
+def isaaclab_to_kimodo(pos: np.ndarray) -> list:
+    """Convert IsaacLab (x, y, z-up) to Kimodo (x, y-up, z) convention."""
+    x, y, z = float(pos[0]), float(pos[1]), float(pos[2])
+    return [x, z, y]  # Kimodo: x=forward, y=height, z=lateral
+
+
 def gt_reach_keyframes(target_world_pos: np.ndarray, frame_index: int) -> list[dict]:
-    """GT keyframes for reach_obj: right hand at target position."""
+    """GT keyframes for reach_obj: right hand at target position.
+
+    target_world_pos: IsaacLab convention (x, y, z-up).
+    Converted to Kimodo y-up convention internally.
+    """
     return [{
         "frame_index": frame_index,
         "joints": {
-            "RightHand": target_world_pos.tolist(),
+            "RightHand": isaaclab_to_kimodo(target_world_pos),
         }
     }]
 
