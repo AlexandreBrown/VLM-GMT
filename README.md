@@ -59,7 +59,7 @@ VLM-GMT/
 ├── prompts/
 │   └── system.txt                  # Shared VLM system prompt (coord system, robot dims)
 ├── tasks/
-│   └── reach_obj/
+│   └── manip_reach_obj/
 │       ├── create_scene.py         # Create scene .pt
 │       ├── vlm_prompt.txt          # Task-specific VLM prompt
 │       └── metrics.py              # Eval metrics
@@ -81,15 +81,15 @@ VLM-GMT/
 └── README.md
 ```
 
-## Pipeline (reach_obj example)
+## Pipeline (manip_reach_obj example)
 
 ### 1. Create scene
 
 ```bash
 cd VLM-GMT
-python tasks/reach_obj/create_scene.py \
+python tasks/manip_reach_obj/create_scene.py \
     --cube-pos 0.6 0.0 0.4 \
-    --output outputs/reach_obj_scene.pt
+    --output outputs/manip_reach_obj_scene.pt
 ```
 
 ### 2. Capture egocentric image (requires IsaacLab)
@@ -100,8 +100,8 @@ python ~/path/to/VLM-GMT/pipeline/capture_egocentric.py \
     --experiment-path examples/experiments/mimic/mlp.py \
     --motion-file data/motion_for_trackers/g1_bones_seed_mini.pt \
     --robot-name g1 --simulator isaaclab --num-envs 1 \
-    --scenes-file ~/path/to/VLM-GMT/outputs/reach_obj_scene.pt \
-    --output-dir ~/path/to/VLM-GMT/outputs/reach_obj \
+    --scenes-file ~/path/to/VLM-GMT/outputs/manip_reach_obj_scene.pt \
+    --output-dir ~/path/to/VLM-GMT/outputs/manip_reach_obj \
     --pitch-deg 50
 ```
 
@@ -113,22 +113,22 @@ cd VLM-GMT
 # Baseline (text only, no constraints)
 python pipeline/generate_motion.py \
     --condition baseline \
-    --output-dir outputs/reach_obj/baseline \
+    --output-dir outputs/manip_reach_obj/baseline \
     --protomotions-root /path/to/ProtoMotions
 
 # GT (ground-truth constraint at cube position)
 python pipeline/generate_motion.py \
     --condition gt \
     --cube-world-pos 0.6 0.0 0.4 \
-    --output-dir outputs/reach_obj/gt \
+    --output-dir outputs/manip_reach_obj/gt \
     --protomotions-root /path/to/ProtoMotions
 
 # VLM (constraint predicted from egocentric image, >=31 GB VRAM with Qwen2.5-VL-7B)
 python pipeline/generate_motion.py \
     --condition vlm \
-    --image outputs/reach_obj/ego.png \
-    --task reach_obj \
-    --output-dir outputs/reach_obj/vlm \
+    --image outputs/manip_reach_obj/ego.png \
+    --task manip_reach_obj \
+    --output-dir outputs/manip_reach_obj/vlm \
     --protomotions-root /path/to/ProtoMotions
 ```
 
@@ -138,9 +138,9 @@ python pipeline/generate_motion.py \
 cd $PROTOMOTIONS_ROOT
 python examples/env_kinematic_playback.py \
     --experiment-path examples/experiments/mimic/mlp.py \
-    --motion-file ~/path/to/VLM-GMT/outputs/reach_obj/gt/motion.pt \
+    --motion-file ~/path/to/VLM-GMT/outputs/manip_reach_obj/gt/motion.pt \
     --robot-name g1 --simulator isaaclab --num-envs 1 \
-    --scenes-file ~/path/to/VLM-GMT/outputs/reach_obj_scene.pt
+    --scenes-file ~/path/to/VLM-GMT/outputs/manip_reach_obj_scene.pt
 ```
 
 ### 5. GMT inference (requires IsaacLab)
@@ -149,9 +149,9 @@ python examples/env_kinematic_playback.py \
 cd $PROTOMOTIONS_ROOT
 python protomotions/inference_agent.py \
     --checkpoint data/pretrained_models/motion_tracker/g1-bones-deploy/last.ckpt \
-    --motion-file ~/path/to/VLM-GMT/outputs/reach_obj/gt/motion.pt \
+    --motion-file ~/path/to/VLM-GMT/outputs/manip_reach_obj/gt/motion.pt \
     --simulator isaaclab --num-envs 1 \
-    --scenes-file ~/path/to/VLM-GMT/outputs/reach_obj_scene.pt
+    --scenes-file ~/path/to/VLM-GMT/outputs/manip_reach_obj_scene.pt
 ```
 
 ### 6. Eval (requires IsaacLab)
@@ -160,12 +160,12 @@ python protomotions/inference_agent.py \
 cd $PROTOMOTIONS_ROOT
 python ~/path/to/VLM-GMT/eval/run_eval.py \
     --checkpoint data/pretrained_models/motion_tracker/g1-bones-deploy/last.ckpt \
-    --motion-file ~/path/to/VLM-GMT/outputs/reach_obj/gt/motion.pt \
-    --scenes-file ~/path/to/VLM-GMT/outputs/reach_obj_scene.pt \
-    --task reach_obj --condition gt \
+    --motion-file ~/path/to/VLM-GMT/outputs/manip_reach_obj/gt/motion.pt \
+    --scenes-file ~/path/to/VLM-GMT/outputs/manip_reach_obj_scene.pt \
+    --task manip_reach_obj --condition gt \
     --num-episodes 20 --simulator isaaclab \
     --protomotions-root $PROTOMOTIONS_ROOT \
-    --output-dir ~/path/to/VLM-GMT/outputs/reach_obj/results
+    --output-dir ~/path/to/VLM-GMT/outputs/manip_reach_obj/results
 ```
 
 ## VLM Prompt System

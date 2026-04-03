@@ -1,1 +1,0 @@
-Reach the red cube with your right hand. The cube is on the ground in front of you. Estimate its 3D position and output a right-hand constraint to reach it near the end of the motion.

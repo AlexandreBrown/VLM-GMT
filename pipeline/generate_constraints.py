@@ -253,7 +253,7 @@ def build_constraints(task: str, condition: str, skeleton, device: str, **kwargs
         )
 
     # GT conditions are task-specific
-    if task == "reach_obj":
+    if task == "manip_reach_obj":
         frame_index = kwargs.get("frame_index", 45)
         if condition == "gt":
             return constraints_reach_obj_gt(
