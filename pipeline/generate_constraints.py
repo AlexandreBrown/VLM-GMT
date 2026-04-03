@@ -30,6 +30,9 @@ import numpy as np
 KIMODO_MODEL   = "kimodo-g1-rp"
 G1_ROOT_HEIGHT = 0.793  # pelvis height in Kimodo y-up standing pose (meters)
 
+# End-effector joint per limb — used to identify the tip of each constrained chain.
+# For hands the chain is [wrist_yaw, hand_roll]; we target the last joint (hand_roll)
+# so the gripper/palm reaches the object, not the forearm.
 LIMB_EFFECTOR_JOINT = {
     "right-hand": "right_hand_roll_skel",
     "left-hand":  "left_hand_roll_skel",
@@ -78,8 +81,14 @@ def make_limb_constraint(skeleton, constraint_type: str, target_kimodo: list,
     """
     Build a hand or foot EndEffectorConstraintSet (single frame or multi-frame).
 
-    Runs FK in rest pose to get a valid skeleton state, then overrides the
-    target EE joint's global position with `target_kimodo` for all given frames.
+    Runs FK in rest pose to get a valid skeleton state, then overrides ALL
+    position-constrained joints so the end effector lands on `target_kimodo`
+    while maintaining consistent bone-length offsets for parent joints in the
+    chain.  (The constraint class constrains every joint returned by
+    ``skeleton.expand_joint_names``; if we only override the tip joint, the
+    parent stays at its rest-pose position and the diffusion model compromises
+    between the two, pulling the hand above the target.)
+
     Kimodo's diffusion uses global_joints_positions directly — no IK needed.
 
     Args:
@@ -121,21 +130,37 @@ def make_limb_constraint(skeleton, constraint_type: str, target_kimodo: list,
     global_pos  = global_pos_1.expand(T, -1, -1).clone()        # [T, n_joints, 3]
     global_rots = global_rots_1.expand(T, -1, -1, -1).clone()   # [T, n_joints, 3, 3]
 
-    # Override EE joint position for all T frames
-    effector_idx = skeleton.bone_index[LIMB_EFFECTOR_JOINT[constraint_type]]
-    rest_pos     = global_pos_1[0, effector_idx].tolist()
-    global_pos[:, effector_idx] = torch.tensor(target_kimodo, dtype=torch.float32, device=device)
+    # --- Override ALL position-constrained joints, not just the tip ----------
+    # The constraint class (via expand_joint_names) will constrain every joint
+    # in the limb chain.  We place the end-effector (last joint) at the target
+    # and shift the other joints by their rest-pose offset so bone lengths stay
+    # consistent and the diffusion model doesn't get conflicting targets.
+    constraint_cls = cls_map[constraint_type]
+    _, pos_joint_names = skeleton.expand_joint_names(constraint_cls.joint_names)
+
+    ee_name = LIMB_EFFECTOR_JOINT[constraint_type]
+    ee_idx  = skeleton.bone_index[ee_name]
+    ee_rest = global_pos_1[0, ee_idx]                 # [3]
+
+    target_t = torch.tensor(target_kimodo, dtype=torch.float32, device=device)
 
     print(f"  [{constraint_type}] frames={frame_indices_list}")
-    print(f"    rest-pose effector: {[round(v,3) for v in rest_pos]}")
+    print(f"    end-effector joint: {ee_name}")
+    print(f"    rest-pose EE pos:   {[round(v,3) for v in ee_rest.tolist()]}")
     print(f"    target (Kimodo):    {[round(v,3) for v in target_kimodo]}")
+
+    for jname in pos_joint_names:
+        jidx   = skeleton.bone_index[jname]
+        offset = global_pos_1[0, jidx] - ee_rest      # rest-pose offset from EE
+        global_pos[:, jidx] = target_t + offset
+        print(f"    {jname} (idx={jidx}): offset={[round(v,4) for v in offset.tolist()]}")
 
     # Match from_dict() device convention:
     #   frame_indices  → CPU, everything else → skeleton device (CUDA)
     frame_indices  = torch.tensor(frame_indices_list)          # CPU
     smooth_root_2d = root_pos_1[:, [0, 2]].expand(T, -1).clone()  # [T, 2], CUDA
 
-    return cls_map[constraint_type](
+    return constraint_cls(
         skeleton=skeleton,
         frame_indices=frame_indices,           # CPU
         global_joints_positions=global_pos,   # CUDA
