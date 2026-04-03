@@ -6,17 +6,15 @@ Supported types: root2d, right-hand, left-hand, right-foot, left-foot.
 
 How it works
 ------------
-For hand/foot constraints, Kimodo stores local joint rotations in the JSON.
-When loaded, FK is run to recover global joint positions, and the constrained
-joints are used as position targets during diffusion. This means we need IK to
-find the joint angles that place the end-effector at the desired world position.
-
-We use a simple gradient-descent IK on Kimodo's own FK function (no external
-IK library required). Only the relevant arm/leg joints are optimized.
+Kimodo's hand/foot constraint classes (e.g. RightHandConstraintSet) accept
+global joint positions and rotations directly — no IK required. We run FK in
+the robot's rest pose (all joints zero) to get a valid global skeleton state,
+then override the target end-effector's position with our desired world target.
+Kimodo's diffusion model handles finding a motion that reaches that position.
 
 Usage
 -----
-    # GT for reach_obj (run from VLM-GMT root)
+    # GT for reach_obj (run from VLM-GMT root, in kimodo env)
     python pipeline/generate_constraints.py \\
         --task reach_obj --condition gt \\
         --cube-world-pos 0.6 0.0 0.4 \\
@@ -39,21 +37,15 @@ from pathlib import Path
 # Constants
 # --------------------------------------------------------------------------- #
 
-KIMODO_MODEL = "kimodo-g1-rp"
-G1_ROOT_HEIGHT = 0.793  # pelvis height in Kimodo y-up coords (standing pose)
+KIMODO_MODEL   = "kimodo-g1-rp"
+G1_ROOT_HEIGHT = 0.793  # pelvis height in Kimodo y-up standing pose (meters)
 
-# Joint index ranges in the G1 34-joint skeleton
-RIGHT_ARM_INDICES = list(range(26, 34))  # shoulder_pitch … hand_roll
-LEFT_ARM_INDICES  = list(range(18, 26))
-RIGHT_LEG_INDICES = list(range(8, 15))
-LEFT_LEG_INDICES  = list(range(1, 8))
-
-# IK end-effector joint (last joint in each limb chain)
-LIMB_EFFECTOR = {
-    "right-hand": ("right_hand_roll_skel", RIGHT_ARM_INDICES),
-    "left-hand":  ("left_hand_roll_skel",  LEFT_ARM_INDICES),
-    "right-foot": ("right_toe_base",        RIGHT_LEG_INDICES),
-    "left-foot":  ("left_toe_base",         LEFT_LEG_INDICES),
+# End-effector joint names in the G1 skeleton (last joint of each limb chain)
+LIMB_EFFECTOR_JOINT = {
+    "right-hand": "right_hand_roll_skel",
+    "left-hand":  "left_hand_roll_skel",
+    "right-foot": "right_toe_base",
+    "left-foot":  "left_toe_base",
 }
 
 # --------------------------------------------------------------------------- #
@@ -84,84 +76,27 @@ def pixels_to_world(
     return pos.astype(np.float32)
 
 # --------------------------------------------------------------------------- #
-# IK
-# --------------------------------------------------------------------------- #
-
-def solve_ik(
-    skeleton,
-    target_pos_kimodo: list,
-    effector_joint_name: str,
-    limb_joint_indices: list,
-    device: str = "cpu",
-    lr: float = 0.05,
-    steps: int = 400,
-) -> "tuple[torch.Tensor, torch.Tensor]":
-    """
-    Gradient-descent IK using Kimodo's FK.
-
-    Optimises only the joints in `limb_joint_indices`; all other joints stay
-    at zero (rest pose). Returns (local_aa [1, N_joints, 3], root_pos [1, 3]).
-    """
-    import torch
-    from kimodo.geometry import axis_angle_to_matrix
-
-    n_joints = skeleton.nbjoints
-    root_pos = torch.tensor([[0.0, G1_ROOT_HEIGHT, 0.0]], dtype=torch.float32, device=device)
-    target    = torch.tensor(target_pos_kimodo, dtype=torch.float32, device=device)
-    joint_idx = skeleton.bone_index[effector_joint_name]
-    limb_idx  = torch.tensor(limb_joint_indices, device=device)
-
-    arm_aa = torch.zeros(len(limb_joint_indices), 3, device=device, requires_grad=True)
-    optimizer = torch.optim.Adam([arm_aa], lr=lr)
-
-    for step in range(steps):
-        optimizer.zero_grad()
-
-        full_aa = torch.zeros(1, n_joints, 3, device=device)
-        full_aa[0, limb_idx] = arm_aa
-
-        rot_mats = axis_angle_to_matrix(full_aa)
-        _, global_pos, _ = skeleton.fk(rot_mats, root_pos)
-
-        hand_pos = global_pos[0, joint_idx]
-        loss = ((hand_pos - target) ** 2).sum()
-        loss.backward()
-        optimizer.step()
-
-        if (step + 1) % 100 == 0:
-            dist = loss.item() ** 0.5
-            print(f"  IK [{step+1}/{steps}] dist={dist:.4f}m  pos={hand_pos.detach().cpu().numpy().round(3).tolist()}")
-
-    # Final full-body axis-angle (only arm joints non-zero)
-    full_aa_final = torch.zeros(1, n_joints, 3, device=device)
-    full_aa_final[0, limb_idx] = arm_aa.detach()
-
-    # Recompute global state with final angles
-    rot_mats = axis_angle_to_matrix(full_aa_final)
-    _, global_pos_final, _ = skeleton.fk(rot_mats, root_pos)
-    dist_final = ((global_pos_final[0, joint_idx] - target) ** 2).sum().item() ** 0.5
-    print(f"  IK done: dist={dist_final:.4f}m  hand={global_pos_final[0, joint_idx].detach().cpu().numpy().round(3).tolist()}")
-
-    return full_aa_final, root_pos
-
-# --------------------------------------------------------------------------- #
-# Constraint builders
+# Constraint builder
 # --------------------------------------------------------------------------- #
 
 def build_limb_constraint(skeleton, constraint_type: str, target_kimodo: list,
                            frame_index: int, device: str = "cpu"):
     """
-    Build a hand or foot EndEffectorConstraintSet via IK.
+    Build a hand or foot EndEffectorConstraintSet.
 
-    constraint_type: one of 'right-hand', 'left-hand', 'right-foot', 'left-foot'
+    Runs FK in rest pose, overrides the target EE joint's global position with
+    `target_kimodo`, then passes the full skeleton state to the constraint class.
+    No IK needed — Kimodo's diffusion handles finding a motion that reaches the target.
+
+    constraint_type: 'right-hand' | 'left-hand' | 'right-foot' | 'left-foot'
     target_kimodo:   [x, y, z] in Kimodo y-up coordinates
     """
     import torch
-    from kimodo.geometry import axis_angle_to_matrix
     from kimodo.constraints import (
         RightHandConstraintSet, LeftHandConstraintSet,
         RightFootConstraintSet, LeftFootConstraintSet,
     )
+    from kimodo.geometry import axis_angle_to_matrix
 
     cls_map = {
         "right-hand": RightHandConstraintSet,
@@ -171,31 +106,42 @@ def build_limb_constraint(skeleton, constraint_type: str, target_kimodo: list,
     }
     if constraint_type not in cls_map:
         raise ValueError(f"Unknown constraint type '{constraint_type}'. "
-                         f"Choose from {list(cls_map.keys())}")
+                         f"Valid: {list(cls_map.keys())}")
 
-    effector_joint, limb_indices = LIMB_EFFECTOR[constraint_type]
-    print(f"[IK] {constraint_type} → target={target_kimodo}")
+    n_joints = skeleton.nbjoints
+    root_pos = torch.tensor([[0.0, G1_ROOT_HEIGHT, 0.0]], dtype=torch.float32, device=device)
 
-    local_aa, root_pos = solve_ik(skeleton, target_kimodo, effector_joint, limb_indices, device)
+    # Rest pose: all joints at zero rotation
+    rest_aa   = torch.zeros(1, n_joints, 3, device=device)
+    rest_mats = axis_angle_to_matrix(rest_aa)
 
-    rot_mats = axis_angle_to_matrix(local_aa)
-    global_joints_rots, global_joints_positions, _ = skeleton.fk(rot_mats, root_pos)
+    # FK → global positions and rotations for the full skeleton in rest pose
+    global_rots, global_pos, _ = skeleton.fk(rest_mats, root_pos)
 
-    # smooth_root_2d = root x,z (robot stays at origin for reach_obj)
-    smooth_root_2d = root_pos[:, [0, 2]]  # shape [1, 2]
+    # Override target joint position with our desired world target
+    effector_joint = LIMB_EFFECTOR_JOINT[constraint_type]
+    effector_idx   = skeleton.bone_index[effector_joint]
+    target_tensor  = torch.tensor(target_kimodo, dtype=torch.float32, device=device)
+    global_pos[0, effector_idx] = target_tensor
+
+    print(f"[{constraint_type}] target (Kimodo)={target_kimodo}  "
+          f"rest-pose effector={global_pos[0, effector_idx].tolist()}")
+
+    # smooth_root_2d: robot stays at origin (x=0, z=0)
+    smooth_root_2d = root_pos[:, [0, 2]]
     frame_indices  = torch.tensor([frame_index], device=device)
 
     return cls_map[constraint_type](
         skeleton=skeleton,
         frame_indices=frame_indices,
-        global_joints_positions=global_joints_positions,
-        global_joints_rots=global_joints_rots,
+        global_joints_positions=global_pos,
+        global_joints_rots=global_rots,
         smooth_root_2d=smooth_root_2d,
     )
 
 
 def build_root2d_constraint(skeleton, x: float, z: float, frame_index: int, device: str = "cpu"):
-    """Build a Root2DConstraintSet for a given root x,z position (Kimodo coords)."""
+    """Build a Root2DConstraintSet (root x,z waypoint in Kimodo coords)."""
     import torch
     from kimodo.constraints import Root2DConstraintSet
 
@@ -220,7 +166,7 @@ def constraints_reach_obj_gt(skeleton, cube_world_pos: np.ndarray, frame_index: 
 def constraints_reach_obj_vlm(skeleton, image_rgb, fx, fy, cx, cy, cam_T_world,
                                assumed_world_z, object_description, vlm_name,
                                frame_index: int, device: str) -> list:
-    """VLM condition: VLM pixel → world pos → right hand constraint."""
+    """VLM condition: pixel → world pos → right hand constraint."""
     import sys, os
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from pipeline.vlm import load_vlm
@@ -246,8 +192,7 @@ def main():
     )
     parser.add_argument("--task", default="reach_obj",
                         help="Task name (default: reach_obj)")
-    parser.add_argument("--condition", choices=["gt", "vlm"], required=True,
-                        help="Condition: gt (ground truth) or vlm (vision model)")
+    parser.add_argument("--condition", choices=["gt", "vlm"], required=True)
     parser.add_argument("--output", required=True,
                         help="Output path for constraints.json")
     parser.add_argument("--frame-index", type=int, default=45,
@@ -259,13 +204,11 @@ def main():
                         help="Cube position in IsaacLab coords (x y z)")
 
     # VLM
-    parser.add_argument("--image", help="Path to RGB image for VLM")
+    parser.add_argument("--image")
     parser.add_argument("--camera-intrinsics", nargs=4, type=float,
                         metavar=("FX", "FY", "CX", "CY"))
-    parser.add_argument("--camera-extrinsic-npy",
-                        help="Path to 4x4 camera-to-world transform .npy")
-    parser.add_argument("--assumed-world-z", type=float, default=0.4,
-                        help="Assumed z height (IsaacLab) for ray-plane intersection")
+    parser.add_argument("--camera-extrinsic-npy")
+    parser.add_argument("--assumed-world-z", type=float, default=0.4)
     parser.add_argument("--object-description", default="red cube")
     parser.add_argument("--vlm-name", default="qwen2.5-vl-7b")
 
@@ -277,11 +220,10 @@ def main():
 
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     print(f"[generate_constraints] device={device}")
-    print(f"[generate_constraints] Loading model skeleton ({args.kimodo_model})...")
+    print(f"[generate_constraints] Loading model ({args.kimodo_model})...")
     model = load_model(args.kimodo_model, device=device)
     skeleton = model.skeleton
 
-    # ── Build constraints ──────────────────────────────────────────────────
     if args.task == "reach_obj":
         if args.condition == "gt":
             if args.cube_world_pos is None:
@@ -303,9 +245,8 @@ def main():
                 args.frame_index, device,
             )
     else:
-        raise ValueError(f"Unknown task '{args.task}'. Add a recipe above for new tasks.")
+        raise ValueError(f"Unknown task '{args.task}'. Add a recipe above.")
 
-    # ── Save ───────────────────────────────────────────────────────────────
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     save_constraints_lst(str(out), constraints)
