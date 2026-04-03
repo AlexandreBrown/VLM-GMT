@@ -10,8 +10,9 @@ Multiple constraints of different types / frame indices are supported.
 
 Coordinate conventions
 ----------------------
-- IsaacLab: x forward, y left, z up
-- Kimodo:   x forward, y up,   z lateral
+- IsaacLab/MuJoCo/ProtoMotions: x=forward, y=left,    z=up   (z-up)
+- Kimodo:                        x=left,    y=up,      z=forward (y-up)
+Mapping (from MujocoQposConverter): kimodo = [mujoco_y, mujoco_z, mujoco_x]
 Use `isaaclab_to_kimodo()` to convert.
 
 Adding a new task
@@ -41,9 +42,19 @@ LIMB_EFFECTOR_JOINT = {
 # --------------------------------------------------------------------------- #
 
 def isaaclab_to_kimodo(pos) -> list:
-    """IsaacLab (x forward, y left, z up) → Kimodo (x forward, y up, z lateral)."""
+    """
+    Convert from IsaacLab/MuJoCo/ProtoMotions world frame to Kimodo frame.
+
+    IsaacLab: x=forward, y=left,  z=up   (z-up, x-forward)
+    Kimodo:   x=left,   y=up,     z=forward  (y-up, z-forward)
+
+    From MujocoQposConverter.mujoco_to_kimodo_matrix = [[0,1,0],[0,0,1],[1,0,0]]:
+      kimodo_x = mujoco_y  (left)
+      kimodo_y = mujoco_z  (up)
+      kimodo_z = mujoco_x  (forward)
+    """
     x, y, z = float(pos[0]), float(pos[1]), float(pos[2])
-    return [x, z, y]
+    return [y, z, x]  # kimodo: [left, up, forward]
 
 
 def pixels_to_world(u, v, fx, fy, cx, cy, cam_T_world, assumed_world_z):
