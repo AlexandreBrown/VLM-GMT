@@ -139,8 +139,6 @@ def main():
     parser.add_argument("--object-description", default="red cube")
     parser.add_argument("--vlm-name", default="qwen2.5-vl-7b")
 
-    # IK / constraint options
-    parser.add_argument("--urdf", default="protomotions/data/assets/urdf/for_retargeting/g1_29dof.urdf")
     parser.add_argument("--frame-index", type=int, default=45)
 
     args = parser.parse_args()
@@ -164,13 +162,14 @@ def main():
         if args.condition == "gt":
             if constraints_json.exists():
                 print(f"[generate_motion] Using existing constraints: {constraints_json}")
-                constraint_cmd = None  # skip generation
+                constraint_cmd = None
             else:
                 if args.cube_world_pos is None:
                     parser.error("--cube-world-pos required for --condition gt when no constraints.json exists")
                 constraint_cmd += [
                     "--mode", "gt",
                     "--cube-world-pos", *[str(v) for v in args.cube_world_pos],
+                    "--frame-index", str(args.frame_index),
                 ]
         elif args.condition == "vlm":
             if not all([args.image, args.camera_intrinsics, args.camera_extrinsic_npy]):

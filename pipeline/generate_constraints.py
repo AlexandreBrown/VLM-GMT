@@ -1,165 +1,102 @@
 """
 pipeline/generate_constraints.py — Generate Kimodo kinematic constraints.
 
-Supports three modes:
-    --mode gt     Ground-truth cube position → IK → constraint (upper bound)
-    --mode vlm    VLM image estimate → IK → constraint
-    --mode none   No constraint (text-only baseline)
+Three modes:
+    gt    Ground-truth target position from sim state (upper bound)
+    vlm   VLM estimates target position from a camera image
+    none  No constraint (text-only baseline, produces no output file)
 
-Usage (run from ProtoMotions root, with VLM-GMT on PYTHONPATH):
+Requires kimodo installed (run in kimodo env on cluster).
+
+Usage:
     # GT
     python VLM-GMT/pipeline/generate_constraints.py --mode gt \
         --cube-world-pos 0.6 0.0 0.4 \
-        --output constraints.json
+        --output VLM-GMT/outputs/reach_obj/gt/constraints.json
 
     # VLM
     python VLM-GMT/pipeline/generate_constraints.py --mode vlm \
         --image sim_frame.png \
         --camera-intrinsics 500 500 320 240 \
         --camera-extrinsic-npy camera_T_world.npy \
-        --output constraints.json
+        --output VLM-GMT/outputs/reach_obj/vlm/constraints.json
 
-    # Baseline
+    # Baseline (no file generated)
     python VLM-GMT/pipeline/generate_constraints.py --mode none
-
-Requires pyroki (separate env or same env):
-    git clone https://github.com/chungmin99/pyroki && pip install -e pyroki
 """
 
 import argparse
-import json
 import numpy as onp
 from pathlib import Path
 
 
-# ---------------------------------------------------------------------------
-# G1 config
-# ---------------------------------------------------------------------------
-G1_URDF_DEFAULT = "protomotions/data/assets/urdf/for_retargeting/g1.urdf"
-G1_RIGHT_WRIST_LINK = "right_wrist_yaw_link"
-G1_ROOT_HEIGHT = 0.793       # default standing pelvis height (meters)
-CONSTRAINT_FRAME = 45        # keyframe index (30fps → 1.5s into a 3s motion)
+G1_ROOT_HEIGHT = 0.793   # default G1 pelvis height in standing pose (meters)
+CONSTRAINT_FRAME = 45    # 30fps → 1.5s into a 3s motion
 
 
 # ---------------------------------------------------------------------------
-# IK via PyRoki
+# Kimodo constraint builders
+# Uses Kimodo Python API — no IK needed.
+# EndEffectorConstraintSet takes global joint positions; Kimodo resolves
+# joint angles internally during generation.
 # ---------------------------------------------------------------------------
 
-def solve_ik_right_wrist(
-    target_world_pos: onp.ndarray,
-    urdf_path: str,
-    root_world_pos: onp.ndarray,
-) -> onp.ndarray:
-    """
-    Single-frame IK: find G1 joint angles so right wrist reaches target_world_pos.
-    Uses pyroki_snippets.solve_ik (from PyRoki examples) which uses the correct API.
-
-    Returns:
-        joint_angles: (n_actuated_dofs,) float32 array.
-    """
-    import sys
-    import os
-    import jax
-    import jax.numpy as jnp
-    import jaxlie
-    import jaxls
-    import jax_dataclasses as jdc
-    from yourdfpy import URDF
-
-    # Import pyroki internals directly to avoid viser import
-    from pyroki._robot import Robot
-    import pyroki.costs as pk_costs
-
-    urdf_obj = URDF.load(urdf_path)
-    robot = Robot.from_urdf(urdf_obj)
-
-    link_names = list(robot.links.names)
-    ee_idx = link_names.index(G1_RIGHT_WRIST_LINK)
-
-    target_root_rel = jnp.array(target_world_pos - root_world_pos, dtype=jnp.float32)
-
-    # Identity orientation (we only care about position)
-    target_wxyz = jnp.array([1.0, 0.0, 0.0, 0.0])
-
-    @jdc.jit
-    def _solve(robot: Robot) -> jax.Array:
-        joint_var = robot.joint_var_cls(0)
-        costs = [
-            pk_costs.pose_cost_analytic_jac(
-                robot,
-                joint_var,
-                jaxlie.SE3.from_rotation_and_translation(
-                    jaxlie.SO3(target_wxyz), target_root_rel
-                ),
-                jnp.array(ee_idx),
-                pos_weight=50.0,
-                ori_weight=0.1,  # low weight: we only care about position
-            ),
-            pk_costs.limit_constraint(robot, joint_var),
-        ]
-        sol = (
-            jaxls.LeastSquaresProblem(costs=costs, variables=[joint_var])
-            .analyze()
-            .solve(verbose=False, linear_solver="dense_cholesky")
-        )
-        return sol[joint_var]
-
-    cfg = _solve(robot)
-    return onp.array(cfg)
+def _load_skeleton(model_name: str = "kimodo-g1-rp"):
+    from kimodo import load_model
+    return load_model(model_name, device="cpu").skeleton
 
 
-def build_right_hand_constraint(
+def build_root2d(target_world_pos: onp.ndarray, frame_index: int) -> object:
+    """Root2D waypoint: walk root toward target XZ position by frame_index."""
+    import torch
+    from kimodo.constraints import Root2DConstraintSet
+
+    smooth_root_2d = torch.tensor([
+        [0.0, 0.0],
+        [float(target_world_pos[0]), float(target_world_pos[2])],
+    ])
+    return Root2DConstraintSet(
+        skeleton=_load_skeleton(),
+        frame_indices=[0, frame_index],
+        smooth_root_2d=smooth_root_2d,
+    )
+
+
+def build_right_hand(
     target_world_pos: onp.ndarray,
     frame_index: int,
-    urdf_path: str,
     root_world_pos: onp.ndarray,
-) -> dict:
-    """Run IK and format as a Kimodo right-hand constraint dict."""
-    from yourdfpy import URDF
+) -> object:
+    """
+    Right-hand end-effector constraint at target_world_pos.
+    Sets the RightHand joint to the target; Kimodo handles the rest.
+    """
+    import torch
+    from kimodo.constraints import RightHandConstraintSet
 
-    joint_angles = solve_ik_right_wrist(target_world_pos, urdf_path, root_world_pos)
+    skeleton = _load_skeleton()
+    joint_names = list(skeleton.joint_names)
+    n_joints = len(joint_names)
 
-    # Get actuated joint axes from URDF
-    urdf_obj = URDF.load(urdf_path)
-    actuated_joints = [
-        j for j in urdf_obj.robot.joints
-        if j.type in ("revolute", "continuous", "prismatic")
-    ]
-    axes = onp.array(
-        [j.axis if j.axis is not None else [0.0, 0.0, 1.0] for j in actuated_joints],
-        dtype=onp.float32,
-    )  # (J, 3)
+    global_positions = torch.zeros(1, n_joints, 3)
+    global_rots = torch.eye(3).unsqueeze(0).unsqueeze(0).expand(1, n_joints, 3, 3).clone()
 
-    n_joints = len(actuated_joints)
-    angles = onp.zeros(n_joints, dtype=onp.float32)
-    n = min(len(joint_angles), n_joints)
-    angles[:n] = joint_angles[:n]
+    rh_idx = joint_names.index("RightHand")
+    global_positions[0, rh_idx] = torch.tensor(target_world_pos, dtype=torch.float32)
 
-    # axis-angle per joint: axis * angle → shape (J, 3)
-    local_joints_rot = (axes * angles[:, None]).astype(onp.float32)
+    smooth_root_2d = torch.tensor([[float(root_world_pos[0]), float(root_world_pos[2])]])
 
-    return {
-        "type": "right-hand",
-        "frame_indices": [frame_index],
-        "local_joints_rot": local_joints_rot[None].tolist(),  # (1, J, 3)
-        "root_positions": [root_world_pos.tolist()],           # (1, 3)
-    }
-
-
-def build_root2d_constraint(
-    target_world_pos: onp.ndarray,
-    frame_index: int,
-) -> dict:
-    """Walk root toward target XZ position by frame_index."""
-    return {
-        "type": "root2d",
-        "frame_indices": [0, frame_index],
-        "smooth_root_2d": [[0.0, 0.0], [float(target_world_pos[0]), float(target_world_pos[2])]],
-    }
+    return RightHandConstraintSet(
+        skeleton=skeleton,
+        frame_indices=[frame_index],
+        global_joints_positions=global_positions,
+        global_joints_rots=global_rots,
+        smooth_root_2d=smooth_root_2d,
+    )
 
 
 # ---------------------------------------------------------------------------
-# Camera unprojection
+# Camera unprojection (pixels → world 3D)
 # ---------------------------------------------------------------------------
 
 def pixels_to_world(
@@ -168,7 +105,7 @@ def pixels_to_world(
     cam_T_world: onp.ndarray,
     assumed_world_z: float,
 ) -> onp.ndarray:
-    """Back-project pixel (u, v) to 3D world via ray-plane intersection at z=assumed_world_z."""
+    """Back-project pixel (u, v) to world 3D via ray-plane intersection at z=assumed_world_z."""
     ray_cam = onp.array([(u - cx) / fx, (v - cy) / fy, 1.0])
     R, t = cam_T_world[:3, :3], cam_T_world[:3, 3]
     ray_world = R @ ray_cam
@@ -189,16 +126,12 @@ def main():
     parser.add_argument("--mode", choices=["gt", "vlm", "none"], required=True)
     parser.add_argument("--output", default="constraints.json")
     parser.add_argument("--frame-index", type=int, default=CONSTRAINT_FRAME)
-    parser.add_argument("--urdf", default=G1_URDF_DEFAULT)
     parser.add_argument(
-        "--root-world-pos", nargs=3, type=float, default=[0.0, 0.0, G1_ROOT_HEIGHT],
-        metavar=("X", "Y", "Z"),
-        help="Robot root (pelvis) position in world frame (default: standing at origin)",
+        "--root-world-pos", nargs=3, type=float,
+        default=[0.0, 0.0, G1_ROOT_HEIGHT], metavar=("X", "Y", "Z"),
     )
-
     # GT
     parser.add_argument("--cube-world-pos", nargs=3, type=float, metavar=("X", "Y", "Z"))
-
     # VLM
     parser.add_argument("--image")
     parser.add_argument("--camera-intrinsics", nargs=4, type=float, metavar=("FX", "FY", "CX", "CY"))
@@ -210,12 +143,11 @@ def main():
     args = parser.parse_args()
 
     if args.mode == "none":
-        print("[generate_constraints] mode=none: no constraint file generated.")
+        print("[generate_constraints] mode=none: no file generated.")
         return
 
     root_world_pos = onp.array(args.root_world_pos, dtype=onp.float32)
 
-    # --- Determine target position ---
     if args.mode == "gt":
         if args.cube_world_pos is None:
             parser.error("--cube-world-pos required for --mode gt")
@@ -224,11 +156,11 @@ def main():
 
     elif args.mode == "vlm":
         if not all([args.image, args.camera_intrinsics, args.camera_extrinsic_npy]):
-            parser.error("--image, --camera-intrinsics, --camera-extrinsic-npy required for vlm.")
-        from PIL import Image as PILImage
+            parser.error("--image, --camera-intrinsics, --camera-extrinsic-npy required for --mode vlm")
         import sys, os
         sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         from pipeline.vlm import load_vlm
+        from PIL import Image as PILImage
 
         image_rgb = onp.array(PILImage.open(args.image).convert("RGB"))
         fx, fy, cx, cy = args.camera_intrinsics
@@ -242,19 +174,16 @@ def main():
         target_pos = pixels_to_world(u, v, fx, fy, cx, cy, cam_T_world, args.assumed_world_z)
         print(f"[generate_constraints] Unprojected world pos: {target_pos}")
 
-    # --- Build constraints ---
-    # Note: right-hand constraint requires Kimodo's internal 34-joint G1 skeleton format
-    # which is not publicly documented. For now we use root2d only (walk root toward target).
-    # The arm reach is handled by the text prompt.
-    print("[generate_constraints] Building root2d constraint (locomotion toward target)...")
+    from kimodo.constraints import save_constraints_lst
+
     constraints = [
-        build_root2d_constraint(target_pos, args.frame_index),
+        build_root2d(target_pos, args.frame_index),
+        build_right_hand(target_pos, args.frame_index, root_world_pos),
     ]
 
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
-    with open(out, "w") as f:
-        json.dump(constraints, f, indent=2)
+    save_constraints_lst(str(out), constraints)
     print(f"[generate_constraints] Saved to '{out}'")
 
 
