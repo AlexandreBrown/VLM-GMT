@@ -63,18 +63,18 @@ def pixels_to_world(u, v, fx, fy, cx, cy, cam_T_world, assumed_world_z):
 # --------------------------------------------------------------------------- #
 
 def make_limb_constraint(skeleton, constraint_type: str, target_kimodo: list,
-                          frame_index: int, device: str = "cpu"):
+                          frame_index, device: str = "cpu"):
     """
-    Build a single hand or foot EndEffectorConstraintSet.
+    Build a hand or foot EndEffectorConstraintSet (single frame or multi-frame).
 
     Runs FK in rest pose to get a valid skeleton state, then overrides the
-    target EE joint's global position with `target_kimodo`. Kimodo's diffusion
-    uses global_joints_positions directly (in-memory path) — no IK needed.
+    target EE joint's global position with `target_kimodo` for all given frames.
+    Kimodo's diffusion uses global_joints_positions directly — no IK needed.
 
     Args:
         constraint_type: 'right-hand' | 'left-hand' | 'right-foot' | 'left-foot'
         target_kimodo:   [x, y, z] in Kimodo y-up coordinates
-        frame_index:     frame at which to apply the constraint (30fps)
+        frame_index:     int or list[int] — frame(s) at which to apply constraint (30fps)
     """
     import torch
     from kimodo.constraints import (
@@ -92,28 +92,37 @@ def make_limb_constraint(skeleton, constraint_type: str, target_kimodo: list,
     if constraint_type not in cls_map:
         raise ValueError(f"Unknown type '{constraint_type}'. Valid: {list(cls_map.keys())}")
 
-    n_joints  = skeleton.nbjoints
-    root_pos  = torch.tensor([[0.0, G1_ROOT_HEIGHT, 0.0]], dtype=torch.float32, device=device)
-    rest_mats = axis_angle_to_matrix(torch.zeros(1, n_joints, 3, device=device))
+    # Normalise frame_index to a list
+    if isinstance(frame_index, int):
+        frame_indices_list = [frame_index]
+    else:
+        frame_indices_list = list(frame_index)
+    T = len(frame_indices_list)
 
-    global_rots, global_pos, _ = skeleton.fk(rest_mats, root_pos)
+    n_joints   = skeleton.nbjoints
+    root_pos_1 = torch.tensor([[0.0, G1_ROOT_HEIGHT, 0.0]], dtype=torch.float32, device=device)
+    rest_mats  = axis_angle_to_matrix(torch.zeros(1, n_joints, 3, device=device))
 
-    # Override target EE joint's global position
-    effector_idx          = skeleton.bone_index[LIMB_EFFECTOR_JOINT[constraint_type]]
-    global_pos            = global_pos.clone()
-    global_pos[0, effector_idx] = torch.tensor(target_kimodo, dtype=torch.float32, device=device)
+    # FK in rest pose → [1, n_joints, 3] / [1, n_joints, 3, 3]
+    global_rots_1, global_pos_1, _ = skeleton.fk(rest_mats, root_pos_1)
 
-    # Match from_dict() device convention exactly:
-    #   frame_indices  → CPU  (bare torch.tensor, no device arg)
-    #   smooth_root_2d → skeleton device (CUDA)
-    #   global_pos     → skeleton device (CUDA)
-    #   global_rots    → skeleton device (CUDA)
-    # pos_indices/rot_indices are created with bare torch.tensor() inside __init__
-    # so they also land on CPU — matching frame_indices.
-    frame_indices  = torch.tensor([frame_index])   # CPU — matches from_dict
-    smooth_root_2d = root_pos[:, [0, 2]]           # CUDA — matches from_dict
+    # Expand to T frames (same rest pose repeated)
+    global_pos  = global_pos_1.expand(T, -1, -1).clone()        # [T, n_joints, 3]
+    global_rots = global_rots_1.expand(T, -1, -1, -1).clone()   # [T, n_joints, 3, 3]
 
-    print(f"  [{constraint_type}] frame={frame_index}  target={[round(v,3) for v in target_kimodo]}")
+    # Override EE joint position for all T frames
+    effector_idx = skeleton.bone_index[LIMB_EFFECTOR_JOINT[constraint_type]]
+    rest_pos     = global_pos_1[0, effector_idx].tolist()
+    global_pos[:, effector_idx] = torch.tensor(target_kimodo, dtype=torch.float32, device=device)
+
+    print(f"  [{constraint_type}] frames={frame_indices_list}")
+    print(f"    rest-pose effector: {[round(v,3) for v in rest_pos]}")
+    print(f"    target (Kimodo):    {[round(v,3) for v in target_kimodo]}")
+
+    # Match from_dict() device convention:
+    #   frame_indices  → CPU, everything else → skeleton device (CUDA)
+    frame_indices  = torch.tensor(frame_indices_list)          # CPU
+    smooth_root_2d = root_pos_1[:, [0, 2]].expand(T, -1).clone()  # [T, 2], CUDA
 
     return cls_map[constraint_type](
         skeleton=skeleton,
@@ -140,11 +149,12 @@ def make_root2d_constraint(skeleton, x: float, z: float, frame_index: int, devic
 # Task / condition recipes
 # --------------------------------------------------------------------------- #
 
-def constraints_reach_obj_gt(skeleton, cube_world_pos, frame_index: int, device: str) -> list:
+def constraints_reach_obj_gt(skeleton, cube_world_pos, frame_index, device: str) -> list:
     """
     GT upper bound for reach_obj: right hand constrained to cube world position.
 
     cube_world_pos: [x, y, z] in IsaacLab coordinates
+    frame_index: int or list[int] — which frames to constrain
     """
     target = isaaclab_to_kimodo(cube_world_pos)
     print(f"[GT] cube (IsaacLab)={list(np.round(cube_world_pos, 3))}  →  Kimodo={[round(v,3) for v in target]}")

@@ -113,8 +113,16 @@ def main():
     parser.add_argument(
         "--frame-index",
         type=int,
-        default=45,
-        help="Keyframe index for constraint (30fps, default 45 = 1.5s)",
+        default=None,
+        help="Single keyframe index for constraint (30fps). "
+             "If not set, --constraint-last-n-frames is used instead.",
+    )
+    parser.add_argument(
+        "--constraint-last-n-frames",
+        type=int,
+        default=20,
+        help="Constrain the last N frames of the motion (default 20). "
+             "Ignored if --frame-index is set.",
     )
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--protomotions-root", required=True)
@@ -158,7 +166,16 @@ def main():
     # ── Build constraints (in memory, no JSON / no IK) ─────────────────────
     from pipeline.generate_constraints import build_constraints
 
-    constraint_kwargs = {"frame_index": args.frame_index}
+    # Resolve which frames to constrain
+    num_frames = int(args.duration * model.fps)
+    if args.frame_index is not None:
+        frame_index = args.frame_index
+    else:
+        n = min(args.constraint_last_n_frames, num_frames)
+        frame_index = list(range(num_frames - n, num_frames))
+    print(f"[generate_motion] Constraint frames: {frame_index}")
+
+    constraint_kwargs = {"frame_index": frame_index}
 
     if args.condition == "gt":
         if args.cube_world_pos is None:
@@ -201,7 +218,6 @@ def main():
     if args.seed is not None:
         seed_everything(args.seed)
 
-    num_frames = int(args.duration * model.fps)
     print(
         f"[generate_motion] Generating: '{args.prompt}'  ({num_frames} frames @ {model.fps}fps)"
     )
