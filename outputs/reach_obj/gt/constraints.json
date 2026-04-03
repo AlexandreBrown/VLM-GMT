@@ -1,22 +1,5 @@
 [
   {
-    "type": "root2d",
-    "frame_indices": [
-      0,
-      45
-    ],
-    "smooth_root_2d": [
-      [
-        0.0,
-        0.0
-      ],
-      [
-        0.6000000238418579,
-        0.4000000059604645
-      ]
-    ]
-  },
-  {
     "type": "right-hand",
     "frame_indices": [
       45
