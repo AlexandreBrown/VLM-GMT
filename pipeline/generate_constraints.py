@@ -1,12 +1,18 @@
 """
-pipeline/generate_constraints.py — Generate Kimodo kinematic constraints.
+pipeline/generate_constraints.py — Generate Kimodo FullBody constraints.
+
+Uses FullBodyConstraintSet for all tasks. The caller (gt/vlm) specifies a list
+of (frame_index, joint_name, world_position) keyframes. Kimodo handles IK internally.
+
+Kimodo limits: max 20 keyframes per constraint type.
+Available G1 joint names: see G1_JOINT_NAMES below.
 
 Three modes:
-    gt    Ground-truth target position from sim state (upper bound)
-    vlm   VLM estimates target position from a camera image
-    none  No constraint (text-only baseline, produces no output file)
+    gt    Ground-truth positions from sim state (upper bound)
+    vlm   VLM estimates positions from a camera image
+    none  No constraint (text-only baseline, no output file)
 
-Requires kimodo installed (run in kimodo env on cluster).
+Requires kimodo installed (run in kimodo env).
 
 Usage:
     # GT
@@ -21,7 +27,7 @@ Usage:
         --camera-extrinsic-npy camera_T_world.npy \
         --output VLM-GMT/outputs/reach_obj/vlm/constraints.json
 
-    # Baseline (no file generated)
+    # Baseline
     python VLM-GMT/pipeline/generate_constraints.py --mode none
 """
 
@@ -30,61 +36,110 @@ import numpy as onp
 from pathlib import Path
 
 
+# G1 skeleton joint names (34 joints, from skeleton.bone_order_names)
+G1_JOINT_NAMES = [
+    "pelvis_skel",
+    "left_hip_pitch_skel", "left_hip_roll_skel", "left_hip_yaw_skel",
+    "left_knee_skel", "left_ankle_pitch_skel", "left_ankle_roll_skel", "left_toe_base",
+    "right_hip_pitch_skel", "right_hip_roll_skel", "right_hip_yaw_skel",
+    "right_knee_skel", "right_ankle_pitch_skel", "right_ankle_roll_skel", "right_toe_base",
+    "waist_yaw_skel", "waist_roll_skel", "waist_pitch_skel",
+    "left_shoulder_pitch_skel", "left_shoulder_roll_skel", "left_shoulder_yaw_skel",
+    "left_elbow_skel", "left_wrist_roll_skel", "left_wrist_pitch_skel",
+    "left_wrist_yaw_skel", "left_hand_roll_skel",
+    "right_shoulder_pitch_skel", "right_shoulder_roll_skel", "right_shoulder_yaw_skel",
+    "right_elbow_skel", "right_wrist_roll_skel", "right_wrist_pitch_skel",
+    "right_wrist_yaw_skel", "right_hand_roll_skel",
+]
+
 G1_ROOT_HEIGHT = 0.793   # default G1 pelvis height in standing pose (meters)
-CONSTRAINT_FRAME = 45    # 30fps → 1.5s into a 3s motion
+MAX_CONSTRAINT_FRAMES = 20  # Kimodo hard limit per constraint type
 
-
-# ---------------------------------------------------------------------------
-# Kimodo constraint builders
-# Uses Kimodo Python API — no IK needed.
-# EndEffectorConstraintSet takes global joint positions; Kimodo resolves
-# joint angles internally during generation.
-# ---------------------------------------------------------------------------
 
 def _load_skeleton(model_name: str = "kimodo-g1-rp"):
     from kimodo import load_model
     return load_model(model_name, device="cpu").skeleton
 
 
-def build_right_hand(
-    target_world_pos: onp.ndarray,
-    frame_index: int,
-    root_world_pos: onp.ndarray,
-) -> object:
+def build_fullbody_constraints(
+    keyframes: list[dict],
+    root_height: float = G1_ROOT_HEIGHT,
+) -> list:
     """
-    Right-hand end-effector constraint at target_world_pos.
-    Sets the RightHand joint to the target; Kimodo handles the rest.
+    Build a list of Kimodo FullBodyConstraintSet objects from keyframes.
+
+    Args:
+        keyframes: list of dicts, each with:
+            {
+                "frame_index": int,
+                "joints": {joint_name: [x, y, z], ...}  # world positions
+            }
+            - pelvis_skel is always set to (0, root_height, 0) unless overridden.
+            - All unspecified joints default to (0, 0, 0) (rest pose approximation).
+            - Max 20 keyframes (Kimodo limit).
+        root_height: Default pelvis height for unspecified frames.
+
+    Returns:
+        List containing a single FullBodyConstraintSet.
     """
     import torch
-    from kimodo.constraints import RightHandConstraintSet
+    from kimodo.constraints import FullBodyConstraintSet
+
+    assert len(keyframes) <= MAX_CONSTRAINT_FRAMES, \
+        f"Too many keyframes: {len(keyframes)} > {MAX_CONSTRAINT_FRAMES}"
 
     skeleton = _load_skeleton()
-    joint_names = list(skeleton.bone_order_names)
-    n_joints = len(joint_names)
+    n_joints = len(G1_JOINT_NAMES)
+    T = len(keyframes)
 
-    global_positions = torch.zeros(1, n_joints, 3)
-    global_rots = torch.eye(3).unsqueeze(0).unsqueeze(0).expand(1, n_joints, 3, 3).clone()
+    global_positions = torch.zeros(T, n_joints, 3)
+    global_rots = torch.eye(3).unsqueeze(0).unsqueeze(0).expand(T, n_joints, 3, 3).clone()
+    frame_indices = []
 
-    # Set pelvis (root) to standing height so Kimodo doesn't generate extreme poses
-    root_idx = joint_names.index("pelvis_skel")
-    global_positions[0, root_idx] = torch.tensor(root_world_pos, dtype=torch.float32)
+    for t, kf in enumerate(keyframes):
+        frame_indices.append(kf["frame_index"])
 
-    rh_idx = joint_names.index("right_hand_roll_skel")
-    global_positions[0, rh_idx] = torch.tensor(target_world_pos, dtype=torch.float32)
+        # Always set pelvis to standing height by default
+        pelvis_idx = G1_JOINT_NAMES.index("pelvis_skel")
+        global_positions[t, pelvis_idx] = torch.tensor([0.0, root_height, 0.0])
 
-    smooth_root_2d = torch.tensor([[float(root_world_pos[0]), float(root_world_pos[2])]])
+        # Apply specified joint positions
+        for joint_name, world_pos in kf.get("joints", {}).items():
+            if joint_name not in G1_JOINT_NAMES:
+                raise ValueError(f"Unknown joint: '{joint_name}'. Valid: {G1_JOINT_NAMES}")
+            idx = G1_JOINT_NAMES.index(joint_name)
+            global_positions[t, idx] = torch.tensor(world_pos, dtype=torch.float32)
 
-    return RightHandConstraintSet(
+    smooth_root_2d = global_positions[:, G1_JOINT_NAMES.index("pelvis_skel"), [0, 2]]  # (T, 2)
+
+    return [FullBodyConstraintSet(
         skeleton=skeleton,
-        frame_indices=[frame_index],
+        frame_indices=frame_indices,
         global_joints_positions=global_positions,
         global_joints_rots=global_rots,
         smooth_root_2d=smooth_root_2d,
-    )
+    )]
 
 
 # ---------------------------------------------------------------------------
-# Camera unprojection (pixels → world 3D)
+# GT keyframe builder for reach_obj
+# ---------------------------------------------------------------------------
+
+def gt_reach_keyframes(
+    target_world_pos: onp.ndarray,
+    frame_index: int,
+) -> list[dict]:
+    """Build GT keyframes for reach_obj: right hand at target_world_pos."""
+    return [{
+        "frame_index": frame_index,
+        "joints": {
+            "right_hand_roll_skel": target_world_pos.tolist(),
+        }
+    }]
+
+
+# ---------------------------------------------------------------------------
+# Camera unprojection
 # ---------------------------------------------------------------------------
 
 def pixels_to_world(
@@ -113,13 +168,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=["gt", "vlm", "none"], required=True)
     parser.add_argument("--output", default="constraints.json")
-    parser.add_argument("--frame-index", type=int, default=CONSTRAINT_FRAME)
-    parser.add_argument(
-        "--root-world-pos", nargs=3, type=float,
-        default=[0.0, 0.0, G1_ROOT_HEIGHT], metavar=("X", "Y", "Z"),
-    )
+    parser.add_argument("--frame-index", type=int, default=45,
+                        help="Keyframe index for the constraint (30fps, default: 45 = 1.5s)")
+    parser.add_argument("--root-height", type=float, default=G1_ROOT_HEIGHT)
+
     # GT
     parser.add_argument("--cube-world-pos", nargs=3, type=float, metavar=("X", "Y", "Z"))
+
     # VLM
     parser.add_argument("--image")
     parser.add_argument("--camera-intrinsics", nargs=4, type=float, metavar=("FX", "FY", "CX", "CY"))
@@ -134,13 +189,12 @@ def main():
         print("[generate_constraints] mode=none: no file generated.")
         return
 
-    root_world_pos = onp.array(args.root_world_pos, dtype=onp.float32)
-
     if args.mode == "gt":
         if args.cube_world_pos is None:
             parser.error("--cube-world-pos required for --mode gt")
         target_pos = onp.array(args.cube_world_pos, dtype=onp.float32)
         print(f"[generate_constraints] GT target: {target_pos}")
+        keyframes = gt_reach_keyframes(target_pos, args.frame_index)
 
     elif args.mode == "vlm":
         if not all([args.image, args.camera_intrinsics, args.camera_extrinsic_npy]):
@@ -161,17 +215,16 @@ def main():
 
         target_pos = pixels_to_world(u, v, fx, fy, cx, cy, cam_T_world, args.assumed_world_z)
         print(f"[generate_constraints] Unprojected world pos: {target_pos}")
+        keyframes = gt_reach_keyframes(target_pos, args.frame_index)
 
     from kimodo.constraints import save_constraints_lst
 
-    constraints = [
-        build_right_hand(target_pos, args.frame_index, root_world_pos),
-    ]
+    constraints = build_fullbody_constraints(keyframes, root_height=args.root_height)
 
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     save_constraints_lst(str(out), constraints)
-    print(f"[generate_constraints] Saved to '{out}'")
+    print(f"[generate_constraints] Saved {len(keyframes)} keyframe(s) to '{out}'")
 
 
 if __name__ == "__main__":
