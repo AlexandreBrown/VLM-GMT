@@ -64,6 +64,7 @@ def _load_skeleton(model_name: str = "kimodo-g1-rp"):
 def build_end_effector_constraints(
     keyframes: list[dict],
     root_height: float = G1_ROOT_HEIGHT,
+    device: str = "cpu",
 ) -> list:
     """
     Build Kimodo EndEffectorConstraintSet from keyframes.
@@ -104,8 +105,8 @@ def build_end_effector_constraints(
         if ee_name not in EE_JOINT_NAMES:
             raise ValueError(f"Unknown EE name: '{ee_name}'. Valid: {EE_JOINT_NAMES}")
 
-    global_positions = torch.zeros(T, n_joints, 3)
-    global_rots = torch.eye(3).unsqueeze(0).unsqueeze(0).expand(T, n_joints, 3, 3).clone()
+    global_positions = torch.zeros(T, n_joints, 3, device=device)
+    global_rots = torch.eye(3, device=device).unsqueeze(0).unsqueeze(0).expand(T, n_joints, 3, 3).clone()
     frame_indices = []
 
     # Map from high-level EE name to skeleton joint index for position setting
@@ -123,15 +124,15 @@ def build_end_effector_constraints(
 
         # Set pelvis to standing height
         pelvis_idx = G1_JOINT_NAMES.index("pelvis_skel")
-        global_positions[t, pelvis_idx] = torch.tensor([0.0, root_height, 0.0])
+        global_positions[t, pelvis_idx] = torch.tensor([0.0, root_height, 0.0], device=device)
 
         for ee_name, world_pos in kf.get("joints", {}).items():
             skel_joint = ee_to_skel_joint[ee_name]
             idx = G1_JOINT_NAMES.index(skel_joint)
-            global_positions[t, idx] = torch.tensor(world_pos, dtype=torch.float32)
+            global_positions[t, idx] = torch.tensor(world_pos, dtype=torch.float32, device=device)
 
     smooth_root_2d = global_positions[:, G1_JOINT_NAMES.index("pelvis_skel"), [0, 2]]  # (T, 2)
-    frame_indices_tensor = torch.tensor(frame_indices, dtype=torch.long)
+    frame_indices_tensor = torch.tensor(frame_indices, dtype=torch.long, device=device)
 
     return [EndEffectorConstraintSet(
         skeleton=skeleton,

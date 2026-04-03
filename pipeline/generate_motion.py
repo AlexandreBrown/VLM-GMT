@@ -72,12 +72,6 @@ def generate_csv(
 
     if constraint_lst:
         print(f"[generate_motion] Using {len(constraint_lst)} constraint set(s) in-memory.")
-        # Move all constraint tensors to the model device
-        for c in constraint_lst:
-            for attr in vars(c):
-                val = getattr(c, attr)
-                if hasattr(val, 'to'):
-                    setattr(c, attr, val.to(device))
     else:
         print("[generate_motion] No constraints (text only).")
         constraint_lst = []
@@ -203,8 +197,10 @@ def main():
             print(f"[generate_motion] VLM world pos (IsaacLab): {target_pos}")
             keyframes = gt_reach_keyframes(target_pos, args.frame_index)
 
-        constraint_lst = build_end_effector_constraints(keyframes)
-        print(f"[generate_motion] Built {len(constraint_lst)} constraint set(s) in-memory.")
+        import torch
+        device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        constraint_lst = build_end_effector_constraints(keyframes, device=device)
+        print(f"[generate_motion] Built {len(constraint_lst)} constraint set(s) in-memory on {device}.")
 
     # --- Generate motion ---
     if args.csv_path is not None:
