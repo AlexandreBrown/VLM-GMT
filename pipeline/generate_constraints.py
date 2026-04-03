@@ -65,6 +65,10 @@ def build_right_hand(
     global_positions = torch.zeros(1, n_joints, 3)
     global_rots = torch.eye(3).unsqueeze(0).unsqueeze(0).expand(1, n_joints, 3, 3).clone()
 
+    # Set pelvis (root) to standing height so Kimodo doesn't generate extreme poses
+    root_idx = joint_names.index("pelvis_skel")
+    global_positions[0, root_idx] = torch.tensor(root_world_pos, dtype=torch.float32)
+
     rh_idx = joint_names.index("right_hand_roll_skel")
     global_positions[0, rh_idx] = torch.tensor(target_world_pos, dtype=torch.float32)
 
