@@ -34,7 +34,7 @@ def create_parser():
     parser.add_argument("--simulator", required=True)
     parser.add_argument("--num-envs", type=int, default=1)
     parser.add_argument("--num-episodes", type=int, default=20)
-    parser.add_argument("--output-dir", default="VLM-GMT/outputs/results")
+    parser.add_argument("--output-dir", required=True, help="Directory for results JSON")
     parser.add_argument("--headless", action="store_true", default=False)
     parser.add_argument(
         "--protomotions-root", required=True,

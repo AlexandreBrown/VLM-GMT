@@ -65,18 +65,14 @@ class DistanceToTarget(Metric):
         if self._link_index is None:
             self._link_index = self._resolve_link_index(env)
 
-        # get_bodies_state() returns RobotState with rigid_body_pos: (num_envs, num_bodies, 3)
-        bodies_state = env.simulator.get_bodies_state()
-        link_pos = bodies_state.rigid_body_pos[:, self._link_index, :]  # (num_envs, 3)
+        # Robot link position: (num_envs, 3)
+        link_pos = env.simulator._robot.data.body_pos_w[:, self._link_index, :]
 
-        # _object_translations stores local scene coords; add per-env scene offset for world position
-        obj_pos = scene_lib._object_translations[self.object_index].clone().to(link_pos.device)  # (3,)
-        scene_offset = scene_lib._scene_offsets[0]  # (x, y) for env 0
-        obj_pos[0] += float(scene_offset[0])
-        obj_pos[1] += float(scene_offset[1])
+        # Scene object position from simulator (already in world frame): (num_envs, 3)
+        obj_pos = env.simulator._object[self.object_index].data.root_pos_w
 
         dist = torch.norm(link_pos - obj_pos, dim=-1)  # (num_envs,)
-        self._distances.append(dist[0].item())         # env 0
+        self._distances.append(dist[0].item())
 
     def compute(self) -> MetricResult:
         if not self._distances:

@@ -21,17 +21,17 @@ def get_metrics():
     """
     return [
         DistanceToTarget(
-            name="dist_right_wrist_to_cube",
-            link_name="right_wrist_yaw_link",
+            name="dist_right_hand_to_cube",
+            link_name="right_rubber_hand",
             object_index=0,
-            success_threshold=0.1,
-            use_min=False,   # final distance (strictest)
+            success_threshold=0.15,
+            use_min=False,   # final distance
         ),
         DistanceToTarget(
-            name="dist_right_wrist_to_cube_min",
-            link_name="right_wrist_yaw_link",
+            name="dist_right_hand_to_cube_min",
+            link_name="right_rubber_hand",
             object_index=0,
-            success_threshold=0.1,
-            use_min=True,    # best distance during episode (more lenient)
+            success_threshold=0.15,
+            use_min=True,    # best distance during episode
         ),
     ]
