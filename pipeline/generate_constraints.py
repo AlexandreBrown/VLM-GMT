@@ -1,37 +1,26 @@
 """
-pipeline/generate_constraints.py — Generate Kimodo constraint JSON files.
+pipeline/generate_constraints.py — Build Kimodo constraint objects in memory.
 
-Writes a constraints.json compatible with kimodo's load_constraints_lst().
-Supported types: root2d, right-hand, left-hand, right-foot, left-foot.
+Returns a list of constraint objects ready to pass to model(constraint_lst=...).
+No JSON serialization needed — Kimodo's in-memory path uses global_joints_positions
+directly, so no IK is required.
 
-How it works
-------------
-Kimodo's hand/foot constraint classes (e.g. RightHandConstraintSet) accept
-global joint positions and rotations directly — no IK required. We run FK in
-the robot's rest pose (all joints zero) to get a valid global skeleton state,
-then override the target end-effector's position with our desired world target.
-Kimodo's diffusion model handles finding a motion that reaches that position.
+Supported constraint types: right-hand, left-hand, right-foot, left-foot, root2d.
+Multiple constraints of different types / frame indices are supported.
 
-Usage
------
-    # GT for reach_obj (run from VLM-GMT root, in kimodo env)
-    python pipeline/generate_constraints.py \\
-        --task reach_obj --condition gt \\
-        --cube-world-pos 0.6 0.0 0.4 \\
-        --output outputs/reach_obj/gt/constraints.json
+Coordinate conventions
+----------------------
+- IsaacLab: x forward, y left, z up
+- Kimodo:   x forward, y up,   z lateral
+Use `isaaclab_to_kimodo()` to convert.
 
-    # VLM for reach_obj
-    python pipeline/generate_constraints.py \\
-        --task reach_obj --condition vlm \\
-        --image outputs/reach_obj/sim_frame.png \\
-        --camera-intrinsics 500 500 320 240 \\
-        --camera-extrinsic-npy outputs/reach_obj/camera_T_world.npy \\
-        --output outputs/reach_obj/vlm/constraints.json
+Adding a new task
+-----------------
+Add a new function `constraints_<task>_<condition>(skeleton, ..., device)` that
+returns a list of constraint objects, then register it in `build_constraints()`.
 """
 
-import argparse
 import numpy as np
-from pathlib import Path
 
 # --------------------------------------------------------------------------- #
 # Constants
@@ -40,7 +29,6 @@ from pathlib import Path
 KIMODO_MODEL   = "kimodo-g1-rp"
 G1_ROOT_HEIGHT = 0.793  # pelvis height in Kimodo y-up standing pose (meters)
 
-# End-effector joint names in the G1 skeleton (last joint of each limb chain)
 LIMB_EFFECTOR_JOINT = {
     "right-hand": "right_hand_roll_skel",
     "left-hand":  "left_hand_roll_skel",
@@ -52,18 +40,13 @@ LIMB_EFFECTOR_JOINT = {
 # Coordinate helpers
 # --------------------------------------------------------------------------- #
 
-def isaaclab_to_kimodo(pos: np.ndarray) -> list:
+def isaaclab_to_kimodo(pos) -> list:
     """IsaacLab (x forward, y left, z up) → Kimodo (x forward, y up, z lateral)."""
     x, y, z = float(pos[0]), float(pos[1]), float(pos[2])
     return [x, z, y]
 
 
-def pixels_to_world(
-    u: float, v: float,
-    fx: float, fy: float, cx: float, cy: float,
-    cam_T_world: np.ndarray,
-    assumed_world_z: float,
-) -> np.ndarray:
+def pixels_to_world(u, v, fx, fy, cx, cy, cam_T_world, assumed_world_z):
     """Back-project pixel (u,v) to world 3D via ray–plane intersection at z=assumed_world_z."""
     ray_cam = np.array([(u - cx) / fx, (v - cy) / fy, 1.0])
     R, t = cam_T_world[:3, :3], cam_T_world[:3, 3]
@@ -76,20 +59,22 @@ def pixels_to_world(
     return pos.astype(np.float32)
 
 # --------------------------------------------------------------------------- #
-# Constraint builder
+# Low-level constraint builders
 # --------------------------------------------------------------------------- #
 
-def build_limb_constraint(skeleton, constraint_type: str, target_kimodo: list,
-                           frame_index: int, device: str = "cpu"):
+def make_limb_constraint(skeleton, constraint_type: str, target_kimodo: list,
+                          frame_index: int, device: str = "cpu"):
     """
-    Build a hand or foot EndEffectorConstraintSet.
+    Build a single hand or foot EndEffectorConstraintSet.
 
-    Runs FK in rest pose, overrides the target EE joint's global position with
-    `target_kimodo`, then passes the full skeleton state to the constraint class.
-    No IK needed — Kimodo's diffusion handles finding a motion that reaches the target.
+    Runs FK in rest pose to get a valid skeleton state, then overrides the
+    target EE joint's global position with `target_kimodo`. Kimodo's diffusion
+    uses global_joints_positions directly (in-memory path) — no IK needed.
 
-    constraint_type: 'right-hand' | 'left-hand' | 'right-foot' | 'left-foot'
-    target_kimodo:   [x, y, z] in Kimodo y-up coordinates
+    Args:
+        constraint_type: 'right-hand' | 'left-hand' | 'right-foot' | 'left-foot'
+        target_kimodo:   [x, y, z] in Kimodo y-up coordinates
+        frame_index:     frame at which to apply the constraint (30fps)
     """
     import torch
     from kimodo.constraints import (
@@ -105,31 +90,23 @@ def build_limb_constraint(skeleton, constraint_type: str, target_kimodo: list,
         "left-foot":  LeftFootConstraintSet,
     }
     if constraint_type not in cls_map:
-        raise ValueError(f"Unknown constraint type '{constraint_type}'. "
-                         f"Valid: {list(cls_map.keys())}")
+        raise ValueError(f"Unknown type '{constraint_type}'. Valid: {list(cls_map.keys())}")
 
-    n_joints = skeleton.nbjoints
-    root_pos = torch.tensor([[0.0, G1_ROOT_HEIGHT, 0.0]], dtype=torch.float32, device=device)
+    n_joints  = skeleton.nbjoints
+    root_pos  = torch.tensor([[0.0, G1_ROOT_HEIGHT, 0.0]], dtype=torch.float32, device=device)
+    rest_mats = axis_angle_to_matrix(torch.zeros(1, n_joints, 3, device=device))
 
-    # Rest pose: all joints at zero rotation
-    rest_aa   = torch.zeros(1, n_joints, 3, device=device)
-    rest_mats = axis_angle_to_matrix(rest_aa)
-
-    # FK → global positions and rotations for the full skeleton in rest pose
     global_rots, global_pos, _ = skeleton.fk(rest_mats, root_pos)
 
-    # Override target joint position with our desired world target
-    effector_joint = LIMB_EFFECTOR_JOINT[constraint_type]
-    effector_idx   = skeleton.bone_index[effector_joint]
-    target_tensor  = torch.tensor(target_kimodo, dtype=torch.float32, device=device)
-    global_pos[0, effector_idx] = target_tensor
+    # Override target EE joint's global position
+    effector_idx          = skeleton.bone_index[LIMB_EFFECTOR_JOINT[constraint_type]]
+    global_pos            = global_pos.clone()
+    global_pos[0, effector_idx] = torch.tensor(target_kimodo, dtype=torch.float32, device=device)
 
-    print(f"[{constraint_type}] target (Kimodo)={target_kimodo}  "
-          f"rest-pose effector={global_pos[0, effector_idx].tolist()}")
-
-    # smooth_root_2d: robot stays at origin (x=0, z=0)
     smooth_root_2d = root_pos[:, [0, 2]]
     frame_indices  = torch.tensor([frame_index], device=device)
+
+    print(f"  [{constraint_type}] frame={frame_index}  target={[round(v,3) for v in target_kimodo]}")
 
     return cls_map[constraint_type](
         skeleton=skeleton,
@@ -140,11 +117,12 @@ def build_limb_constraint(skeleton, constraint_type: str, target_kimodo: list,
     )
 
 
-def build_root2d_constraint(skeleton, x: float, z: float, frame_index: int, device: str = "cpu"):
-    """Build a Root2DConstraintSet (root x,z waypoint in Kimodo coords)."""
+def make_root2d_constraint(skeleton, x: float, z: float, frame_index: int, device: str = "cpu"):
+    """Root2D constraint: fix robot root (x, z) position at a given frame."""
     import torch
     from kimodo.constraints import Root2DConstraintSet
 
+    print(f"  [root2d] frame={frame_index}  x={x:.3f}  z={z:.3f}")
     return Root2DConstraintSet(
         skeleton=skeleton,
         frame_indices=torch.tensor([frame_index], device=device),
@@ -152,21 +130,26 @@ def build_root2d_constraint(skeleton, x: float, z: float, frame_index: int, devi
     )
 
 # --------------------------------------------------------------------------- #
-# Task-specific recipes
+# Task / condition recipes
 # --------------------------------------------------------------------------- #
 
-def constraints_reach_obj_gt(skeleton, cube_world_pos: np.ndarray, frame_index: int,
-                              device: str) -> list:
-    """GT upper bound: right hand constrained to cube position."""
+def constraints_reach_obj_gt(skeleton, cube_world_pos, frame_index: int, device: str) -> list:
+    """
+    GT upper bound for reach_obj: right hand constrained to cube world position.
+
+    cube_world_pos: [x, y, z] in IsaacLab coordinates
+    """
     target = isaaclab_to_kimodo(cube_world_pos)
-    print(f"[GT] cube (IsaacLab)={cube_world_pos.tolist()}  →  Kimodo={target}")
-    return [build_limb_constraint(skeleton, "right-hand", target, frame_index, device)]
+    print(f"[GT] cube (IsaacLab)={list(np.round(cube_world_pos, 3))}  →  Kimodo={[round(v,3) for v in target]}")
+    return [make_limb_constraint(skeleton, "right-hand", target, frame_index, device)]
 
 
 def constraints_reach_obj_vlm(skeleton, image_rgb, fx, fy, cx, cy, cam_T_world,
                                assumed_world_z, object_description, vlm_name,
                                frame_index: int, device: str) -> list:
-    """VLM condition: pixel → world pos → right hand constraint."""
+    """
+    VLM condition for reach_obj: VLM estimates pixel → world → right hand constraint.
+    """
     import sys, os
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from pipeline.vlm import load_vlm
@@ -178,80 +161,54 @@ def constraints_reach_obj_vlm(skeleton, image_rgb, fx, fy, cx, cy, cam_T_world,
     target_world = pixels_to_world(u, v, fx, fy, cx, cy, cam_T_world, assumed_world_z)
     print(f"[VLM] world (IsaacLab): {target_world.tolist()}")
     target = isaaclab_to_kimodo(target_world)
-    print(f"[VLM] Kimodo: {target}")
 
-    return [build_limb_constraint(skeleton, "right-hand", target, frame_index, device)]
+    return [make_limb_constraint(skeleton, "right-hand", target, frame_index, device)]
 
 # --------------------------------------------------------------------------- #
-# CLI
+# Public API
 # --------------------------------------------------------------------------- #
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Generate Kimodo constraint JSON for a given task and condition."
-    )
-    parser.add_argument("--task", default="reach_obj",
-                        help="Task name (default: reach_obj)")
-    parser.add_argument("--condition", choices=["gt", "vlm"], required=True)
-    parser.add_argument("--output", required=True,
-                        help="Output path for constraints.json")
-    parser.add_argument("--frame-index", type=int, default=45,
-                        help="Keyframe index at 30fps (default 45 = 1.5s)")
-    parser.add_argument("--kimodo-model", default=KIMODO_MODEL)
+def build_constraints(task: str, condition: str, skeleton, device: str, **kwargs) -> list:
+    """
+    Build and return a list of Kimodo constraint objects for a given task/condition.
 
-    # GT
-    parser.add_argument("--cube-world-pos", nargs=3, type=float, metavar=("X", "Y", "Z"),
-                        help="Cube position in IsaacLab coords (x y z)")
+    kwargs are task-specific (see individual recipe functions above).
+    Returns [] for baseline (no constraints).
 
-    # VLM
-    parser.add_argument("--image")
-    parser.add_argument("--camera-intrinsics", nargs=4, type=float,
-                        metavar=("FX", "FY", "CX", "CY"))
-    parser.add_argument("--camera-extrinsic-npy")
-    parser.add_argument("--assumed-world-z", type=float, default=0.4)
-    parser.add_argument("--object-description", default="red cube")
-    parser.add_argument("--vlm-name", default="qwen2.5-vl-7b")
+    Example — reach_obj gt:
+        constraints = build_constraints(
+            "reach_obj", "gt", skeleton, device,
+            cube_world_pos=np.array([0.6, 0.0, 0.4]),
+            frame_index=45,
+        )
 
-    args = parser.parse_args()
+    Example — multi-constraint (future tasks):
+        constraints = [
+            make_limb_constraint(skeleton, "right-hand", target_rh, frame_5, device),
+            make_limb_constraint(skeleton, "left-foot",  target_lf, frame_18, device),
+            make_root2d_constraint(skeleton, x=0.3, z=0.0, frame_index=30, device=device),
+        ]
+    """
+    if condition == "baseline":
+        return []
 
-    import torch
-    from kimodo import load_model
-    from kimodo.constraints import save_constraints_lst
-
-    device = "cuda:0" if torch.cuda.is_available() else "cpu"
-    print(f"[generate_constraints] device={device}")
-    print(f"[generate_constraints] Loading model ({args.kimodo_model})...")
-    model = load_model(args.kimodo_model, device=device)
-    skeleton = model.skeleton
-
-    if args.task == "reach_obj":
-        if args.condition == "gt":
-            if args.cube_world_pos is None:
-                parser.error("--cube-world-pos required for reach_obj gt")
-            constraints = constraints_reach_obj_gt(
-                skeleton, np.array(args.cube_world_pos, dtype=np.float32),
-                args.frame_index, device,
+    if task == "reach_obj":
+        frame_index = kwargs.get("frame_index", 45)
+        if condition == "gt":
+            return constraints_reach_obj_gt(
+                skeleton, np.array(kwargs["cube_world_pos"], dtype=np.float32),
+                frame_index, device,
             )
-        else:  # vlm
-            if not all([args.image, args.camera_intrinsics, args.camera_extrinsic_npy]):
-                parser.error("--image, --camera-intrinsics, --camera-extrinsic-npy required for vlm")
-            from PIL import Image as PILImage
-            image_rgb = np.array(PILImage.open(args.image).convert("RGB"))
-            fx, fy, cx, cy = args.camera_intrinsics
-            cam_T_world = np.load(args.camera_extrinsic_npy).astype(np.float32)
-            constraints = constraints_reach_obj_vlm(
-                skeleton, image_rgb, fx, fy, cx, cy, cam_T_world,
-                args.assumed_world_z, args.object_description, args.vlm_name,
-                args.frame_index, device,
+        elif condition == "vlm":
+            return constraints_reach_obj_vlm(
+                skeleton,
+                kwargs["image_rgb"],
+                kwargs["fx"], kwargs["fy"], kwargs["cx"], kwargs["cy"],
+                kwargs["cam_T_world"],
+                kwargs.get("assumed_world_z", 0.4),
+                kwargs.get("object_description", "red cube"),
+                kwargs.get("vlm_name", "qwen2.5-vl-7b"),
+                frame_index, device,
             )
-    else:
-        raise ValueError(f"Unknown task '{args.task}'. Add a recipe above.")
 
-    out = Path(args.output)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    save_constraints_lst(str(out), constraints)
-    print(f"[generate_constraints] Saved {len(constraints)} constraint(s) → {out}")
-
-
-if __name__ == "__main__":
-    main()
+    raise ValueError(f"Unknown task/condition: {task}/{condition}")

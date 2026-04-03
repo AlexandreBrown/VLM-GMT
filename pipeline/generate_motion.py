@@ -1,26 +1,31 @@
 """
 pipeline/generate_motion.py — Generate a Kimodo motion and package for ProtoMotions.
 
-Closely mirrors kimodo/scripts/generate.py, adding CSV → motion.pt packaging.
+Builds constraints in memory (no JSON, no IK) and passes them directly to
+model(constraint_lst=...). Then converts output CSV → motion.pt.
 
-Usage (run from VLM-GMT root or anywhere; pass --protomotions-root explicitly)
-------
+Usage (run from VLM-GMT root, in kimodo env)
+----
     # Baseline (no constraints)
     python pipeline/generate_motion.py \\
+        --condition baseline \\
         --output-dir outputs/reach_obj/baseline \\
         --protomotions-root /path/to/ProtoMotions
 
-    # GT (with pre-generated constraints)
+    # GT
     python pipeline/generate_motion.py \\
-        --constraints outputs/reach_obj/gt/constraints.json \\
+        --condition gt \\
+        --cube-world-pos 0.6 0.0 0.4 \\
         --output-dir outputs/reach_obj/gt \\
         --protomotions-root /path/to/ProtoMotions
 
-    # Custom prompt / duration
+    # VLM
     python pipeline/generate_motion.py \\
-        --prompt "A person squats down slowly." \\
-        --duration 4.0 \\
-        --output-dir outputs/squat/baseline \\
+        --condition vlm \\
+        --image outputs/reach_obj/sim_frame.png \\
+        --camera-intrinsics 500 500 320 240 \\
+        --camera-extrinsic-npy outputs/reach_obj/camera_T_world.npy \\
+        --output-dir outputs/reach_obj/vlm \\
         --protomotions-root /path/to/ProtoMotions
 """
 
@@ -29,17 +34,18 @@ import subprocess
 import sys
 from pathlib import Path
 
+import numpy as np
 import torch
 
-KIMODO_MODEL   = "kimodo-g1-rp"
-DEFAULT_PROMPT = "A person reaches forward with their right hand to grab an object in front of them."
+KIMODO_MODEL      = "kimodo-g1-rp"
+DEFAULT_PROMPT    = "A person reaches forward with their right hand to grab an object in front of them."
 DEFAULT_DURATION  = 3.0
 DENOISING_STEPS   = 100
 SEED              = 42
 
 
 def convert_and_package(csv_path: Path, output_dir: Path, protomotions_root: Path) -> Path:
-    """CSV → .motion (per-motion ProtoMotions format) → .pt (MotionLib batch)."""
+    """CSV → per-motion .motion files → MotionLib .pt batch."""
     proto_dir = output_dir / "proto"
     pt_path   = output_dir / "motion.pt"
     proto_dir.mkdir(parents=True, exist_ok=True)
@@ -48,13 +54,13 @@ def convert_and_package(csv_path: Path, output_dir: Path, protomotions_root: Pat
     subprocess.run([
         sys.executable,
         str(protomotions_root / "data/scripts/convert_g1_csv_to_proto.py"),
-        "--input-dir",       str(csv_path.parent.resolve()),
-        "--output-dir",      str(proto_dir),
-        "--input-fps",       "30",
-        "--output-fps",      "30",
-        "--pos-units",       "m",
-        "--rot-format",      "quat_wxyz",
-        "--joint-units",     "rad",
+        "--input-dir",         str(csv_path.parent.resolve()),
+        "--output-dir",        str(proto_dir),
+        "--input-fps",         "30",
+        "--output-fps",        "30",
+        "--pos-units",         "m",
+        "--rot-format",        "quat_wxyz",
+        "--joint-units",       "rad",
         "--no-has-header",
         "--no-has-frame-column",
         "--force-remake",
@@ -76,55 +82,87 @@ def main():
     parser = argparse.ArgumentParser(
         description="Generate a Kimodo motion (optionally constrained) and package as motion.pt."
     )
-    parser.add_argument("--prompt", default=DEFAULT_PROMPT,
-                        help="Text prompt for Kimodo")
-    parser.add_argument("--duration", type=float, default=DEFAULT_DURATION,
-                        help="Motion duration in seconds (default: 3.0)")
-    parser.add_argument("--model", default=KIMODO_MODEL,
-                        help="Kimodo model name")
-    parser.add_argument("--constraints", default=None,
-                        help="Path to constraints.json (omit for baseline)")
+    parser.add_argument("--task", default="reach_obj")
+    parser.add_argument("--condition", choices=["baseline", "gt", "vlm"], required=True)
+    parser.add_argument("--prompt", default=DEFAULT_PROMPT)
+    parser.add_argument("--duration", type=float, default=DEFAULT_DURATION)
+    parser.add_argument("--kimodo-model", default=KIMODO_MODEL)
     parser.add_argument("--diffusion-steps", type=int, default=DENOISING_STEPS)
     parser.add_argument("--seed", type=int, default=SEED)
-    parser.add_argument("--output-dir", required=True,
-                        help="Directory to write reach.csv, proto/, and motion.pt")
-    parser.add_argument("--protomotions-root", required=True,
-                        help="Path to ProtoMotions root directory")
+    parser.add_argument("--frame-index", type=int, default=45,
+                        help="Keyframe index for constraint (30fps, default 45 = 1.5s)")
+    parser.add_argument("--output-dir", required=True)
+    parser.add_argument("--protomotions-root", required=True)
+
+    # GT
+    parser.add_argument("--cube-world-pos", nargs=3, type=float, metavar=("X", "Y", "Z"))
+
+    # VLM
+    parser.add_argument("--image")
+    parser.add_argument("--camera-intrinsics", nargs=4, type=float,
+                        metavar=("FX", "FY", "CX", "CY"))
+    parser.add_argument("--camera-extrinsic-npy")
+    parser.add_argument("--assumed-world-z", type=float, default=0.4)
+    parser.add_argument("--object-description", default="red cube")
+    parser.add_argument("--vlm-name", default="qwen2.5-vl-7b")
+
     args = parser.parse_args()
 
-    output_dir       = Path(args.output_dir).resolve()
+    output_dir        = Path(args.output_dir).resolve()
     protomotions_root = Path(args.protomotions_root).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Add VLM-GMT root to sys.path for pipeline imports
+    vlm_gmt_root = Path(__file__).resolve().parent.parent
+    sys.path.insert(0, str(vlm_gmt_root))
+
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
-    print(f"[generate_motion] device={device}")
+    print(f"[generate_motion] device={device}  condition={args.condition}")
 
     # ── Load model ─────────────────────────────────────────────────────────
     from kimodo import load_model
-    from kimodo.constraints import load_constraints_lst
     from kimodo.tools import seed_everything
     from kimodo.exports.mujoco import MujocoQposConverter
 
-    print(f"[generate_motion] Loading model '{args.model}' ...")
-    model = load_model(args.model, device=device)
+    print(f"[generate_motion] Loading model '{args.kimodo_model}' ...")
+    model = load_model(args.kimodo_model, device=device)
 
-    # ── Load constraints ───────────────────────────────────────────────────
-    if args.constraints:
-        print(f"[generate_motion] Loading constraints: {args.constraints}")
-        constraint_lst = load_constraints_lst(args.constraints, model.skeleton, device=device)
-        print(f"[generate_motion] {len(constraint_lst)} constraint set(s):")
-        for c in constraint_lst:
-            print(f"    {c.__class__.__name__}")
+    # ── Build constraints (in memory, no JSON / no IK) ─────────────────────
+    from pipeline.generate_constraints import build_constraints
+
+    constraint_kwargs = {"frame_index": args.frame_index}
+
+    if args.condition == "gt":
+        if args.cube_world_pos is None:
+            parser.error("--cube-world-pos required for condition=gt")
+        constraint_kwargs["cube_world_pos"] = args.cube_world_pos
+
+    elif args.condition == "vlm":
+        if not all([args.image, args.camera_intrinsics, args.camera_extrinsic_npy]):
+            parser.error("--image, --camera-intrinsics, --camera-extrinsic-npy required for condition=vlm")
+        from PIL import Image as PILImage
+        constraint_kwargs["image_rgb"]          = np.array(PILImage.open(args.image).convert("RGB"))
+        constraint_kwargs["fx"], constraint_kwargs["fy"], \
+            constraint_kwargs["cx"], constraint_kwargs["cy"] = args.camera_intrinsics
+        constraint_kwargs["cam_T_world"]        = np.load(args.camera_extrinsic_npy).astype(np.float32)
+        constraint_kwargs["assumed_world_z"]    = args.assumed_world_z
+        constraint_kwargs["object_description"] = args.object_description
+        constraint_kwargs["vlm_name"]           = args.vlm_name
+
+    print(f"[generate_motion] Building constraints ...")
+    constraint_lst = build_constraints(args.task, args.condition, model.skeleton, device,
+                                       **constraint_kwargs)
+    if constraint_lst:
+        print(f"[generate_motion] {len(constraint_lst)} constraint set(s) ready.")
     else:
-        print("[generate_motion] No constraints — baseline run.")
-        constraint_lst = []
+        print("[generate_motion] No constraints (baseline).")
 
     # ── Generate motion ────────────────────────────────────────────────────
     if args.seed is not None:
         seed_everything(args.seed)
 
     num_frames = int(args.duration * model.fps)
-    print(f"[generate_motion] '{args.prompt}'  ({num_frames} frames @ {model.fps} fps)")
+    print(f"[generate_motion] Generating: '{args.prompt}'  ({num_frames} frames @ {model.fps}fps)")
 
     output = model(
         [args.prompt],
@@ -138,28 +176,25 @@ def main():
     )
 
     # ── Save CSV ───────────────────────────────────────────────────────────
-    csv_path = output_dir / "reach.csv"
+    csv_path  = output_dir / "reach.csv"
     converter = MujocoQposConverter(model.skeleton)
-    qpos = converter.dict_to_qpos(output, device)
+    qpos      = converter.dict_to_qpos(output, device)
     converter.save_csv(qpos, str(output_dir / "reach"))
     print(f"[generate_motion] CSV saved: {csv_path}")
 
     # ── Convert + package ──────────────────────────────────────────────────
     pt_path = convert_and_package(csv_path, output_dir, protomotions_root)
 
-    # ── Usage hints ────────────────────────────────────────────────────────
     print(f"\n{'='*60}")
     print(f"Done!  motion.pt → {pt_path}")
-    print(f"\nKinematic preview (run from ProtoMotions root):")
+    print(f"\nKinematic preview (from ProtoMotions root):")
     print(f"  python examples/env_kinematic_playback.py \\")
     print(f"    --experiment-path examples/experiments/mimic/mlp.py \\")
-    print(f"    --motion-file {pt_path} \\")
-    print(f"    --robot-name g1 --simulator isaaclab --num-envs 1")
-    print(f"\nGMT inference (run from ProtoMotions root):")
+    print(f"    --motion-file {pt_path} --robot-name g1 --simulator isaaclab --num-envs 1")
+    print(f"\nGMT inference (from ProtoMotions root):")
     print(f"  python protomotions/inference_agent.py \\")
     print(f"    --checkpoint data/pretrained_models/motion_tracker/g1-bones-deploy/last.ckpt \\")
-    print(f"    --motion-file {pt_path} \\")
-    print(f"    --simulator isaaclab --num-envs 1")
+    print(f"    --motion-file {pt_path} --simulator isaaclab --num-envs 1")
     print(f"{'='*60}")
 
 
