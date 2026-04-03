@@ -103,17 +103,24 @@ def make_limb_constraint(skeleton, constraint_type: str, target_kimodo: list,
     global_pos            = global_pos.clone()
     global_pos[0, effector_idx] = torch.tensor(target_kimodo, dtype=torch.float32, device=device)
 
-    smooth_root_2d = root_pos[:, [0, 2]]
-    frame_indices  = torch.tensor([frame_index], device=device)
+    # Match from_dict() device convention exactly:
+    #   frame_indices  → CPU  (bare torch.tensor, no device arg)
+    #   smooth_root_2d → skeleton device (CUDA)
+    #   global_pos     → skeleton device (CUDA)
+    #   global_rots    → skeleton device (CUDA)
+    # pos_indices/rot_indices are created with bare torch.tensor() inside __init__
+    # so they also land on CPU — matching frame_indices.
+    frame_indices  = torch.tensor([frame_index])   # CPU — matches from_dict
+    smooth_root_2d = root_pos[:, [0, 2]]           # CUDA — matches from_dict
 
     print(f"  [{constraint_type}] frame={frame_index}  target={[round(v,3) for v in target_kimodo]}")
 
     return cls_map[constraint_type](
         skeleton=skeleton,
-        frame_indices=frame_indices,
-        global_joints_positions=global_pos,
-        global_joints_rots=global_rots,
-        smooth_root_2d=smooth_root_2d,
+        frame_indices=frame_indices,           # CPU
+        global_joints_positions=global_pos,   # CUDA
+        global_joints_rots=global_rots,        # CUDA
+        smooth_root_2d=smooth_root_2d,         # CUDA
     )
 
 

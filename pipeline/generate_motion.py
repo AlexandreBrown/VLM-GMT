@@ -37,42 +37,63 @@ from pathlib import Path
 import numpy as np
 import torch
 
-KIMODO_MODEL      = "kimodo-g1-rp"
-DEFAULT_PROMPT    = "A person reaches forward with their right hand to grab an object in front of them."
-DEFAULT_DURATION  = 3.0
-DENOISING_STEPS   = 100
-SEED              = 42
+KIMODO_MODEL = "kimodo-g1-rp"
+DEFAULT_PROMPT = (
+    "A person reaches forward with their right hand to grab an object in front of them."
+)
+DEFAULT_DURATION = 3.0
+DENOISING_STEPS = 100
+SEED = 42
 
 
-def convert_and_package(csv_path: Path, output_dir: Path, protomotions_root: Path) -> Path:
+def convert_and_package(
+    csv_path: Path, output_dir: Path, protomotions_root: Path
+) -> Path:
     """CSV → per-motion .motion files → MotionLib .pt batch."""
     proto_dir = output_dir / "proto"
-    pt_path   = output_dir / "motion.pt"
+    pt_path = output_dir / "motion.pt"
     proto_dir.mkdir(parents=True, exist_ok=True)
 
     print("[generate_motion] Converting CSV → .motion ...")
-    subprocess.run([
-        sys.executable,
-        str(protomotions_root / "data/scripts/convert_g1_csv_to_proto.py"),
-        "--input-dir",         str(csv_path.parent.resolve()),
-        "--output-dir",        str(proto_dir),
-        "--input-fps",         "30",
-        "--output-fps",        "30",
-        "--pos-units",         "m",
-        "--rot-format",        "quat_wxyz",
-        "--joint-units",       "rad",
-        "--no-has-header",
-        "--no-has-frame-column",
-        "--force-remake",
-    ], check=True, cwd=str(protomotions_root))
+    subprocess.run(
+        [
+            sys.executable,
+            str(protomotions_root / "data/scripts/convert_g1_csv_to_proto.py"),
+            "--input-dir",
+            str(csv_path.parent.resolve()),
+            "--output-dir",
+            str(proto_dir),
+            "--input-fps",
+            "30",
+            "--output-fps",
+            "30",
+            "--pos-units",
+            "m",
+            "--rot-format",
+            "quat_wxyz",
+            "--joint-units",
+            "rad",
+            "--no-has-header",
+            "--no-has-frame-column",
+            "--force-remake",
+        ],
+        check=True,
+        cwd=str(protomotions_root),
+    )
 
     print("[generate_motion] Packaging .motion → .pt ...")
-    subprocess.run([
-        sys.executable,
-        str(protomotions_root / "protomotions/components/motion_lib.py"),
-        "--motion-path", str(proto_dir),
-        "--output-file", str(pt_path),
-    ], check=True, cwd=str(protomotions_root))
+    subprocess.run(
+        [
+            sys.executable,
+            str(protomotions_root / "protomotions/components/motion_lib.py"),
+            "--motion-path",
+            str(proto_dir),
+            "--output-file",
+            str(pt_path),
+        ],
+        check=True,
+        cwd=str(protomotions_root),
+    )
 
     print(f"[generate_motion] MotionLib written: {pt_path}")
     return pt_path
@@ -89,18 +110,25 @@ def main():
     parser.add_argument("--kimodo-model", default=KIMODO_MODEL)
     parser.add_argument("--diffusion-steps", type=int, default=DENOISING_STEPS)
     parser.add_argument("--seed", type=int, default=SEED)
-    parser.add_argument("--frame-index", type=int, default=45,
-                        help="Keyframe index for constraint (30fps, default 45 = 1.5s)")
+    parser.add_argument(
+        "--frame-index",
+        type=int,
+        default=45,
+        help="Keyframe index for constraint (30fps, default 45 = 1.5s)",
+    )
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--protomotions-root", required=True)
 
     # GT
-    parser.add_argument("--cube-world-pos", nargs=3, type=float, metavar=("X", "Y", "Z"))
+    parser.add_argument(
+        "--cube-world-pos", nargs=3, type=float, metavar=("X", "Y", "Z")
+    )
 
     # VLM
     parser.add_argument("--image")
-    parser.add_argument("--camera-intrinsics", nargs=4, type=float,
-                        metavar=("FX", "FY", "CX", "CY"))
+    parser.add_argument(
+        "--camera-intrinsics", nargs=4, type=float, metavar=("FX", "FY", "CX", "CY")
+    )
     parser.add_argument("--camera-extrinsic-npy")
     parser.add_argument("--assumed-world-z", type=float, default=0.4)
     parser.add_argument("--object-description", default="red cube")
@@ -108,7 +136,7 @@ def main():
 
     args = parser.parse_args()
 
-    output_dir        = Path(args.output_dir).resolve()
+    output_dir = Path(args.output_dir).resolve()
     protomotions_root = Path(args.protomotions_root).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -139,19 +167,31 @@ def main():
 
     elif args.condition == "vlm":
         if not all([args.image, args.camera_intrinsics, args.camera_extrinsic_npy]):
-            parser.error("--image, --camera-intrinsics, --camera-extrinsic-npy required for condition=vlm")
+            parser.error(
+                "--image, --camera-intrinsics, --camera-extrinsic-npy required for condition=vlm"
+            )
         from PIL import Image as PILImage
-        constraint_kwargs["image_rgb"]          = np.array(PILImage.open(args.image).convert("RGB"))
-        constraint_kwargs["fx"], constraint_kwargs["fy"], \
-            constraint_kwargs["cx"], constraint_kwargs["cy"] = args.camera_intrinsics
-        constraint_kwargs["cam_T_world"]        = np.load(args.camera_extrinsic_npy).astype(np.float32)
-        constraint_kwargs["assumed_world_z"]    = args.assumed_world_z
+
+        constraint_kwargs["image_rgb"] = np.array(
+            PILImage.open(args.image).convert("RGB")
+        )
+        (
+            constraint_kwargs["fx"],
+            constraint_kwargs["fy"],
+            constraint_kwargs["cx"],
+            constraint_kwargs["cy"],
+        ) = args.camera_intrinsics
+        constraint_kwargs["cam_T_world"] = np.load(args.camera_extrinsic_npy).astype(
+            np.float32
+        )
+        constraint_kwargs["assumed_world_z"] = args.assumed_world_z
         constraint_kwargs["object_description"] = args.object_description
-        constraint_kwargs["vlm_name"]           = args.vlm_name
+        constraint_kwargs["vlm_name"] = args.vlm_name
 
     print(f"[generate_motion] Building constraints ...")
-    constraint_lst = build_constraints(args.task, args.condition, model.skeleton, device,
-                                       **constraint_kwargs)
+    constraint_lst = build_constraints(
+        args.task, args.condition, model.skeleton, device, **constraint_kwargs
+    )
     if constraint_lst:
         print(f"[generate_motion] {len(constraint_lst)} constraint set(s) ready.")
     else:
@@ -162,7 +202,9 @@ def main():
         seed_everything(args.seed)
 
     num_frames = int(args.duration * model.fps)
-    print(f"[generate_motion] Generating: '{args.prompt}'  ({num_frames} frames @ {model.fps}fps)")
+    print(
+        f"[generate_motion] Generating: '{args.prompt}'  ({num_frames} frames @ {model.fps}fps)"
+    )
 
     output = model(
         [args.prompt],
@@ -176,10 +218,10 @@ def main():
     )
 
     # ── Save CSV ───────────────────────────────────────────────────────────
-    csv_path  = output_dir / "reach.csv"
+    csv_path = output_dir / "reach.csv"
     converter = MujocoQposConverter(model.skeleton)
-    qpos      = converter.dict_to_qpos(output, device)
-    converter.save_csv(qpos, str(output_dir / "reach"))
+    qpos = converter.dict_to_qpos(output, device)
+    converter.save_csv(qpos, str(csv_path))
     print(f"[generate_motion] CSV saved: {csv_path}")
 
     # ── Convert + package ──────────────────────────────────────────────────
@@ -190,10 +232,14 @@ def main():
     print(f"\nKinematic preview (from ProtoMotions root):")
     print(f"  python examples/env_kinematic_playback.py \\")
     print(f"    --experiment-path examples/experiments/mimic/mlp.py \\")
-    print(f"    --motion-file {pt_path} --robot-name g1 --simulator isaaclab --num-envs 1")
+    print(
+        f"    --motion-file {pt_path} --robot-name g1 --simulator isaaclab --num-envs 1"
+    )
     print(f"\nGMT inference (from ProtoMotions root):")
     print(f"  python protomotions/inference_agent.py \\")
-    print(f"    --checkpoint data/pretrained_models/motion_tracker/g1-bones-deploy/last.ckpt \\")
+    print(
+        f"    --checkpoint data/pretrained_models/motion_tracker/g1-bones-deploy/last.ckpt \\"
+    )
     print(f"    --motion-file {pt_path} --simulator isaaclab --num-envs 1")
     print(f"{'='*60}")
 
