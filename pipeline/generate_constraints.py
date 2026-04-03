@@ -46,22 +46,6 @@ def _load_skeleton(model_name: str = "kimodo-g1-rp"):
     return load_model(model_name, device="cpu").skeleton
 
 
-def build_root2d(target_world_pos: onp.ndarray, frame_index: int) -> object:
-    """Root2D waypoint: walk root toward target XZ position by frame_index."""
-    import torch
-    from kimodo.constraints import Root2DConstraintSet
-
-    smooth_root_2d = torch.tensor([
-        [0.0, 0.0],
-        [float(target_world_pos[0]), float(target_world_pos[2])],
-    ])
-    return Root2DConstraintSet(
-        skeleton=_load_skeleton(),
-        frame_indices=[0, frame_index],
-        smooth_root_2d=smooth_root_2d,
-    )
-
-
 def build_right_hand(
     target_world_pos: onp.ndarray,
     frame_index: int,
@@ -177,7 +161,6 @@ def main():
     from kimodo.constraints import save_constraints_lst
 
     constraints = [
-        build_root2d(target_pos, args.frame_index),
         build_right_hand(target_pos, args.frame_index, root_world_pos),
     ]
 
