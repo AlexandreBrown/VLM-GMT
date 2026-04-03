@@ -22,9 +22,8 @@ Usage (run from VLM-GMT root, in kimodo env)
     # VLM
     python pipeline/generate_motion.py \\
         --condition vlm \\
-        --image outputs/reach_obj/sim_frame.png \\
-        --camera-intrinsics 500 500 320 240 \\
-        --camera-extrinsic-npy outputs/reach_obj/camera_T_world.npy \\
+        --image outputs/reach_obj/ego.png \\
+        --task-description "Reach the red cube with your right hand." \\
         --output-dir outputs/reach_obj/vlm \\
         --protomotions-root /path/to/ProtoMotions
 """
@@ -133,13 +132,12 @@ def main():
     )
 
     # VLM
-    parser.add_argument("--image")
+    parser.add_argument("--image", help="Egocentric RGB image for VLM condition")
     parser.add_argument(
-        "--camera-intrinsics", nargs=4, type=float, metavar=("FX", "FY", "CX", "CY")
+        "--task-description",
+        default="Reach the red cube with your right hand.",
+        help="Natural-language task description passed to the VLM",
     )
-    parser.add_argument("--camera-extrinsic-npy")
-    parser.add_argument("--assumed-world-z", type=float, default=0.4)
-    parser.add_argument("--object-description", default="red cube")
     parser.add_argument("--vlm-name", default="qwen2.5-vl-7b")
 
     args = parser.parse_args()
@@ -183,27 +181,16 @@ def main():
         constraint_kwargs["cube_world_pos"] = args.cube_world_pos
 
     elif args.condition == "vlm":
-        if not all([args.image, args.camera_intrinsics, args.camera_extrinsic_npy]):
-            parser.error(
-                "--image, --camera-intrinsics, --camera-extrinsic-npy required for condition=vlm"
-            )
+        if args.image is None:
+            parser.error("--image required for condition=vlm")
         from PIL import Image as PILImage
 
         constraint_kwargs["image_rgb"] = np.array(
             PILImage.open(args.image).convert("RGB")
         )
-        (
-            constraint_kwargs["fx"],
-            constraint_kwargs["fy"],
-            constraint_kwargs["cx"],
-            constraint_kwargs["cy"],
-        ) = args.camera_intrinsics
-        constraint_kwargs["cam_T_world"] = np.load(args.camera_extrinsic_npy).astype(
-            np.float32
-        )
-        constraint_kwargs["assumed_world_z"] = args.assumed_world_z
-        constraint_kwargs["object_description"] = args.object_description
+        constraint_kwargs["task_description"] = args.task_description
         constraint_kwargs["vlm_name"] = args.vlm_name
+        constraint_kwargs["num_frames"] = num_frames
 
     print(f"[generate_motion] Building constraints ...")
     constraint_lst = build_constraints(

@@ -8,20 +8,43 @@ pip install transformers>=4.50.0 qwen-vl-utils accelerate
 import re
 import base64
 import io
+from typing import Any
+
 import numpy as np
 from PIL import Image
 
 from .base import VLMBase
 
 
-PROMPT_TEMPLATE = (
-    "You are analyzing a robotics simulation image. "
-    "Identify the {object_description} in the image. "
-    "Respond with ONLY a JSON object in this exact format: "
-    '{{"u": <pixel_col_float>, "v": <pixel_row_float>}} '
-    "where u is the horizontal pixel coordinate and v is the vertical pixel coordinate "
-    "of the object's center. No explanation, no markdown, just the JSON."
-)
+SYSTEM_PROMPT = """\
+You are an embodied AI controlling a humanoid robot. You see through the robot's \
+head-mounted camera (egocentric view).
+
+Coordinate system (IsaacLab / MuJoCo convention):
+  +X = forward (the direction the robot faces)
+  +Y = left
+  +Z = up
+  Origin is on the ground beneath the robot.
+
+Robot reference dimensions:
+  Pelvis height: ~0.8 m
+  Head / camera height: ~1.2 m
+  Arm reach from shoulder: ~0.6 m
+
+Motion is generated at 30 fps. Total frames: {num_frames}.
+
+Your task: look at the image and output kinematic constraints that will guide \
+the robot's motion to accomplish the described task. Output ONLY a JSON array, \
+no explanation, no markdown fences. Each element must have exactly these keys:
+  "frame_id": int — target frame index (0 to {max_frame})
+  "type": str — one of "right-hand", "left-hand", "right-foot", "left-foot"
+  "position": [x, y, z] — target position in world coordinates (meters)
+
+Example output for reaching a cup 0.5 m forward on a 0.75 m table:
+[{{"frame_id": 60, "type": "right-hand", "position": [0.5, 0.0, 0.75]}}]
+"""
+
+USER_PROMPT = "Task: {task_description}\nOutput the JSON array of constraints."
 
 
 class QwenVLM(VLMBase):
@@ -31,10 +54,12 @@ class QwenVLM(VLMBase):
         model_name: str = "Qwen/Qwen2.5-VL-7B-Instruct",
         device: str = "cuda",
         dtype: str = "bfloat16",
+        num_frames: int = 90,
     ):
         self.model_name = model_name
         self.device = device
         self.dtype = dtype
+        self.num_frames = num_frames
         self._model = None
         self._processor = None
 
@@ -53,11 +78,11 @@ class QwenVLM(VLMBase):
         self._model.eval()
         print("[QwenVLM] Ready.")
 
-    def query_object_pixels(
+    def query_constraints(
         self,
         image_rgb: np.ndarray,
-        object_description: str,
-    ) -> tuple[float, float]:
+        task_description: str,
+    ) -> list[dict[str, Any]]:
         import json
         import torch
 
@@ -68,15 +93,21 @@ class QwenVLM(VLMBase):
         pil_img.save(buf, format="JPEG")
         b64 = base64.b64encode(buf.getvalue()).decode()
 
-        prompt = PROMPT_TEMPLATE.format(object_description=object_description)
+        system = SYSTEM_PROMPT.format(
+            num_frames=self.num_frames,
+            max_frame=self.num_frames - 1,
+        )
+        user = USER_PROMPT.format(task_description=task_description)
+
         messages = [
+            {"role": "system", "content": system},
             {
                 "role": "user",
                 "content": [
                     {"type": "image", "image": f"data:image/jpeg;base64,{b64}"},
-                    {"type": "text", "text": prompt},
+                    {"type": "text", "text": user},
                 ],
-            }
+            },
         ]
 
         text = self._processor.apply_chat_template(
@@ -87,7 +118,7 @@ class QwenVLM(VLMBase):
         ).to(self.device)
 
         with torch.no_grad():
-            output_ids = self._model.generate(**inputs, max_new_tokens=64)
+            output_ids = self._model.generate(**inputs, max_new_tokens=256)
 
         input_len = inputs["input_ids"].shape[1]
         raw = self._processor.batch_decode(
@@ -97,14 +128,29 @@ class QwenVLM(VLMBase):
         return self._parse(raw)
 
     @staticmethod
-    def _parse(raw: str) -> tuple[float, float]:
+    def _parse(raw: str) -> list[dict[str, Any]]:
         import json
+
+        # Strip markdown fences if present
+        clean = re.sub(r"```[a-z]*", "", raw).replace("```", "").strip()
         try:
-            clean = re.sub(r"```[a-z]*", "", raw).replace("```", "").strip()
             data = json.loads(clean)
-            return float(data["u"]), float(data["v"])
-        except Exception:
-            m = re.search(r'"?u"?\s*:\s*([\d.]+).*?"?v"?\s*:\s*([\d.]+)', raw)
+        except json.JSONDecodeError:
+            # Try to find a JSON array in the response
+            m = re.search(r"\[.*\]", clean, re.DOTALL)
             if m:
-                return float(m.group(1)), float(m.group(2))
-            raise ValueError(f"[QwenVLM] Could not parse response: {raw!r}")
+                data = json.loads(m.group(0))
+            else:
+                raise ValueError(f"[QwenVLM] Could not parse response: {raw!r}")
+
+        if isinstance(data, dict):
+            data = [data]
+
+        constraints = []
+        for item in data:
+            constraints.append({
+                "frame_id": int(item["frame_id"]),
+                "type": str(item["type"]),
+                "position": [float(v) for v in item["position"]],
+            })
+        return constraints

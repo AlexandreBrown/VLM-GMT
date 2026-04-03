@@ -60,18 +60,6 @@ def isaaclab_to_kimodo(pos) -> list:
     return [y, z, x]  # kimodo: [left, up, forward]
 
 
-def pixels_to_world(u, v, fx, fy, cx, cy, cam_T_world, assumed_world_z):
-    """Back-project pixel (u,v) to world 3D via ray–plane intersection at z=assumed_world_z."""
-    ray_cam = np.array([(u - cx) / fx, (v - cy) / fy, 1.0])
-    R, t = cam_T_world[:3, :3], cam_T_world[:3, 3]
-    ray_world = R @ ray_cam
-    if abs(ray_world[2]) < 1e-6:
-        raise ValueError("Ray is nearly horizontal — cannot intersect the z-plane.")
-    lam = (assumed_world_z - t[2]) / ray_world[2]
-    pos = t + lam * ray_world
-    pos[2] = assumed_world_z
-    return pos.astype(np.float32)
-
 # --------------------------------------------------------------------------- #
 # Low-level constraint builders
 # --------------------------------------------------------------------------- #
@@ -197,25 +185,34 @@ def constraints_reach_obj_gt(skeleton, cube_world_pos, frame_index, device: str)
     return [make_limb_constraint(skeleton, "right-hand", target, frame_index, device)]
 
 
-def constraints_reach_obj_vlm(skeleton, image_rgb, fx, fy, cx, cy, cam_T_world,
-                               assumed_world_z, object_description, vlm_name,
-                               frame_index: int, device: str) -> list:
+def constraints_reach_obj_vlm(skeleton, image_rgb, task_description, vlm_name,
+                               num_frames, device: str) -> list:
     """
-    VLM condition for reach_obj: VLM estimates pixel → world → right hand constraint.
+    VLM condition for reach_obj: VLM directly predicts 3D constraint positions
+    from an egocentric image.  No camera calibration or depth assumptions needed.
+
+    The VLM receives the coordinate system, robot dimensions, and motion duration
+    in its prompt and outputs a JSON array of constraints with world-frame [x,y,z].
     """
     import sys, os
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from pipeline.vlm import load_vlm
 
-    vlm = load_vlm(vlm_name)
-    u, v = vlm.query_object_pixels(image_rgb, object_description)
-    print(f"[VLM] pixel: u={u:.1f}  v={v:.1f}")
+    vlm = load_vlm(vlm_name, num_frames=num_frames)
+    raw_constraints = vlm.query_constraints(image_rgb, task_description)
+    print(f"[VLM] predicted {len(raw_constraints)} constraint(s):")
 
-    target_world = pixels_to_world(u, v, fx, fy, cx, cy, cam_T_world, assumed_world_z)
-    print(f"[VLM] world (IsaacLab): {target_world.tolist()}")
-    target = isaaclab_to_kimodo(target_world)
-
-    return [make_limb_constraint(skeleton, "right-hand", target, frame_index, device)]
+    constraint_objects = []
+    for c in raw_constraints:
+        ctype = c["type"]
+        pos_isaaclab = np.array(c["position"], dtype=np.float32)
+        frame_id = c["frame_id"]
+        target = isaaclab_to_kimodo(pos_isaaclab)
+        print(f"  {ctype} frame={frame_id}  IsaacLab={pos_isaaclab.tolist()}  Kimodo={[round(v,3) for v in target]}")
+        constraint_objects.append(
+            make_limb_constraint(skeleton, ctype, target, frame_id, device)
+        )
+    return constraint_objects
 
 # --------------------------------------------------------------------------- #
 # Public API
@@ -256,12 +253,11 @@ def build_constraints(task: str, condition: str, skeleton, device: str, **kwargs
             return constraints_reach_obj_vlm(
                 skeleton,
                 kwargs["image_rgb"],
-                kwargs["fx"], kwargs["fy"], kwargs["cx"], kwargs["cy"],
-                kwargs["cam_T_world"],
-                kwargs.get("assumed_world_z", 0.4),
-                kwargs.get("object_description", "red cube"),
+                kwargs.get("task_description",
+                            "Reach the red cube with your right hand."),
                 kwargs.get("vlm_name", "qwen2.5-vl-7b"),
-                frame_index, device,
+                kwargs["num_frames"],
+                device,
             )
 
     raise ValueError(f"Unknown task/condition: {task}/{condition}")
