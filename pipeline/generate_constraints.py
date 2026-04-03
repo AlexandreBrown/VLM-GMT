@@ -32,55 +32,32 @@ Usage:
 """
 
 import argparse
-import numpy as onp
+import numpy as np
 from pathlib import Path
 
 
 # G1 skeleton joint names (34 joints, from skeleton.bone_order_names)
 G1_JOINT_NAMES = [
     "pelvis_skel",
-    "left_hip_pitch_skel",
-    "left_hip_roll_skel",
-    "left_hip_yaw_skel",
-    "left_knee_skel",
-    "left_ankle_pitch_skel",
-    "left_ankle_roll_skel",
-    "left_toe_base",
-    "right_hip_pitch_skel",
-    "right_hip_roll_skel",
-    "right_hip_yaw_skel",
-    "right_knee_skel",
-    "right_ankle_pitch_skel",
-    "right_ankle_roll_skel",
-    "right_toe_base",
-    "waist_yaw_skel",
-    "waist_roll_skel",
-    "waist_pitch_skel",
-    "left_shoulder_pitch_skel",
-    "left_shoulder_roll_skel",
-    "left_shoulder_yaw_skel",
-    "left_elbow_skel",
-    "left_wrist_roll_skel",
-    "left_wrist_pitch_skel",
-    "left_wrist_yaw_skel",
-    "left_hand_roll_skel",
-    "right_shoulder_pitch_skel",
-    "right_shoulder_roll_skel",
-    "right_shoulder_yaw_skel",
-    "right_elbow_skel",
-    "right_wrist_roll_skel",
-    "right_wrist_pitch_skel",
-    "right_wrist_yaw_skel",
-    "right_hand_roll_skel",
+    "left_hip_pitch_skel", "left_hip_roll_skel", "left_hip_yaw_skel",
+    "left_knee_skel", "left_ankle_pitch_skel", "left_ankle_roll_skel", "left_toe_base",
+    "right_hip_pitch_skel", "right_hip_roll_skel", "right_hip_yaw_skel",
+    "right_knee_skel", "right_ankle_pitch_skel", "right_ankle_roll_skel", "right_toe_base",
+    "waist_yaw_skel", "waist_roll_skel", "waist_pitch_skel",
+    "left_shoulder_pitch_skel", "left_shoulder_roll_skel", "left_shoulder_yaw_skel",
+    "left_elbow_skel", "left_wrist_roll_skel", "left_wrist_pitch_skel",
+    "left_wrist_yaw_skel", "left_hand_roll_skel",
+    "right_shoulder_pitch_skel", "right_shoulder_roll_skel", "right_shoulder_yaw_skel",
+    "right_elbow_skel", "right_wrist_roll_skel", "right_wrist_pitch_skel",
+    "right_wrist_yaw_skel", "right_hand_roll_skel",
 ]
 
-G1_ROOT_HEIGHT = 0.793  # default G1 pelvis height in standing pose (meters)
+G1_ROOT_HEIGHT = 0.793   # default G1 pelvis height in standing pose (meters)
 MAX_CONSTRAINT_FRAMES = 20  # Kimodo hard limit per constraint type
 
 
 def _load_skeleton(model_name: str = "kimodo-g1-rp"):
     from kimodo import load_model
-
     return load_model(model_name, device="cpu").skeleton
 
 
@@ -97,23 +74,22 @@ def build_fullbody_constraints(
                 "frame_index": int,
                 "joints": {joint_name: [x, y, z], ...}  # world positions
             }
-            - pelvis_skel is always set to (0, root_height, 0) unless overridden.
-            - All unspecified joints default to (0, 0, 0) (rest pose approximation).
-            - Max 20 keyframes (Kimodo limit).
-        root_height: Default pelvis height for unspecified frames.
+            pelvis_skel is always set to (0, root_height, 0) unless overridden.
+            All unspecified joints default to (0, 0, 0).
+            If empty, returns [].
+            If > 20, first 20 are used.
 
     Returns:
-        List containing a single FullBodyConstraintSet.
+        List containing a single FullBodyConstraintSet, or [] if no keyframes.
     """
     import torch
     from kimodo.constraints import FullBodyConstraintSet
 
     if not keyframes:
         return []
+
     if len(keyframes) > MAX_CONSTRAINT_FRAMES:
-        print(
-            f"[build_fullbody_constraints] Warning: {len(keyframes)} keyframes > {MAX_CONSTRAINT_FRAMES} limit, truncating to first {MAX_CONSTRAINT_FRAMES}."
-        )
+        print(f"[build_fullbody_constraints] {len(keyframes)} keyframes exceeds limit {MAX_CONSTRAINT_FRAMES}, using first {MAX_CONSTRAINT_FRAMES}.")
         keyframes = keyframes[:MAX_CONSTRAINT_FRAMES]
 
     skeleton = _load_skeleton()
@@ -121,9 +97,7 @@ def build_fullbody_constraints(
     T = len(keyframes)
 
     global_positions = torch.zeros(T, n_joints, 3)
-    global_rots = (
-        torch.eye(3).unsqueeze(0).unsqueeze(0).expand(T, n_joints, 3, 3).clone()
-    )
+    global_rots = torch.eye(3).unsqueeze(0).unsqueeze(0).expand(T, n_joints, 3, 3).clone()
     frame_indices = []
 
     for t, kf in enumerate(keyframes):
@@ -133,67 +107,49 @@ def build_fullbody_constraints(
         pelvis_idx = G1_JOINT_NAMES.index("pelvis_skel")
         global_positions[t, pelvis_idx] = torch.tensor([0.0, root_height, 0.0])
 
-        # Apply specified joint positions
         for joint_name, world_pos in kf.get("joints", {}).items():
             if joint_name not in G1_JOINT_NAMES:
-                raise ValueError(
-                    f"Unknown joint: '{joint_name}'. Valid: {G1_JOINT_NAMES}"
-                )
+                raise ValueError(f"Unknown joint: '{joint_name}'. Valid names: {G1_JOINT_NAMES}")
             idx = G1_JOINT_NAMES.index(joint_name)
             global_positions[t, idx] = torch.tensor(world_pos, dtype=torch.float32)
 
-    smooth_root_2d = global_positions[
-        :, G1_JOINT_NAMES.index("pelvis_skel"), [0, 2]
-    ]  # (T, 2)
+    smooth_root_2d = global_positions[:, G1_JOINT_NAMES.index("pelvis_skel"), [0, 2]]  # (T, 2)
 
-    return [
-        FullBodyConstraintSet(
-            skeleton=skeleton,
-            frame_indices=frame_indices,
-            global_joints_positions=global_positions,
-            global_joints_rots=global_rots,
-            smooth_root_2d=smooth_root_2d,
-        )
-    ]
+    return [FullBodyConstraintSet(
+        skeleton=skeleton,
+        frame_indices=frame_indices,
+        global_joints_positions=global_positions,
+        global_joints_rots=global_rots,
+        smooth_root_2d=smooth_root_2d,
+    )]
 
 
 # ---------------------------------------------------------------------------
 # GT keyframe builder for reach_obj
 # ---------------------------------------------------------------------------
 
-
-def gt_reach_keyframes(
-    target_world_pos: onp.ndarray,
-    frame_index: int,
-) -> list[dict]:
-    """Build GT keyframes for reach_obj: right hand at target_world_pos."""
-    return [
-        {
-            "frame_index": frame_index,
-            "joints": {
-                "right_hand_roll_skel": target_world_pos.tolist(),
-            },
+def gt_reach_keyframes(target_world_pos: np.ndarray, frame_index: int) -> list[dict]:
+    """GT keyframes for reach_obj: right hand at target position."""
+    return [{
+        "frame_index": frame_index,
+        "joints": {
+            "right_hand_roll_skel": target_world_pos.tolist(),
         }
-    ]
+    }]
 
 
 # ---------------------------------------------------------------------------
 # Camera unprojection
 # ---------------------------------------------------------------------------
 
-
 def pixels_to_world(
-    u: float,
-    v: float,
-    fx: float,
-    fy: float,
-    cx: float,
-    cy: float,
-    cam_T_world: onp.ndarray,
+    u: float, v: float,
+    fx: float, fy: float, cx: float, cy: float,
+    cam_T_world: np.ndarray,
     assumed_world_z: float,
-) -> onp.ndarray:
+) -> np.ndarray:
     """Back-project pixel (u, v) to world 3D via ray-plane intersection at z=assumed_world_z."""
-    ray_cam = onp.array([(u - cx) / fx, (v - cy) / fy, 1.0])
+    ray_cam = np.array([(u - cx) / fx, (v - cy) / fy, 1.0])
     R, t = cam_T_world[:3, :3], cam_T_world[:3, 3]
     ray_world = R @ ray_cam
     if abs(ray_world[2]) < 1e-6:
@@ -201,36 +157,27 @@ def pixels_to_world(
     lam = (assumed_world_z - t[2]) / ray_world[2]
     pos = t + lam * ray_world
     pos[2] = assumed_world_z
-    return pos.astype(onp.float32)
+    return pos.astype(np.float32)
 
 
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=["gt", "vlm", "none"], required=True)
     parser.add_argument("--output", default="constraints.json")
-    parser.add_argument(
-        "--frame-index",
-        type=int,
-        default=45,
-        help="Keyframe index for the constraint (30fps, default: 45 = 1.5s)",
-    )
+    parser.add_argument("--frame-index", type=int, default=45,
+                        help="Keyframe index (30fps, default 45 = 1.5s)")
     parser.add_argument("--root-height", type=float, default=G1_ROOT_HEIGHT)
 
     # GT
-    parser.add_argument(
-        "--cube-world-pos", nargs=3, type=float, metavar=("X", "Y", "Z")
-    )
+    parser.add_argument("--cube-world-pos", nargs=3, type=float, metavar=("X", "Y", "Z"))
 
     # VLM
     parser.add_argument("--image")
-    parser.add_argument(
-        "--camera-intrinsics", nargs=4, type=float, metavar=("FX", "FY", "CX", "CY")
-    )
+    parser.add_argument("--camera-intrinsics", nargs=4, type=float, metavar=("FX", "FY", "CX", "CY"))
     parser.add_argument("--camera-extrinsic-npy")
     parser.add_argument("--assumed-world-z", type=float, default=0.4)
     parser.add_argument("--object-description", default="red cube")
@@ -245,33 +192,28 @@ def main():
     if args.mode == "gt":
         if args.cube_world_pos is None:
             parser.error("--cube-world-pos required for --mode gt")
-        target_pos = onp.array(args.cube_world_pos, dtype=onp.float32)
+        target_pos = np.array(args.cube_world_pos, dtype=np.float32)
         print(f"[generate_constraints] GT target: {target_pos}")
         keyframes = gt_reach_keyframes(target_pos, args.frame_index)
 
     elif args.mode == "vlm":
         if not all([args.image, args.camera_intrinsics, args.camera_extrinsic_npy]):
-            parser.error(
-                "--image, --camera-intrinsics, --camera-extrinsic-npy required for --mode vlm"
-            )
+            parser.error("--image, --camera-intrinsics, --camera-extrinsic-npy required for --mode vlm")
         import sys, os
-
         sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         from pipeline.vlm import load_vlm
         from PIL import Image as PILImage
 
-        image_rgb = onp.array(PILImage.open(args.image).convert("RGB"))
+        image_rgb = np.array(PILImage.open(args.image).convert("RGB"))
         fx, fy, cx, cy = args.camera_intrinsics
-        cam_T_world = onp.load(args.camera_extrinsic_npy).astype(onp.float32)
+        cam_T_world = np.load(args.camera_extrinsic_npy).astype(np.float32)
 
         print(f"[generate_constraints] Querying VLM ({args.vlm_name})...")
         vlm = load_vlm(args.vlm_name)
         u, v = vlm.query_object_pixels(image_rgb, args.object_description)
         print(f"[generate_constraints] VLM pixel estimate: u={u:.1f} v={v:.1f}")
 
-        target_pos = pixels_to_world(
-            u, v, fx, fy, cx, cy, cam_T_world, args.assumed_world_z
-        )
+        target_pos = pixels_to_world(u, v, fx, fy, cx, cy, cam_T_world, args.assumed_world_z)
         print(f"[generate_constraints] Unprojected world pos: {target_pos}")
         keyframes = gt_reach_keyframes(target_pos, args.frame_index)
 
