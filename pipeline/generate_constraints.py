@@ -81,7 +81,7 @@ def build_right_hand(
     global_positions = torch.zeros(1, n_joints, 3)
     global_rots = torch.eye(3).unsqueeze(0).unsqueeze(0).expand(1, n_joints, 3, 3).clone()
 
-    rh_idx = joint_names.index("RightHand")
+    rh_idx = joint_names.index("right_hand_roll_skel")
     global_positions[0, rh_idx] = torch.tensor(target_world_pos, dtype=torch.float32)
 
     smooth_root_2d = torch.tensor([[float(root_world_pos[0]), float(root_world_pos[2])]])
