@@ -1,6 +1,4 @@
-"""
-Qwen2.5-VL-7B-Instruct adapter.
-~14GB bf16, fits on a single RTX 5080 / A100.
+"""Qwen2.5-VL-7B-Instruct adapter (~14GB bf16).
 
 pip install transformers>=4.50.0 qwen-vl-utils accelerate
 """
@@ -8,6 +6,7 @@ pip install transformers>=4.50.0 qwen-vl-utils accelerate
 import re
 import base64
 import io
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -15,36 +14,28 @@ from PIL import Image
 
 from .base import VLMBase
 
+VLM_GMT_ROOT = Path(__file__).resolve().parent.parent.parent
 
-SYSTEM_PROMPT = """\
-You are an embodied AI controlling a humanoid robot. You see through the robot's \
-head-mounted camera (egocentric view).
 
-Coordinate system (IsaacLab / MuJoCo convention):
-  +X = forward (the direction the robot faces)
-  +Y = left
-  +Z = up
-  Origin is on the ground beneath the robot.
+def load_prompt(path: str | Path) -> str:
+    return Path(path).read_text().strip()
 
-Robot reference dimensions:
-  Pelvis height: ~0.8 m
-  Head / camera height: ~1.2 m
-  Arm reach from shoulder: ~0.6 m
 
-Motion is generated at 30 fps. Total frames: {num_frames}.
+def get_system_prompt(num_frames: int) -> str:
+    text = load_prompt(VLM_GMT_ROOT / "prompts" / "system.txt")
+    return text.format(num_frames=num_frames, max_frame=num_frames - 1)
 
-Your task: look at the image and output kinematic constraints that will guide \
-the robot's motion to accomplish the described task. Output ONLY a JSON array, \
-no explanation, no markdown fences. Each element must have exactly these keys:
-  "frame_id": int — target frame index (0 to {max_frame})
-  "type": str — one of "right-hand", "left-hand", "right-foot", "left-foot"
-  "position": [x, y, z] — target position in world coordinates (meters)
 
-Example output for reaching a cup 0.5 m forward on a 0.75 m table:
-[{{"frame_id": 60, "type": "right-hand", "position": [0.5, 0.0, 0.75]}}]
-"""
-
-USER_PROMPT = "Task: {task_description}\nOutput the JSON array of constraints."
+def get_task_prompt(task: str, override: str | None = None) -> str:
+    if override:
+        p = Path(override)
+        if p.is_file():
+            return load_prompt(p)
+        return override
+    path = VLM_GMT_ROOT / "tasks" / task / "vlm_prompt.txt"
+    if not path.exists():
+        raise FileNotFoundError(f"No VLM prompt for task '{task}' at {path}")
+    return load_prompt(path)
 
 
 class QwenVLM(VLMBase):
@@ -55,11 +46,15 @@ class QwenVLM(VLMBase):
         device: str = "cuda",
         dtype: str = "bfloat16",
         num_frames: int = 90,
+        task: str = "reach_obj",
+        task_description: str | None = None,
     ):
         self.model_name = model_name
         self.device = device
         self.dtype = dtype
         self.num_frames = num_frames
+        self.task = task
+        self.task_description = task_description
         self._model = None
         self._processor = None
 
@@ -81,7 +76,7 @@ class QwenVLM(VLMBase):
     def query_constraints(
         self,
         image_rgb: np.ndarray,
-        task_description: str,
+        task_description: str | None = None,
     ) -> list[dict[str, Any]]:
         import json
         import torch
@@ -93,11 +88,9 @@ class QwenVLM(VLMBase):
         pil_img.save(buf, format="JPEG")
         b64 = base64.b64encode(buf.getvalue()).decode()
 
-        system = SYSTEM_PROMPT.format(
-            num_frames=self.num_frames,
-            max_frame=self.num_frames - 1,
-        )
-        user = USER_PROMPT.format(task_description=task_description)
+        system = get_system_prompt(self.num_frames)
+        task_text = task_description or get_task_prompt(self.task, self.task_description)
+        user = f"Task: {task_text}\nOutput the JSON array of constraints."
 
         messages = [
             {"role": "system", "content": system},
@@ -131,12 +124,10 @@ class QwenVLM(VLMBase):
     def _parse(raw: str) -> list[dict[str, Any]]:
         import json
 
-        # Strip markdown fences if present
         clean = re.sub(r"```[a-z]*", "", raw).replace("```", "").strip()
         try:
             data = json.loads(clean)
         except json.JSONDecodeError:
-            # Try to find a JSON array in the response
             m = re.search(r"\[.*\]", clean, re.DOTALL)
             if m:
                 data = json.loads(m.group(0))

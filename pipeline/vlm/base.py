@@ -13,17 +13,17 @@ class VLMBase(ABC):
     def query_constraints(
         self,
         image_rgb: np.ndarray,
-        task_description: str,
+        task_description: str | None = None,
     ) -> list[dict[str, Any]]:
-        """Return a list of kinematic constraints predicted from the egocentric image.
+        """Predict kinematic constraints from an egocentric image.
 
-        Each constraint is a dict with keys:
-            frame_id:  int     — target frame index (0-based, 30 fps)
-            type:      str     — "right-hand" | "left-hand" | "right-foot" | "left-foot"
-            position:  list    — [x, y, z] in IsaacLab world frame (meters)
-                                  +X forward, +Y left, +Z up
+        System prompt is loaded from prompts/system.txt.
+        Task prompt is loaded from tasks/<task>/vlm_prompt.txt,
+        or overridden by task_description if provided.
 
-        The VLM is given the coordinate system, robot dimensions, and motion
-        duration in its prompt so it can reason about metric positions.
+        Each returned constraint is a dict:
+            frame_id:  int   — target frame (0-based, 30 fps)
+            type:      str   — "right-hand" | "left-hand" | "right-foot" | "left-foot"
+            position:  list  — [x, y, z] in world frame (meters), +X fwd, +Y left, +Z up
         """
         ...

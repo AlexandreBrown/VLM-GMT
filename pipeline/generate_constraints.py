@@ -185,21 +185,20 @@ def constraints_reach_obj_gt(skeleton, cube_world_pos, frame_index, device: str)
     return [make_limb_constraint(skeleton, "right-hand", target, frame_index, device)]
 
 
-def constraints_reach_obj_vlm(skeleton, image_rgb, task_description, vlm_name,
-                               num_frames, device: str) -> list:
-    """
-    VLM condition for reach_obj: VLM directly predicts 3D constraint positions
-    from an egocentric image.  No camera calibration or depth assumptions needed.
+def constraints_vlm(skeleton, task, image_rgb, task_description, vlm_name,
+                     num_frames, device: str) -> list:
+    """VLM predicts 3D constraint positions from an egocentric image.
 
-    The VLM receives the coordinate system, robot dimensions, and motion duration
-    in its prompt and outputs a JSON array of constraints with world-frame [x,y,z].
+    Loads system prompt from prompts/system.txt and task prompt from
+    tasks/<task>/vlm_prompt.txt (or uses task_description override).
     """
     import sys, os
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from pipeline.vlm import load_vlm
 
-    vlm = load_vlm(vlm_name, num_frames=num_frames)
-    raw_constraints = vlm.query_constraints(image_rgb, task_description)
+    vlm = load_vlm(vlm_name, num_frames=num_frames, task=task,
+                    task_description=task_description)
+    raw_constraints = vlm.query_constraints(image_rgb)
     print(f"[VLM] predicted {len(raw_constraints)} constraint(s):")
 
     constraint_objects = []
@@ -242,22 +241,24 @@ def build_constraints(task: str, condition: str, skeleton, device: str, **kwargs
     if condition == "baseline":
         return []
 
+    # VLM condition is task-agnostic (prompt loaded from tasks/<task>/vlm_prompt.txt)
+    if condition == "vlm":
+        return constraints_vlm(
+            skeleton, task,
+            kwargs["image_rgb"],
+            kwargs.get("task_description"),
+            kwargs.get("vlm_name", "qwen2.5-vl-7b"),
+            kwargs["num_frames"],
+            device,
+        )
+
+    # GT conditions are task-specific
     if task == "reach_obj":
         frame_index = kwargs.get("frame_index", 45)
         if condition == "gt":
             return constraints_reach_obj_gt(
                 skeleton, np.array(kwargs["cube_world_pos"], dtype=np.float32),
                 frame_index, device,
-            )
-        elif condition == "vlm":
-            return constraints_reach_obj_vlm(
-                skeleton,
-                kwargs["image_rgb"],
-                kwargs.get("task_description",
-                            "Reach the red cube with your right hand."),
-                kwargs.get("vlm_name", "qwen2.5-vl-7b"),
-                kwargs["num_frames"],
-                device,
             )
 
     raise ValueError(f"Unknown task/condition: {task}/{condition}")
