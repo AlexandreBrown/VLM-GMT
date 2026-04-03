@@ -62,19 +62,9 @@ def _load_skeleton(model_name: str = "kimodo-g1-rp"):
 
 
 def move_constraints_to_device(constraint_lst: list, device: str) -> list:
-    """Move all known tensor attributes of each constraint to the target device."""
-    import torch
-    # Explicit list — EndEffectorConstraintSet stores these in __init__
-    _tensor_attrs = [
-        "frame_indices", "pos_indices", "rot_indices",
-        "global_joints_positions", "global_joints_rots",
-        "smooth_root_2d", "root_y_pos", "global_root_heading",
-    ]
+    """Move constraints to target device using built-in .to() method."""
     for c in constraint_lst:
-        for attr in _tensor_attrs:
-            val = getattr(c, attr, None)
-            if isinstance(val, torch.Tensor):
-                setattr(c, attr, val.to(device))
+        c.to(device=device)
     return constraint_lst
 
 
