@@ -75,7 +75,7 @@ def build_right_hand(
     from kimodo.constraints import RightHandConstraintSet
 
     skeleton = _load_skeleton()
-    joint_names = list(skeleton.joint_names)
+    joint_names = list(skeleton.bone_order_names)
     n_joints = len(joint_names)
 
     global_positions = torch.zeros(1, n_joints, 3)
