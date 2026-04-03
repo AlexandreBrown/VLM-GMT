@@ -162,12 +162,16 @@ def main():
             "--urdf", args.urdf,
         ]
         if args.condition == "gt":
-            if args.cube_world_pos is None:
-                parser.error("--cube-world-pos required for --condition gt")
-            constraint_cmd += [
-                "--mode", "gt",
-                "--cube-world-pos", *[str(v) for v in args.cube_world_pos],
-            ]
+            if constraints_json.exists():
+                print(f"[generate_motion] Using existing constraints: {constraints_json}")
+                constraint_cmd = None  # skip generation
+            else:
+                if args.cube_world_pos is None:
+                    parser.error("--cube-world-pos required for --condition gt when no constraints.json exists")
+                constraint_cmd += [
+                    "--mode", "gt",
+                    "--cube-world-pos", *[str(v) for v in args.cube_world_pos],
+                ]
         elif args.condition == "vlm":
             if not all([args.image, args.camera_intrinsics, args.camera_extrinsic_npy]):
                 parser.error("--image, --camera-intrinsics, --camera-extrinsic-npy required for vlm.")
@@ -180,7 +184,8 @@ def main():
                 "--object-description", args.object_description,
                 "--vlm-name", args.vlm_name,
             ]
-        subprocess.run(constraint_cmd, check=True, cwd=str(protomotions_root))
+        if constraint_cmd is not None:
+            subprocess.run(constraint_cmd, check=True, cwd=str(protomotions_root))
 
     # --- Generate motion ---
     if args.csv_path is not None:
