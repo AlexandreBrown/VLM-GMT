@@ -81,6 +81,7 @@ def generate_csv(
         [prompt],
         [NUM_FRAMES],
         num_denoising_steps=DENOISING_STEPS,
+        num_samples=1,
         constraint_lst=constraint_lst,
         multi_prompt=True,
         post_processing=False,  # does not work for G1

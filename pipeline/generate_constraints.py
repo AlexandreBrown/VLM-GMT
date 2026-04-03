@@ -119,7 +119,7 @@ def build_end_effector_constraints(
     }
 
     for t, kf in enumerate(keyframes):
-        frame_indices.append(kf["frame_index"])
+        frame_indices.append(int(kf["frame_index"]))
 
         # Set pelvis to standing height
         pelvis_idx = G1_JOINT_NAMES.index("pelvis_skel")
@@ -131,10 +131,11 @@ def build_end_effector_constraints(
             global_positions[t, idx] = torch.tensor(world_pos, dtype=torch.float32)
 
     smooth_root_2d = global_positions[:, G1_JOINT_NAMES.index("pelvis_skel"), [0, 2]]  # (T, 2)
+    frame_indices_tensor = torch.tensor(frame_indices, dtype=torch.long)
 
     return [EndEffectorConstraintSet(
         skeleton=skeleton,
-        frame_indices=frame_indices,
+        frame_indices=frame_indices_tensor,
         global_joints_positions=global_positions,
         global_joints_rots=global_rots,
         smooth_root_2d=smooth_root_2d,
