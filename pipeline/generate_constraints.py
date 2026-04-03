@@ -98,25 +98,36 @@ def build_end_effector_constraints(
     n_joints = len(G1_JOINT_NAMES)
     T = len(keyframes)
 
-    # Collect constrained joint names (must be consistent across keyframes)
-    constrained_joint_names = list(keyframes[0].get("joints", {}).keys())
-    for joint_name in constrained_joint_names:
-        if joint_name not in G1_JOINT_NAMES:
-            raise ValueError(f"Unknown joint: '{joint_name}'. Valid names: {G1_JOINT_NAMES}")
+    # Collect EE names (must be from EE_JOINT_NAMES)
+    constrained_ee_names = list(keyframes[0].get("joints", {}).keys())
+    for ee_name in constrained_ee_names:
+        if ee_name not in EE_JOINT_NAMES:
+            raise ValueError(f"Unknown EE name: '{ee_name}'. Valid: {EE_JOINT_NAMES}")
 
     global_positions = torch.zeros(T, n_joints, 3)
     global_rots = torch.eye(3).unsqueeze(0).unsqueeze(0).expand(T, n_joints, 3, 3).clone()
     frame_indices = []
 
+    # Map from high-level EE name to skeleton joint index for position setting
+    # Kimodo uses the last joint in each chain as the position target
+    ee_to_skel_joint = {
+        "RightHand": "right_hand_roll_skel",
+        "LeftHand": "left_hand_roll_skel",
+        "RightFoot": "right_toe_base",
+        "LeftFoot": "left_toe_base",
+        "Hips": "pelvis_skel",
+    }
+
     for t, kf in enumerate(keyframes):
         frame_indices.append(kf["frame_index"])
 
-        # Set pelvis to standing height (needed for root_positions field)
+        # Set pelvis to standing height
         pelvis_idx = G1_JOINT_NAMES.index("pelvis_skel")
         global_positions[t, pelvis_idx] = torch.tensor([0.0, root_height, 0.0])
 
-        for joint_name, world_pos in kf.get("joints", {}).items():
-            idx = G1_JOINT_NAMES.index(joint_name)
+        for ee_name, world_pos in kf.get("joints", {}).items():
+            skel_joint = ee_to_skel_joint[ee_name]
+            idx = G1_JOINT_NAMES.index(skel_joint)
             global_positions[t, idx] = torch.tensor(world_pos, dtype=torch.float32)
 
     smooth_root_2d = global_positions[:, G1_JOINT_NAMES.index("pelvis_skel"), [0, 2]]  # (T, 2)
@@ -127,7 +138,7 @@ def build_end_effector_constraints(
         global_joints_positions=global_positions,
         global_joints_rots=global_rots,
         smooth_root_2d=smooth_root_2d,
-        joint_names=constrained_joint_names,
+        joint_names=constrained_ee_names,
     )]
 
 
@@ -135,12 +146,16 @@ def build_end_effector_constraints(
 # GT keyframe builder for reach_obj
 # ---------------------------------------------------------------------------
 
+# Valid end-effector names for EndEffectorConstraintSet
+EE_JOINT_NAMES = ["LeftFoot", "RightFoot", "LeftHand", "RightHand", "Hips"]
+
+
 def gt_reach_keyframes(target_world_pos: np.ndarray, frame_index: int) -> list[dict]:
     """GT keyframes for reach_obj: right hand at target position."""
     return [{
         "frame_index": frame_index,
         "joints": {
-            "right_hand_roll_skel": target_world_pos.tolist(),
+            "RightHand": target_world_pos.tolist(),
         }
     }]
 
