@@ -48,35 +48,49 @@ KIMODO_MODEL = "kimodo-g1-rp"
 def generate_csv(
     prompt: str,
     output_csv: Path,
-    constraints_json: Path = None,
+    constraint_lst: list = None,
     seed: int = SEED,
     model_name: str = KIMODO_MODEL,
 ):
     """
-    Generate G1 CSV via Kimodo CLI (kimodo_gen).
-    Uses CLI to avoid undocumented Python API kwargs.
+    Generate G1 CSV via Kimodo Python API.
+    Passes constraint objects directly to avoid JSON serialization loss.
     """
+    import torch
+    from kimodo import load_model
+    from kimodo.tools import seed_everything
+    from kimodo.exports.mujoco import MujocoQposConverter
+
     output_csv.parent.mkdir(parents=True, exist_ok=True)
 
-    # kimodo_gen writes <stem>.csv — we control the stem
-    output_stem = str(output_csv.parent / output_csv.stem)
+    if seed is not None:
+        seed_everything(seed)
 
-    cmd = [
-        "kimodo_gen", prompt,
-        "--model", model_name,
-        "--duration", str(MOTION_DURATION),
-        "--diffusion_steps", str(DENOISING_STEPS),
-        "--seed", str(seed),
-        "--output", output_stem,
-    ]
-    if constraints_json is not None and constraints_json.exists():
-        cmd += ["--constraints", str(constraints_json)]
-        print(f"[generate_motion] Using constraints: {constraints_json}")
+    device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    print(f"[generate_motion] Loading Kimodo model '{model_name}' on {device}...")
+    model = load_model(model_name, device=device)
+
+    if constraint_lst:
+        print(f"[generate_motion] Using {len(constraint_lst)} constraint set(s) in-memory.")
     else:
         print("[generate_motion] No constraints (text only).")
+        constraint_lst = []
 
     print(f"[generate_motion] Generating: '{prompt}'")
-    subprocess.run(cmd, check=True)
+    output = model(
+        [prompt],
+        [NUM_FRAMES],
+        num_denoising_steps=DENOISING_STEPS,
+        constraint_lst=constraint_lst,
+        multi_prompt=True,
+        post_processing=False,  # does not work for G1
+        return_numpy=True,
+    )
+
+    converter = MujocoQposConverter(model.skeleton)
+    qpos = converter.dict_to_qpos(output, device)
+    csv_stem = str(output_csv.parent / output_csv.stem)
+    converter.save_csv(qpos, csv_stem + ".csv")
     print(f"[generate_motion] CSV saved: {output_csv}")
 
 
@@ -146,44 +160,44 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
     protomotions_root = Path(args.protomotions_root).resolve()
 
-    constraints_json = output_dir / "constraints.json"
     csv_path = output_dir / "reach.csv"
-
     vlm_gmt_root = Path(__file__).resolve().parent.parent
+    sys.path.insert(0, str(vlm_gmt_root))
 
-    # --- Generate constraints ---
+    # --- Build constraints in-memory ---
+    constraint_lst = []
     if args.condition != "baseline":
-        constraint_cmd = [
-            sys.executable, str(vlm_gmt_root / "pipeline" / "generate_constraints.py"),
-            "--output", str(constraints_json),
-            "--frame-index", str(args.frame_index),
-        ]
+        from pipeline.generate_constraints import build_end_effector_constraints, gt_reach_keyframes, pixels_to_world
+        import numpy as np
+
         if args.condition == "gt":
-            if constraints_json.exists():
-                print(f"[generate_motion] Using existing constraints: {constraints_json}")
-                constraint_cmd = None
-            else:
-                if args.cube_world_pos is None:
-                    parser.error("--cube-world-pos required for --condition gt when no constraints.json exists")
-                constraint_cmd += [
-                    "--mode", "gt",
-                    "--cube-world-pos", *[str(v) for v in args.cube_world_pos],
-                    "--frame-index", str(args.frame_index),
-                ]
+            if args.cube_world_pos is None:
+                parser.error("--cube-world-pos required for --condition gt")
+            target_pos = np.array(args.cube_world_pos, dtype=np.float32)
+            print(f"[generate_motion] GT target (IsaacLab): {target_pos}")
+            keyframes = gt_reach_keyframes(target_pos, args.frame_index)
+
         elif args.condition == "vlm":
             if not all([args.image, args.camera_intrinsics, args.camera_extrinsic_npy]):
                 parser.error("--image, --camera-intrinsics, --camera-extrinsic-npy required for vlm.")
-            constraint_cmd += [
-                "--mode", "vlm",
-                "--image", args.image,
-                "--camera-intrinsics", *[str(v) for v in args.camera_intrinsics],
-                "--camera-extrinsic-npy", args.camera_extrinsic_npy,
-                "--assumed-world-z", str(args.assumed_world_z),
-                "--object-description", args.object_description,
-                "--vlm-name", args.vlm_name,
-            ]
-        if constraint_cmd is not None:
-            subprocess.run(constraint_cmd, check=True, cwd=str(protomotions_root))
+            from pipeline.vlm import load_vlm
+            from PIL import Image as PILImage
+
+            image_rgb = np.array(PILImage.open(args.image).convert("RGB"))
+            fx, fy, cx, cy = args.camera_intrinsics
+            cam_T_world = np.load(args.camera_extrinsic_npy).astype(np.float32)
+
+            print(f"[generate_motion] Querying VLM ({args.vlm_name})...")
+            vlm = load_vlm(args.vlm_name)
+            u, v = vlm.query_object_pixels(image_rgb, args.object_description)
+            print(f"[generate_motion] VLM pixel: u={u:.1f} v={v:.1f}")
+
+            target_pos = pixels_to_world(u, v, fx, fy, cx, cy, cam_T_world, args.assumed_world_z)
+            print(f"[generate_motion] VLM world pos (IsaacLab): {target_pos}")
+            keyframes = gt_reach_keyframes(target_pos, args.frame_index)
+
+        constraint_lst = build_end_effector_constraints(keyframes)
+        print(f"[generate_motion] Built {len(constraint_lst)} constraint set(s) in-memory.")
 
     # --- Generate motion ---
     if args.csv_path is not None:
@@ -195,7 +209,7 @@ def main():
         generate_csv(
             prompt=args.prompt,
             output_csv=csv_path,
-            constraints_json=constraints_json if args.condition != "baseline" else None,
+            constraint_lst=constraint_lst if constraint_lst else None,
             seed=args.seed,
             model_name=args.kimodo_model,
         )
