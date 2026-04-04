@@ -105,6 +105,7 @@ python $VLMGMT/pipeline/capture_egocentric.py \
     --output-dir $VLMGMT/outputs/manip_reach_obj \
     --pitch-deg 50
 ```
+**Note: When the image is saved, close the script using CTRL-C (check terminal output) otherwise isaacsim will stay opened.**
 
 ### 3. Generate motion (requires Kimodo, >=17 GB VRAM)
 
