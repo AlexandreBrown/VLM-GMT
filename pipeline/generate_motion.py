@@ -37,9 +37,6 @@ import numpy as np
 import torch
 
 KIMODO_MODEL = "kimodo-g1-rp"
-DEFAULT_PROMPT = (
-    "A person reaches forward with their right hand to grab an object in front of them."
-)
 DEFAULT_DURATION = 3.0
 DENOISING_STEPS = 100
 SEED = 42
@@ -102,9 +99,10 @@ def main():
     parser = argparse.ArgumentParser(
         description="Generate a Kimodo motion (optionally constrained) and package as motion.pt."
     )
-    parser.add_argument("--task", default="reach_obj")
+    parser.add_argument("--task", default="manip_reach_obj")
     parser.add_argument("--condition", choices=["baseline", "gt", "vlm"], required=True)
-    parser.add_argument("--prompt", default=DEFAULT_PROMPT)
+    parser.add_argument("--prompt", default=None,
+                        help="Kimodo text prompt. If not set, loads from tasks/<task>/kimodo_prompt.txt")
     parser.add_argument("--duration", type=float, default=DEFAULT_DURATION)
     parser.add_argument("--kimodo-model", default=KIMODO_MODEL)
     parser.add_argument("--diffusion-steps", type=int, default=DENOISING_STEPS)
@@ -149,6 +147,13 @@ def main():
     # Add VLM-GMT root to sys.path for pipeline imports
     vlm_gmt_root = Path(__file__).resolve().parent.parent
     sys.path.insert(0, str(vlm_gmt_root))
+
+    # Load kimodo text prompt from file if not provided
+    if args.prompt is None:
+        prompt_path = vlm_gmt_root / "tasks" / args.task / "kimodo_prompt.txt"
+        if not prompt_path.exists():
+            raise FileNotFoundError(f"No kimodo prompt for task '{args.task}' at {prompt_path}")
+        args.prompt = prompt_path.read_text().strip()
 
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     print(f"[generate_motion] device={device}  condition={args.condition}")

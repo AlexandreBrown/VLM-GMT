@@ -18,32 +18,33 @@ The VLM sees an egocentric image, receives the robot's coordinate system and dim
 
 ## Setup
 
-### Local (simulation + inference + eval)
+### Dependencies
 
-Requires IsaacLab + ProtoMotions. Follow the [ProtoMotions installation guide](https://nvlabs.github.io/ProtoMotions/getting_started/installation.html).
+ProtoMotions is required everywhere (motion generation, simulation, eval). Follow the [ProtoMotions installation guide](https://nvlabs.github.io/ProtoMotions/getting_started/installation.html).
 
 ```bash
+git clone https://github.com/NVlabs/ProtoMotions.git
+uv pip install -e ProtoMotions
+uv pip install dm_control easydict matplotlib
+
 git clone https://github.com/AlexandreBrown/VLM-GMT.git
+
 export PROTOMOTIONS_ROOT=/path/to/ProtoMotions
+export VLMGMT=/path/to/VLM-GMT
 ```
 
 Commands that need IsaacLab (capture, playback, inference, eval) must be run from `$PROTOMOTIONS_ROOT` because ProtoMotions uses relative asset paths.
 
-### Motion generation (Kimodo)
+### IsaacLab (simulation + inference + eval)
+
+Required locally for kinematic playback, GMT inference, eval, and egocentric capture. Follow the [IsaacLab installation guide](https://isaac-sim.github.io/IsaacLab/).
+
+### Kimodo (motion generation)
 
 Kimodo requires **>=17 GB VRAM**. If running the VLM condition on the same GPU, the VLM adds ~14 GB (total ~31 GB; an A100 40 GB+ is recommended).
 
-IsaacLab is **not** needed for motion generation. Only Kimodo + ProtoMotions conversion scripts.
-
 ```bash
 # Install Kimodo (follow Kimodo docs)
-# Clone ProtoMotions (no LFS needed)
-git clone https://github.com/NVlabs/ProtoMotions.git
-uv pip install -e ProtoMotions
-uv pip install dm_control easydict
-
-# Clone this repo
-git clone https://github.com/AlexandreBrown/VLM-GMT.git
 ```
 
 ### VLM deps (VLM condition only)
@@ -96,12 +97,12 @@ python tasks/manip_reach_obj/create_scene.py \
 
 ```bash
 cd $PROTOMOTIONS_ROOT
-python ~/path/to/VLM-GMT/pipeline/capture_egocentric.py \
+python $VLMGMT/pipeline/capture_egocentric.py \
     --experiment-path examples/experiments/mimic/mlp.py \
     --motion-file data/motion_for_trackers/g1_bones_seed_mini.pt \
     --robot-name g1 --simulator isaaclab --num-envs 1 \
-    --scenes-file ~/path/to/VLM-GMT/outputs/manip_reach_obj_scene.pt \
-    --output-dir ~/path/to/VLM-GMT/outputs/manip_reach_obj \
+    --scenes-file $VLMGMT/outputs/manip_reach_obj_scene.pt \
+    --output-dir $VLMGMT/outputs/manip_reach_obj \
     --pitch-deg 50
 ```
 
@@ -114,14 +115,14 @@ cd VLM-GMT
 python pipeline/generate_motion.py \
     --condition baseline \
     --output-dir outputs/manip_reach_obj/baseline \
-    --protomotions-root /path/to/ProtoMotions
+    --protomotions-root $PROTOMOTIONS_ROOT
 
 # GT (ground-truth constraint at cube position)
 python pipeline/generate_motion.py \
     --condition gt \
     --cube-world-pos 0.6 0.0 0.4 \
     --output-dir outputs/manip_reach_obj/gt \
-    --protomotions-root /path/to/ProtoMotions
+    --protomotions-root $PROTOMOTIONS_ROOT
 
 # VLM (constraint predicted from egocentric image, >=31 GB VRAM with Qwen2.5-VL-7B)
 python pipeline/generate_motion.py \
@@ -129,7 +130,7 @@ python pipeline/generate_motion.py \
     --image outputs/manip_reach_obj/ego.png \
     --task manip_reach_obj \
     --output-dir outputs/manip_reach_obj/vlm \
-    --protomotions-root /path/to/ProtoMotions
+    --protomotions-root $PROTOMOTIONS_ROOT
 ```
 
 ### 4. Kinematic playback (requires IsaacLab)
@@ -138,9 +139,9 @@ python pipeline/generate_motion.py \
 cd $PROTOMOTIONS_ROOT
 python examples/env_kinematic_playback.py \
     --experiment-path examples/experiments/mimic/mlp.py \
-    --motion-file ~/path/to/VLM-GMT/outputs/manip_reach_obj/gt/motion.pt \
+    --motion-file $VLMGMT/outputs/manip_reach_obj/gt/motion.pt \
     --robot-name g1 --simulator isaaclab --num-envs 1 \
-    --scenes-file ~/path/to/VLM-GMT/outputs/manip_reach_obj_scene.pt
+    --scenes-file $VLMGMT/outputs/manip_reach_obj_scene.pt
 ```
 
 ### 5. GMT inference (requires IsaacLab)
@@ -149,23 +150,23 @@ python examples/env_kinematic_playback.py \
 cd $PROTOMOTIONS_ROOT
 python protomotions/inference_agent.py \
     --checkpoint data/pretrained_models/motion_tracker/g1-bones-deploy/last.ckpt \
-    --motion-file ~/path/to/VLM-GMT/outputs/manip_reach_obj/gt/motion.pt \
+    --motion-file $VLMGMT/outputs/manip_reach_obj/gt/motion.pt \
     --simulator isaaclab --num-envs 1 \
-    --scenes-file ~/path/to/VLM-GMT/outputs/manip_reach_obj_scene.pt
+    --scenes-file $VLMGMT/outputs/manip_reach_obj_scene.pt
 ```
 
 ### 6. Eval (requires IsaacLab)
 
 ```bash
 cd $PROTOMOTIONS_ROOT
-python ~/path/to/VLM-GMT/eval/run_eval.py \
+python $VLMGMT/eval/run_eval.py \
     --checkpoint data/pretrained_models/motion_tracker/g1-bones-deploy/last.ckpt \
-    --motion-file ~/path/to/VLM-GMT/outputs/manip_reach_obj/gt/motion.pt \
-    --scenes-file ~/path/to/VLM-GMT/outputs/manip_reach_obj_scene.pt \
+    --motion-file $VLMGMT/outputs/manip_reach_obj/gt/motion.pt \
+    --scenes-file $VLMGMT/outputs/manip_reach_obj_scene.pt \
     --task manip_reach_obj --condition gt \
     --num-episodes 20 --simulator isaaclab \
     --protomotions-root $PROTOMOTIONS_ROOT \
-    --output-dir ~/path/to/VLM-GMT/outputs/manip_reach_obj/results
+    --output-dir $VLMGMT/outputs/manip_reach_obj/results
 ```
 
 ## VLM Prompt System
