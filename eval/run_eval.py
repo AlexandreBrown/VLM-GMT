@@ -53,6 +53,12 @@ def create_parser():
         help="Egocentric camera pitch for video recording",
     )
     parser.add_argument(
+        "--video-max-episodes",
+        type=int,
+        default=5,
+        help="Max episodes to include in video (metrics still computed for all)",
+    )
+    parser.add_argument(
         "--protomotions-root",
         required=True,
         help="Path to ProtoMotions root directory (scripts use relative asset paths).",
@@ -321,14 +327,15 @@ def main():
 
     log.info(f"Running {args.num_episodes} episodes...")
     for ep in range(args.num_episodes):
-        if video_recorder:
+        record_this_ep = video_recorder and ep < args.video_max_episodes
+        if record_this_ep:
             video_recorder.new_episode()
         episode_results = run_episode(
             env,
             agent,
             metrics,
-            video_recorder=video_recorder,
-            ego_camera=ego_camera if video_recorder else None,
+            video_recorder=video_recorder if record_this_ep else None,
+            ego_camera=ego_camera if record_this_ep else None,
             episode_num=ep,
         )
         for i, result in enumerate(episode_results):
