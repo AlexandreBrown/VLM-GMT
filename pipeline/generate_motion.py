@@ -196,6 +196,7 @@ def main():
         constraint_kwargs["task_description"] = args.task_description
         constraint_kwargs["vlm_name"] = args.vlm_name
         constraint_kwargs["num_frames"] = num_frames
+        constraint_kwargs["output_dir"] = str(output_dir)
 
     print(f"[generate_motion] Building constraints ...")
     constraint_lst = build_constraints(

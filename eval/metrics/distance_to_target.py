@@ -35,12 +35,14 @@ class DistanceToTarget(Metric):
         object_index: int = 0,
         success_threshold: float = 0.1,
         use_min: bool = False,
+        overlay_label: str | None = None,
     ):
         self.name = name
         self.link_name = link_name
         self.object_index = object_index
         self.success_threshold = success_threshold
         self.use_min = use_min
+        self.overlay_label = overlay_label
 
         self._link_index = None      # resolved on first update
         self._distances = []         # distance at each step
@@ -74,6 +76,13 @@ class DistanceToTarget(Metric):
         dist = torch.norm(link_pos - obj_pos, dim=-1)  # (num_envs,)
         self._distances.append(dist[0].item())
 
+    def get_overlay(self) -> tuple[str, bool] | None:
+        if self.use_min or not self._distances:
+            return None
+        d = self._distances[-1]
+        label = self.overlay_label or self.name
+        return f"{label}: {d:.3f}m", d < self.success_threshold
+
     def compute(self) -> MetricResult:
         if not self._distances:
             return MetricResult(value=float("inf"), success=False)
@@ -88,6 +97,7 @@ class DistanceToTarget(Metric):
             info={
                 "final_dist": final_dist,
                 "min_dist": min_dist,
+                "max_dist": max(self._distances),
                 "mean_dist": sum(self._distances) / len(self._distances),
                 "threshold": self.success_threshold,
             },

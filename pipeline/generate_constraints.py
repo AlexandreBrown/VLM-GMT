@@ -186,13 +186,16 @@ def constraints_reach_obj_gt(skeleton, cube_world_pos, frame_index, device: str)
 
 
 def constraints_vlm(skeleton, task, image_rgb, task_description, vlm_name,
-                     num_frames, device: str) -> list:
+                     num_frames, output_dir, device: str) -> list:
     """VLM predicts 3D constraint positions from an egocentric image.
 
     Loads system prompt from prompts/system.txt and task prompt from
     tasks/<task>/vlm_prompt.txt (or uses task_description override).
+    Saves raw VLM predictions to <output_dir>/vlm_constraints.json.
     """
+    import json
     import sys, os
+    from pathlib import Path
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from pipeline.vlm import load_vlm
 
@@ -200,6 +203,14 @@ def constraints_vlm(skeleton, task, image_rgb, task_description, vlm_name,
                     task_description=task_description)
     raw_constraints = vlm.query_constraints(image_rgb)
     print(f"[VLM] predicted {len(raw_constraints)} constraint(s):")
+
+    # Save raw VLM output for debugging
+    if output_dir:
+        log_path = Path(output_dir) / "vlm_constraints.json"
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(log_path, "w") as f:
+            json.dump(raw_constraints, f, indent=2)
+        print(f"[VLM] Saved constraints to {log_path}")
 
     constraint_objects = []
     for c in raw_constraints:
@@ -249,6 +260,7 @@ def build_constraints(task: str, condition: str, skeleton, device: str, **kwargs
             kwargs.get("task_description"),
             kwargs.get("vlm_name", "qwen2.5-vl-7b"),
             kwargs["num_frames"],
+            kwargs.get("output_dir"),
             device,
         )
 

@@ -30,15 +30,32 @@ def create_parser():
     parser.add_argument("--motion-file", required=True)
     parser.add_argument("--scenes-file", required=True)
     parser.add_argument("--task", required=True, help="Task name, e.g. 'reach_obj'")
-    parser.add_argument("--condition", required=True, help="Condition label for output, e.g. 'baseline'")
+    parser.add_argument(
+        "--condition", required=True, help="Condition label for output, e.g. 'baseline'"
+    )
     parser.add_argument("--simulator", required=True)
     parser.add_argument("--num-envs", type=int, default=1)
     parser.add_argument("--num-episodes", type=int, default=20)
-    parser.add_argument("--output-dir", required=True, help="Directory for results JSON")
+    parser.add_argument(
+        "--output-dir", required=True, help="Directory for results JSON"
+    )
     parser.add_argument("--headless", action="store_true", default=False)
     parser.add_argument(
-        "--protomotions-root", required=True,
-        help="Path to ProtoMotions root directory (scripts use relative asset paths)."
+        "--record-video",
+        action="store_true",
+        default=False,
+        help="Record side-by-side video (third-person + ego) per episode",
+    )
+    parser.add_argument(
+        "--pitch-deg",
+        type=float,
+        default=50.0,
+        help="Egocentric camera pitch for video recording",
+    )
+    parser.add_argument(
+        "--protomotions-root",
+        required=True,
+        help="Path to ProtoMotions root directory (scripts use relative asset paths).",
     )
     return parser
 
@@ -47,12 +64,14 @@ parser = create_parser()
 args, _ = parser.parse_known_args()
 
 from protomotions.utils.simulator_imports import import_simulator_before_torch
+
 AppLauncher = import_simulator_before_torch(args.simulator)
 
 # ── safe to import torch now ──────────────────────────────────────────────────
 import json
 import importlib
 import logging
+import numpy as np
 import sys
 import os
 from pathlib import Path
@@ -83,11 +102,48 @@ def load_task_metrics(task_name: str):
     return mod.get_metrics()
 
 
-def run_episode(env, agent, metrics, max_steps: int = 300):
-    """
-    Run a single episode, calling metric.update() every step.
-    Returns list of MetricResult (one per metric).
-    """
+THIRD_PERSON_CAM_DIST = 2.5  # meters behind the robot (lower = more zoomed in)
+THIRD_PERSON_CAM_HEIGHT = 1.0  # meters above the robot
+
+
+def capture_viewport_rgb(simulator, width: int = 500, height: int = 500) -> np.ndarray:
+    """Grab the viewport (third-person) as an RGB array."""
+    import omni.replicator.core as rep
+
+    if not hasattr(simulator, "_eval_viewport_annot"):
+        rp = rep.create.render_product(
+            "/OmniverseKit_Persp", resolution=(width, height)
+        )
+        annot = rep.AnnotatorRegistry.get_annotator("rgb")
+        annot.attach([rp])
+        simulator._eval_viewport_annot = annot
+        simulator._sim.render()
+
+    # Position viewport camera relative to robot root
+    root_pos = simulator._robot.data.root_pos_w[0].cpu().numpy()
+    if hasattr(simulator, "_perspective_view"):
+        eye = root_pos + np.array([0, -THIRD_PERSON_CAM_DIST, THIRD_PERSON_CAM_HEIGHT])
+        target = root_pos + np.array([0, 0, 0.3])
+        simulator._perspective_view.set_camera_view(eye, target)
+
+    simulator._sim.render()
+    data = simulator._eval_viewport_annot.get_data()
+    if data is None:
+        return np.zeros((height, width, 3), dtype=np.uint8)
+    rgb = np.frombuffer(data, dtype=np.uint8).reshape(height, width, 4)[:, :, :3].copy()
+    return rgb
+
+
+def run_episode(
+    env,
+    agent,
+    metrics,
+    max_steps: int = 300,
+    video_recorder=None,
+    ego_camera=None,
+    episode_num: int = 0,
+):
+    """Run a single episode. Returns list of MetricResult."""
     for m in metrics:
         m.reset()
 
@@ -110,6 +166,17 @@ def run_episode(env, agent, metrics, max_steps: int = 300):
         for m in metrics:
             m.update(env, scene_lib)
 
+        if video_recorder:
+            tp_rgb = capture_viewport_rgb(env.simulator)
+            ego_rgb = None
+            if ego_camera:
+                ego_camera.update(0.0)
+                ego_data = ego_camera.data.output["rgb"][0].cpu().numpy()
+                if ego_data.shape[-1] == 4:
+                    ego_data = ego_data[:, :, :3]
+                ego_rgb = ego_data.astype(np.uint8)
+            video_recorder.capture_frame(tp_rgb, ego_rgb, metrics, episode_num)
+
         if dones[0].item():
             break
 
@@ -122,25 +189,29 @@ def main():
 
     # ProtoMotions uses relative asset paths — must run from its root
     import os
+
     os.chdir(Path(args.protomotions_root).resolve())
 
     checkpoint = Path(args.checkpoint)
     resolved_configs_path = checkpoint.parent / "resolved_configs_inference.pt"
     assert resolved_configs_path.exists(), f"Missing {resolved_configs_path}"
 
-    resolved_configs = torch.load(resolved_configs_path, map_location="cpu", weights_only=False)
-    robot_config     = resolved_configs["robot"]
+    resolved_configs = torch.load(
+        resolved_configs_path, map_location="cpu", weights_only=False
+    )
+    robot_config = resolved_configs["robot"]
     simulator_config = resolved_configs["simulator"]
-    terrain_config   = resolved_configs.get("terrain")
+    terrain_config = resolved_configs.get("terrain")
     scene_lib_config = resolved_configs["scene_lib"]
     motion_lib_config = resolved_configs["motion_lib"]
-    env_config       = resolved_configs["env"]
-    agent_config     = resolved_configs["agent"]
+    env_config = resolved_configs["env"]
+    agent_config = resolved_configs["agent"]
 
     # Switch simulator if needed
     current_simulator = simulator_config._target_.split(".")[-3]
     if args.simulator != current_simulator:
         from protomotions.simulator.factory import update_simulator_config_for_test
+
         simulator_config = update_simulator_config_for_test(
             current_simulator_config=simulator_config,
             new_simulator=args.simulator,
@@ -148,6 +219,7 @@ def main():
         )
 
     from protomotions.utils.inference_utils import apply_backward_compatibility_fixes
+
     apply_backward_compatibility_fixes(robot_config, simulator_config, env_config)
 
     # Apply CLI overrides
@@ -157,19 +229,44 @@ def main():
     simulator_config.headless = args.headless
 
     accelerator = "cpu" if args.simulator == "mujoco" else "gpu"
-    fabric_config = FabricConfig(accelerator=accelerator, devices=1, num_nodes=1, loggers=[], callbacks=[])
+    fabric_config = FabricConfig(
+        accelerator=accelerator, devices=1, num_nodes=1, loggers=[], callbacks=[]
+    )
     fabric: Fabric = Fabric(**asdict(fabric_config))
     fabric.launch()
 
     simulator_extra_params = {}
     if args.simulator == "isaaclab":
-        app_launcher = AppLauncher({"headless": args.headless, "device": str(fabric.device)})
+        launcher_flags = {"headless": args.headless, "device": str(fabric.device)}
+        if args.record_video:
+            launcher_flags["enable_cameras"] = True
+        app_launcher = AppLauncher(launcher_flags)
         simulator_extra_params["simulation_app"] = app_launcher.app
 
-    from protomotions.simulator.base_simulator.utils import convert_friction_for_simulator
-    terrain_config, simulator_config = convert_friction_for_simulator(terrain_config, simulator_config)
+    # Patch scene with egocentric camera if recording video
+    ego_camera = None
+    if args.record_video and args.simulator == "isaaclab":
+        vlm_gmt_root = Path(__file__).resolve().parent.parent
+        sys.path.insert(0, str(vlm_gmt_root))
+        from pipeline.egocentric_camera import (
+            patch_scene_with_egocentric_camera,
+            get_egocentric_camera,
+        )
+
+        patch_scene_with_egocentric_camera(
+            pitch_deg=args.pitch_deg, offset_forward=0.33
+        )
+
+    from protomotions.simulator.base_simulator.utils import (
+        convert_friction_for_simulator,
+    )
+
+    terrain_config, simulator_config = convert_friction_for_simulator(
+        terrain_config, simulator_config
+    )
 
     from protomotions.utils.component_builder import build_all_components
+
     components = build_all_components(
         terrain_config=terrain_config,
         scene_lib_config=scene_lib_config,
@@ -182,6 +279,7 @@ def main():
     )
 
     from protomotions.envs.base_env.env import BaseEnv
+
     EnvClass = get_class(env_config._target_)
     env: BaseEnv = EnvClass(
         config=env_config,
@@ -194,27 +292,53 @@ def main():
     )
 
     from protomotions.agents.base_agent.agent import BaseAgent
+
     AgentClass = get_class(agent_config._target_)
-    agent: BaseAgent = AgentClass(config=agent_config, env=env, fabric=fabric, root_dir=checkpoint.parent)
+    agent: BaseAgent = AgentClass(
+        config=agent_config, env=env, fabric=fabric, root_dir=checkpoint.parent
+    )
     agent.setup()
     agent.load(str(checkpoint), load_env=False)
 
     # Load task metrics
     metrics = load_task_metrics(args.task)
-    log.info(f"Loaded {len(metrics)} metrics for task '{args.task}': {[m.name for m in metrics]}")
+    log.info(
+        f"Loaded {len(metrics)} metrics for task '{args.task}': {[m.name for m in metrics]}"
+    )
+
+    # Set up video recording
+    video_recorder = None
+    if args.record_video:
+        from eval.video_recorder import VideoRecorder
+
+        video_dir = Path(args.output_dir) / "videos"
+        video_recorder = VideoRecorder(str(video_dir))
+        ego_camera = get_egocentric_camera(env.simulator)
+        log.info(f"Video recording enabled, saving to {video_dir}")
 
     # Run episodes
     all_results = {m.name: [] for m in metrics}
 
     log.info(f"Running {args.num_episodes} episodes...")
     for ep in range(args.num_episodes):
-        episode_results = run_episode(env, agent, metrics)
+        if video_recorder:
+            video_recorder.new_episode()
+        episode_results = run_episode(
+            env,
+            agent,
+            metrics,
+            video_recorder=video_recorder,
+            ego_camera=ego_camera if video_recorder else None,
+            episode_num=ep,
+        )
         for i, result in enumerate(episode_results):
-            all_results[metrics[i].name].append({
-                "value": result.value,
-                "success": result.success,
-                **result.info,
-            })
+            all_results[metrics[i].name].append(
+                {
+                    "value": result.value,
+                    "success": result.success,
+                    **result.info,
+                }
+            )
         log.info(
             f"Episode {ep+1}/{args.num_episodes} — "
             + " | ".join(
@@ -222,6 +346,9 @@ def main():
                 for i, result in enumerate(episode_results)
             )
         )
+
+    if video_recorder:
+        video_recorder.save(f"{args.condition}.mp4")
 
     # Aggregate
     summary = {}
@@ -239,7 +366,11 @@ def main():
     def to_relative(path_str):
         """Make path relative to protomotions_root or output_dir parent if possible."""
         try:
-            return str(Path(path_str).resolve().relative_to(Path(args.protomotions_root).resolve().parent))
+            return str(
+                Path(path_str)
+                .resolve()
+                .relative_to(Path(args.protomotions_root).resolve().parent)
+            )
         except ValueError:
             return Path(path_str).name  # fallback: just filename
 
@@ -266,7 +397,9 @@ def main():
     print("=" * 60)
     for name, s in summary.items():
         print(f"  {name}:")
-        print(f"    success_rate : {s['success_rate']:.1%} ({int(s['success_rate']*args.num_episodes)}/{args.num_episodes})")
+        print(
+            f"    success_rate : {s['success_rate']:.1%} ({int(s['success_rate']*args.num_episodes)}/{args.num_episodes})"
+        )
         print(f"    mean_value   : {s['mean_value']:.4f}m")
         print(f"    min_value    : {s['min_value']:.4f}m")
     print("=" * 60)

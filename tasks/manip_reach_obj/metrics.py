@@ -18,6 +18,7 @@ def get_metrics():
             object_index=1,  # index 0 = table, index 1 = cube
             success_threshold=0.15,
             use_min=False,
+            overlay_label="Distance To Cube",
         ),
         DistanceToTarget(
             name="dist_right_hand_to_cube_min",

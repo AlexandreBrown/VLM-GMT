@@ -27,7 +27,7 @@ EGO_CAM_FOCAL_LENGTH = 24.0          # mm
 EGO_CAM_HORIZONTAL_APERTURE = 20.955 # mm
 EGO_CAM_CLIPPING = (0.05, 50.0)      # near / far in meters
 EGO_CAM_DEFAULT_PITCH_DEG = 50.0     # degrees downward
-EGO_CAM_OFFSET_POS = (0.08, 0.0, 0.0)  # 8cm forward from head center
+EGO_CAM_OFFSET_FORWARD = 0.08  # meters forward from head center
 
 # Key for the sensor in InteractiveScene
 _SCENE_KEY = "egocentric_camera"
@@ -46,6 +46,7 @@ def patch_scene_with_egocentric_camera(
     width: int = EGO_CAM_WIDTH,
     height: int = EGO_CAM_HEIGHT,
     pitch_deg: float = EGO_CAM_DEFAULT_PITCH_DEG,
+    offset_forward: float = EGO_CAM_OFFSET_FORWARD,
 ):
     """Add a head-mounted camera to the ProtoMotions scene config.
 
@@ -72,7 +73,7 @@ def patch_scene_with_egocentric_camera(
             clipping_range=EGO_CAM_CLIPPING,
         ),
         offset=CameraCfg.OffsetCfg(
-            pos=EGO_CAM_OFFSET_POS,
+            pos=(offset_forward, 0.0, 0.0),
             rot=_pitch_to_quat(pitch_deg),
             convention="world",
         ),

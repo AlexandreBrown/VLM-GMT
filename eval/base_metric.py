@@ -52,3 +52,11 @@ class Metric(ABC):
         Should NOT reset internal state (reset() does that).
         """
         ...
+
+    def get_overlay(self) -> tuple[str, bool] | None:
+        """Return (text, is_success) for video overlay, or None to skip.
+
+        Called each frame during recording. Override in subclasses to
+        show live metric values on the video.
+        """
+        return None
