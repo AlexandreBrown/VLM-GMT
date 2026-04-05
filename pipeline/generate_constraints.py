@@ -205,7 +205,7 @@ def constraints_reach_obj_gt(skeleton, cube_world_pos, frame_index, device: str)
 
 
 def constraints_vlm(skeleton, task, image_rgb, task_description, vlm_name,
-                     num_frames, output_dir, device: str) -> list:
+                     num_frames, output_dir, device: str, load_in_4bit: bool = True) -> list:
     """VLM predicts 3D constraint positions from an egocentric image.
 
     Loads system prompt from prompts/system.txt and task prompt from
@@ -219,7 +219,8 @@ def constraints_vlm(skeleton, task, image_rgb, task_description, vlm_name,
     from pipeline.vlm import load_vlm
 
     vlm = load_vlm(vlm_name, num_frames=num_frames, task=task,
-                    task_description=task_description)
+                    task_description=task_description,
+                    load_in_4bit=load_in_4bit)
     raw_constraints = vlm.query_constraints(image_rgb)
     print(f"[VLM] predicted {len(raw_constraints)} constraint(s):")
 
@@ -285,10 +286,11 @@ def build_constraints(task: str, condition: str, skeleton, device: str, **kwargs
             skeleton, task,
             kwargs["image_rgb"],
             kwargs.get("task_description"),
-            kwargs.get("vlm_name", "qwen2.5-vl-7b"),
+            kwargs.get("vlm_name", "qwen2.5-vl-72b"),
             kwargs["num_frames"],
             kwargs.get("output_dir"),
             device,
+            load_in_4bit=kwargs.get("load_in_4bit", True),
         )
 
     # GT conditions are task-specific

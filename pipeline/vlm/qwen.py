@@ -42,9 +42,10 @@ class QwenVLM(VLMBase):
 
     def __init__(
         self,
-        model_name: str = "Qwen/Qwen2.5-VL-7B-Instruct",
+        model_name: str = "Qwen/Qwen2.5-VL-72B-Instruct",
         device: str = "cuda",
         dtype: str = "bfloat16",
+        load_in_4bit: bool = True,
         num_frames: int = 90,
         task: str = "reach_obj",
         task_description: str | None = None,
@@ -52,6 +53,7 @@ class QwenVLM(VLMBase):
         self.model_name = model_name
         self.device = device
         self.dtype = dtype
+        self.load_in_4bit = load_in_4bit
         self.num_frames = num_frames
         self.task = task
         self.task_description = task_description
@@ -63,12 +65,17 @@ class QwenVLM(VLMBase):
         from transformers import Qwen2_5_VLForConditionalGeneration, AutoProcessor
 
         torch_dtype = getattr(torch, self.dtype)
-        print(f"[QwenVLM] Loading {self.model_name} ({self.dtype})...")
+        quant_str = "4-bit" if self.load_in_4bit else self.dtype
+        print(f"[QwenVLM] Loading {self.model_name} ({quant_str})...")
         self._processor = AutoProcessor.from_pretrained(self.model_name)
+        load_kwargs = dict(torch_dtype=torch_dtype, device_map="auto")
+        if self.load_in_4bit:
+            from transformers import BitsAndBytesConfig
+            load_kwargs["quantization_config"] = BitsAndBytesConfig(load_in_4bit=True)
+            load_kwargs.pop("torch_dtype")  # incompatible with bnb 4-bit
         self._model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
             self.model_name,
-            torch_dtype=torch_dtype,
-            device_map=self.device,
+            **load_kwargs,
         )
         self._model.eval()
         print("[QwenVLM] Ready.")

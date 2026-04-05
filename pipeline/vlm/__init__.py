@@ -2,13 +2,22 @@ from .base import VLMBase
 from .qwen import QwenVLM
 
 REGISTRY: dict[str, type[VLMBase]] = {
-    "qwen2.5-vl-7b": QwenVLM,
+    "qwen2.5-vl-7b":  QwenVLM,
+    "qwen2.5-vl-32b": QwenVLM,
+    "qwen2.5-vl-72b": QwenVLM,
+}
+
+HF_MODEL_IDS = {
+    "qwen2.5-vl-7b":  "Qwen/Qwen2.5-VL-7B-Instruct",
+    "qwen2.5-vl-32b": "Qwen/Qwen2.5-VL-32B-Instruct",
+    "qwen2.5-vl-72b": "Qwen/Qwen2.5-VL-72B-Instruct",
 }
 
 
-def load_vlm(name: str = "qwen2.5-vl-7b", **kwargs) -> VLMBase:
+def load_vlm(name: str = "qwen2.5-vl-72b", **kwargs) -> VLMBase:
     if name not in REGISTRY:
         raise ValueError(f"Unknown VLM '{name}'. Available: {list(REGISTRY)}")
-    vlm = REGISTRY[name](**kwargs)
+    hf_model_id = HF_MODEL_IDS[name]
+    vlm = REGISTRY[name](model_name=hf_model_id, **kwargs)
     vlm.load()
     return vlm

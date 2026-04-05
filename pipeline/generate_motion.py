@@ -140,7 +140,9 @@ def main():
         default="Reach the red cube with your right hand.",
         help="Natural-language task description passed to the VLM",
     )
-    parser.add_argument("--vlm-name", default="qwen2.5-vl-7b")
+    parser.add_argument("--vlm-name", default="qwen2.5-vl-72b")
+    parser.add_argument("--vlm-no-4bit", action="store_true", default=False,
+                        help="Disable 4-bit quantization (use bfloat16, requires more VRAM)")
 
     args = parser.parse_args()
 
@@ -206,6 +208,7 @@ def main():
         )
         constraint_kwargs["task_description"] = args.task_description
         constraint_kwargs["vlm_name"] = args.vlm_name
+        constraint_kwargs["load_in_4bit"] = not args.vlm_no_4bit
         constraint_kwargs["num_frames"] = num_frames
         constraint_kwargs["output_dir"] = str(output_dir)
 
