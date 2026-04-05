@@ -70,15 +70,10 @@ class Qwen35VLM(VLMBase):
         print(f"[Qwen35VLM] Loading {self.model_name} ...")
         self._processor = AutoProcessor.from_pretrained(self.model_name)
 
-        load_kwargs = dict(device_map="auto")
-        if self.load_in_4bit:
-            from transformers import BitsAndBytesConfig
-            load_kwargs["quantization_config"] = BitsAndBytesConfig(load_in_4bit=True)
-        else:
-            load_kwargs["torch_dtype"] = torch.bfloat16
-
+        # FP8 weights are already quantized — torch_dtype="auto" picks them up natively.
+        # bitsandbytes is not used here regardless of load_in_4bit.
         self._model = AutoModelForCausalLM.from_pretrained(
-            self.model_name, **load_kwargs
+            self.model_name, torch_dtype="auto", device_map="auto"
         )
         self._model.eval()
         print("[Qwen35VLM] Ready.")
