@@ -173,6 +173,25 @@ def make_root2d_constraint(skeleton, x: float, z: float, frame_index: int, devic
 # Task / condition recipes
 # --------------------------------------------------------------------------- #
 
+def constraints_walk_to_obj_gt(skeleton, box_world_pos, frame_index, device: str) -> list:
+    """
+    GT upper bound for walk_to_obj: root2d constrained to box XY position.
+
+    box_world_pos: [x, y, z] in IsaacLab coordinates (only x, y used)
+    frame_index: int or list[int] — constraint applied at the last frame only
+    """
+    x_isaaclab = float(box_world_pos[0])  # forward
+    y_isaaclab = float(box_world_pos[1])  # left
+    # Kimodo: x=left, z=forward  →  kimodo_x = isaaclab_y, kimodo_z = isaaclab_x
+    kimodo_x = y_isaaclab
+    kimodo_z = x_isaaclab
+    last_frame = frame_index if isinstance(frame_index, int) else list(frame_index)[-1]
+    print(f"[GT walk_to_obj] box XY (IsaacLab): ({x_isaaclab:.3f}, {y_isaaclab:.3f})")
+    print(f"  → root2d (Kimodo): x={kimodo_x:.3f}, z={kimodo_z:.3f}  frame={last_frame}")
+    return [make_root2d_constraint(skeleton, x=kimodo_x, z=kimodo_z,
+                                   frame_index=last_frame, device=device)]
+
+
 def constraints_reach_obj_gt(skeleton, cube_world_pos, frame_index, device: str) -> list:
     """
     GT upper bound for reach_obj: right hand constrained to cube world position.
@@ -217,11 +236,19 @@ def constraints_vlm(skeleton, task, image_rgb, task_description, vlm_name,
         ctype = c["type"]
         pos_isaaclab = np.array(c["position"], dtype=np.float32)
         frame_id = c["frame_id"]
-        target = isaaclab_to_kimodo(pos_isaaclab)
-        print(f"  {ctype} frame={frame_id}  IsaacLab={pos_isaaclab.tolist()}  Kimodo={[round(v,3) for v in target]}")
-        constraint_objects.append(
-            make_limb_constraint(skeleton, ctype, target, frame_id, device)
-        )
+        print(f"  {ctype} frame={frame_id}  IsaacLab={pos_isaaclab.tolist()}")
+        if ctype == "root2d":
+            # Only XY used; Kimodo: x=isaaclab_y (left), z=isaaclab_x (forward)
+            constraint_objects.append(
+                make_root2d_constraint(skeleton, x=float(pos_isaaclab[1]),
+                                       z=float(pos_isaaclab[0]),
+                                       frame_index=frame_id, device=device)
+            )
+        else:
+            target = isaaclab_to_kimodo(pos_isaaclab)
+            constraint_objects.append(
+                make_limb_constraint(skeleton, ctype, target, frame_id, device)
+            )
     return constraint_objects
 
 # --------------------------------------------------------------------------- #
@@ -265,12 +292,18 @@ def build_constraints(task: str, condition: str, skeleton, device: str, **kwargs
         )
 
     # GT conditions are task-specific
-    if task == "manip_reach_obj":
-        frame_index = kwargs.get("frame_index", 45)
-        if condition == "gt":
-            return constraints_reach_obj_gt(
-                skeleton, np.array(kwargs["cube_world_pos"], dtype=np.float32),
-                frame_index, device,
-            )
+    frame_index = kwargs.get("frame_index", 45)
+
+    if task == "manip_reach_obj" and condition == "gt":
+        return constraints_reach_obj_gt(
+            skeleton, np.array(kwargs["cube_world_pos"], dtype=np.float32),
+            frame_index, device,
+        )
+
+    if task == "walk_to_obj" and condition == "gt":
+        return constraints_walk_to_obj_gt(
+            skeleton, np.array(kwargs["box_world_pos"], dtype=np.float32),
+            frame_index, device,
+        )
 
     raise ValueError(f"Unknown task/condition: {task}/{condition}")

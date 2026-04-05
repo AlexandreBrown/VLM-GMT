@@ -124,9 +124,13 @@ def main():
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--protomotions-root", required=True)
 
-    # GT
+    # GT: manip_reach_obj
     parser.add_argument(
         "--cube-world-pos", nargs=3, type=float, metavar=("X", "Y", "Z")
+    )
+    # GT: walk_to_obj
+    parser.add_argument(
+        "--box-world-pos", nargs=3, type=float, metavar=("X", "Y", "Z")
     )
 
     # VLM
@@ -181,9 +185,14 @@ def main():
     constraint_kwargs = {"frame_index": frame_index}
 
     if args.condition == "gt":
-        if args.cube_world_pos is None:
-            parser.error("--cube-world-pos required for condition=gt")
-        constraint_kwargs["cube_world_pos"] = args.cube_world_pos
+        if args.task == "manip_reach_obj":
+            if args.cube_world_pos is None:
+                parser.error("--cube-world-pos required for condition=gt with task=manip_reach_obj")
+            constraint_kwargs["cube_world_pos"] = args.cube_world_pos
+        elif args.task == "walk_to_obj":
+            if args.box_world_pos is None:
+                parser.error("--box-world-pos required for condition=gt with task=walk_to_obj")
+            constraint_kwargs["box_world_pos"] = args.box_world_pos
 
     elif args.condition == "vlm":
         if args.image is None:

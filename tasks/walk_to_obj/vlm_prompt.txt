@@ -1,0 +1,1 @@
+The robot must walk to the object directly in front of it and stop close to it.

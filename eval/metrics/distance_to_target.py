@@ -23,6 +23,8 @@ class DistanceToTarget(Metric):
         success_threshold: Distance in meters below which the episode is a success.
         use_min:         If True, success is based on min distance during episode.
                          If False, success is based on final distance only.
+        use_2d:          If True, measure XY distance only (ignore Z). Useful for
+                         locomotion tasks where the robot root is always above the object.
         higher_is_better: Always False for distance metrics.
     """
 
@@ -35,6 +37,7 @@ class DistanceToTarget(Metric):
         object_index: int = 0,
         success_threshold: float = 0.1,
         use_min: bool = False,
+        use_2d: bool = False,
         overlay_label: str | None = None,
     ):
         self.name = name
@@ -42,6 +45,7 @@ class DistanceToTarget(Metric):
         self.object_index = object_index
         self.success_threshold = success_threshold
         self.use_min = use_min
+        self.use_2d = use_2d
         self.overlay_label = overlay_label
 
         self._link_index = None      # resolved on first update
@@ -73,7 +77,10 @@ class DistanceToTarget(Metric):
         # Scene object position from simulator (already in world frame): (num_envs, 3)
         obj_pos = env.simulator._object[self.object_index].data.root_pos_w
 
-        dist = torch.norm(link_pos - obj_pos, dim=-1)  # (num_envs,)
+        if self.use_2d:
+            dist = torch.norm(link_pos[:, :2] - obj_pos[:, :2], dim=-1)
+        else:
+            dist = torch.norm(link_pos - obj_pos, dim=-1)  # (num_envs,)
         self._distances.append(dist[0].item())
 
     def get_overlay(self) -> tuple[str, bool] | None:

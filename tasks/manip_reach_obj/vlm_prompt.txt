@@ -1,1 +1,1 @@
-Reach the red cube on the table with your right hand. Estimate the cube's 3D position and output a right-hand constraint to reach it near the end of the motion.
+The robot must reach the red cube on the table and keep its hand at the cube once reached.
