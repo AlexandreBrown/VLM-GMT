@@ -321,7 +321,7 @@ def build_constraints(task: str, condition: str, skeleton, device: str, **kwargs
             skeleton, task,
             kwargs["image_rgb"],
             kwargs.get("task_description"),
-            kwargs.get("vlm_name", "qwen3.5-35b-a3b"),
+            kwargs.get("vlm_name", "qwen2.5-vl-72b"),
             kwargs["num_frames"],
             kwargs.get("output_dir"),
             device,
