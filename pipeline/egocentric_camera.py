@@ -104,6 +104,30 @@ def capture_egocentric_frame(camera, env_idx: int = 0, dt: float = 0.0) -> dict:
     return {"image_rgb": rgb.astype(np.uint8)}
 
 
+def orient_robot_with_yaw(simulator, yaw_deg: float = 0.0, env_idx: int = 0):
+    """Set the robot root yaw to a fixed angle. Call after env.reset().
+
+    yaw_deg=0 matches the default eval orientation (robot faces +X).
+    Adjust to match whatever the eval starting pose is for the task.
+    """
+    import torch
+
+    yaw = math.radians(yaw_deg)
+    robot = simulator._robot
+    root_state = robot.data.default_root_state[env_idx].clone().unsqueeze(0)
+    root_state[0, :3] = robot.data.root_pos_w[env_idx]
+    root_state[0, 3] = math.cos(yaw / 2)  # w
+    root_state[0, 4] = 0.0                 # x
+    root_state[0, 5] = 0.0                 # y
+    root_state[0, 6] = math.sin(yaw / 2)   # z
+    root_state[0, 7:] = 0.0
+
+    env_ids = torch.tensor([env_idx], device=robot.device)
+    robot.write_root_state_to_sim(root_state.to(robot.device), env_ids)
+    simulator._sim.step(render=True)
+    print(f"[ego_camera] Robot yaw set to {yaw_deg:.1f}°")
+
+
 def orient_robot_toward_objects(simulator, env_idx: int = 0):
     """Yaw the robot root to face the first scene object. Call after env.reset()."""
     import torch

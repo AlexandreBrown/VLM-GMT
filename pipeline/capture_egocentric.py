@@ -34,6 +34,9 @@ parser.add_argument("--width", type=int, default=640)
 parser.add_argument("--height", type=int, default=480)
 parser.add_argument("--pitch-deg", type=float, default=60.0,
                     help="Camera downward tilt in degrees (0=horizontal, 90=straight down)")
+parser.add_argument("--robot-yaw-deg", type=float, default=0.0,
+                    help="Fixed robot yaw in degrees (0 = faces +X, matches eval default). "
+                         "Tweak to match the eval starting orientation for the task.")
 parser.add_argument("--warmup-steps", type=int, default=10)
 parser.add_argument("--prefix", type=str, default="ego")
 parser.add_argument("--seed", type=int, default=0)
@@ -77,7 +80,7 @@ def main():
         get_egocentric_camera,
         capture_egocentric_frame,
         save_egocentric_frame,
-        orient_robot_toward_objects,
+        orient_robot_with_yaw,
     )
     patch_scene_with_egocentric_camera(
         width=args.width, height=args.height, pitch_deg=args.pitch_deg
@@ -142,7 +145,7 @@ def main():
         print("[capture] Resetting environment ...")
         env.reset()
 
-        orient_robot_toward_objects(env.simulator, env_idx=0)
+        orient_robot_with_yaw(env.simulator, yaw_deg=args.robot_yaw_deg, env_idx=0)
 
         # Render-only warmup (no physics) so robot stays standing
         for _ in range(args.warmup_steps):

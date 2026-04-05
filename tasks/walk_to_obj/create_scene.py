@@ -19,7 +19,7 @@ from protomotions.components.scene_lib import (
 
 
 def create_walk_scene(
-    box_pos: tuple = (1.5, -1.5, 0.25),
+    box_pos: tuple = (1.5, -0.8, 0.25),
     box_width: float = 0.4,
     box_depth: float = 0.4,
     box_height: float = 0.5,
@@ -47,7 +47,7 @@ def parse_color(s: str) -> tuple:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--box-pos", nargs=3, type=float, default=[1.5, -1.5, 0.25],
+    parser.add_argument("--box-pos", nargs=3, type=float, default=[1.5, -0.8, 0.25],
                         metavar=("X", "Y", "Z"))
     parser.add_argument("--box-width", type=float, default=0.4)
     parser.add_argument("--box-depth", type=float, default=0.4)

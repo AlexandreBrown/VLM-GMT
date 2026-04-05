@@ -236,7 +236,7 @@ def main():
     )
 
     # ── Save CSV ───────────────────────────────────────────────────────────
-    csv_path = output_dir / "reach.csv"
+    csv_path = output_dir / f"{args.task}.csv"
     converter = MujocoQposConverter(model.skeleton)
     qpos = converter.dict_to_qpos(output, device)
     converter.save_csv(qpos, str(csv_path))
