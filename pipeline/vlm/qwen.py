@@ -118,6 +118,7 @@ class QwenVLM(VLMBase):
             output_ids[:, input_len:], skip_special_tokens=True
         )[0].strip()
 
+        print(f"[QwenVLM] Raw response:\n{raw}")
         return self._parse(raw)
 
     @staticmethod
