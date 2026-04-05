@@ -33,20 +33,20 @@ Each element must have exactly these keys:
   "frame_id": target frame index, 0 to {max_frame} (int)
   "position": [x, y, z] in world coordinates, meters (list of 3 floats)
 
---- Examples ---
+--- Examples (illustrative only — do NOT copy these values, estimate from the image) ---
 
-Right hand reaches an object 0.5 m forward on a 0.75 m table, constrained at frame 80:
-[{{"frame_id": 80, "type": "right-hand", "position": [0.5, 0.0, 0.75]}}]
+Right hand reaches an object 0.73 m forward, 0.12 m to the right, on a 0.81 m surface, at frame 74:
+[{{"frame_id": 74, "type": "right-hand", "position": [0.73, -0.12, 0.81]}}]
 
-Left foot steps onto a platform 1.0 m forward, 0.2 m high, at frame 40:
-[{{"frame_id": 40, "type": "left-foot", "position": [1.0, 0.0, 0.2]}}]
+Left foot steps onto a ledge 1.34 m forward, 0.18 m high, at frame 38:
+[{{"frame_id": 38, "type": "left-foot", "position": [1.34, 0.21, 0.18]}}]
 
-Robot root walks to 1.0 m forward by end of motion (root2d, Z ignored):
-[{{"frame_id": {max_frame}, "type": "root2d", "position": [1.0, 0.0, 0.0]}}]
+Robot root walks to a target 2.17 m forward and 1.43 m to the right by end of motion (root2d, Z ignored):
+[{{"frame_id": {max_frame}, "type": "root2d", "position": [2.17, -1.43, 0.0]}}]
 
-Multiple constraints across frames (right hand waves up then settles on an object):
+Multiple constraints across frames (hand approaches then holds an object):
 [
-  {{"frame_id": 30, "type": "right-hand", "position": [0.3, -0.2, 1.4]}},
-  {{"frame_id": 60, "type": "right-hand", "position": [0.4, -0.1, 1.0]}},
-  {{"frame_id": {max_frame}, "type": "right-hand", "position": [0.5, 0.0, 0.75]}}
+  {{"frame_id": 45, "type": "right-hand", "position": [0.61, -0.08, 1.12]}},
+  {{"frame_id": 67, "type": "right-hand", "position": [0.84, -0.11, 0.93]}},
+  {{"frame_id": {max_frame}, "type": "right-hand", "position": [0.91, -0.14, 0.87]}}
 ]
