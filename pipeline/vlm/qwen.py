@@ -90,7 +90,14 @@ class QwenVLM(VLMBase):
 
         system = get_system_prompt(self.num_frames)
         task_text = task_description or get_task_prompt(self.task, self.task_description)
-        user = f"Task: {task_text}\nOutput the JSON array of constraints."
+        user = (
+            f"Task: {task_text}\n"
+            "Look at the image carefully. Think step by step:\n"
+            "1. What objects are visible and where are they relative to the robot?\n"
+            "2. What body parts need to be constrained and at which frames to achieve the task?\n"
+            "3. What are the estimated 3D world positions of those targets?\n"
+            "Now output the JSON array of constraints. You MUST output at least 1 constraint."
+        )
 
         messages = [
             {"role": "system", "content": system},
@@ -111,7 +118,7 @@ class QwenVLM(VLMBase):
         ).to(self.device)
 
         with torch.no_grad():
-            output_ids = self._model.generate(**inputs, max_new_tokens=256)
+            output_ids = self._model.generate(**inputs, max_new_tokens=512)
 
         input_len = inputs["input_ids"].shape[1]
         raw = self._processor.batch_decode(
@@ -119,7 +126,10 @@ class QwenVLM(VLMBase):
         )[0].strip()
 
         print(f"[QwenVLM] Raw response:\n{raw}")
-        return self._parse(raw)
+        constraints = self._parse(raw)
+        if not constraints:
+            raise ValueError(f"[QwenVLM] Model returned 0 constraints. Raw response: {raw!r}")
+        return constraints
 
     @staticmethod
     def _parse(raw: str) -> list[dict[str, Any]]:

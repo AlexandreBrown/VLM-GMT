@@ -173,16 +173,18 @@ def main():
     # ── Build constraints (in memory, no JSON / no IK) ─────────────────────
     from pipeline.generate_constraints import build_constraints
 
-    # Resolve which frames to constrain
     num_frames = int(args.duration * model.fps)
-    if args.frame_index is not None:
-        frame_index = args.frame_index
-    else:
-        n = min(args.constraint_last_n_frames, num_frames)
-        frame_index = list(range(num_frames - n, num_frames))
-    print(f"[generate_motion] Constraint frames: {frame_index}")
+    constraint_kwargs = {"num_frames": num_frames}
 
-    constraint_kwargs = {"frame_index": frame_index}
+    if args.condition == "gt":
+        # Resolve keyframes for GT (VLM picks its own frame_ids)
+        if args.frame_index is not None:
+            frame_index = args.frame_index
+        else:
+            n = min(args.constraint_last_n_frames, num_frames)
+            frame_index = list(range(num_frames - n, num_frames))
+        print(f"[generate_motion] GT constraint frames: {frame_index}")
+        constraint_kwargs["frame_index"] = frame_index
 
     if args.condition == "gt":
         if args.task == "manip_reach_obj":
