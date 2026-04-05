@@ -261,6 +261,11 @@ def constraints_vlm(skeleton, task, image_rgb, task_description, vlm_name,
             json.dump(raw_constraints, f, indent=2)
         print(f"[VLM] Saved constraints to {log_path}")
 
+    return _build_vlm_constraints_from_raw(skeleton, raw_constraints, device)
+
+
+def _build_vlm_constraints_from_raw(skeleton, raw_constraints: list, device: str) -> list:
+    """Convert raw VLM dicts to Kimodo constraint objects using the skeleton."""
     constraint_objects = []
     for c in raw_constraints:
         ctype = c["type"]
@@ -268,7 +273,6 @@ def constraints_vlm(skeleton, task, image_rgb, task_description, vlm_name,
         frame_id = c["frame_id"]
         print(f"  {ctype} frame={frame_id}  IsaacLab={pos_isaaclab.tolist()}")
         if ctype == "root2d":
-            # Only XY used; Kimodo: x=isaaclab_y (left), z=isaaclab_x (forward)
             constraint_objects.append(
                 make_root2d_constraint(skeleton, x=float(pos_isaaclab[1]),
                                        z=float(pos_isaaclab[0]),
