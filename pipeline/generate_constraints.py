@@ -204,6 +204,35 @@ def constraints_reach_obj_gt(skeleton, cube_world_pos, frame_index, device: str)
     return [make_limb_constraint(skeleton, "right-hand", target, frame_index, device)]
 
 
+def query_vlm_raw(task: str, image_rgb, task_description, vlm_name: str,
+                   load_in_4bit: bool, num_frames: int, output_dir: str) -> list:
+    """Run the VLM and return raw constraint dicts. No skeleton required.
+
+    Call this BEFORE loading Kimodo to avoid concurrent GPU memory usage.
+    Returns a list of dicts: [{"type": ..., "position": [...], "frame_id": ...}, ...]
+    """
+    import json
+    import sys, os
+    from pathlib import Path
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from pipeline.vlm import load_vlm
+
+    vlm = load_vlm(vlm_name, num_frames=num_frames, task=task,
+                    task_description=task_description,
+                    load_in_4bit=load_in_4bit)
+    raw_constraints = vlm.query_constraints(image_rgb)
+    print(f"[VLM] predicted {len(raw_constraints)} constraint(s):")
+
+    if output_dir:
+        log_path = Path(output_dir) / "vlm_constraints.json"
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(log_path, "w") as f:
+            json.dump(raw_constraints, f, indent=2)
+        print(f"[VLM] Saved constraints to {log_path}")
+
+    return raw_constraints
+
+
 def constraints_vlm(skeleton, task, image_rgb, task_description, vlm_name,
                      num_frames, output_dir, device: str, load_in_4bit: bool = True) -> list:
     """VLM predicts 3D constraint positions from an egocentric image.
@@ -280,8 +309,10 @@ def build_constraints(task: str, condition: str, skeleton, device: str, **kwargs
     if condition == "baseline":
         return []
 
-    # VLM condition is task-agnostic (prompt loaded from tasks/<task>/vlm_prompt.txt)
+    # VLM condition: accept pre-queried raw dicts (from query_vlm_raw) or run VLM inline
     if condition == "vlm":
+        if "raw_vlm_constraints" in kwargs:
+            return _build_vlm_constraints_from_raw(skeleton, kwargs["raw_vlm_constraints"], device)
         return constraints_vlm(
             skeleton, task,
             kwargs["image_rgb"],

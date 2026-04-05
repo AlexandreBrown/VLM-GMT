@@ -164,7 +164,34 @@ def main():
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     print(f"[generate_motion] device={device}  condition={args.condition}")
 
-    # ── Load model ─────────────────────────────────────────────────────────
+    # ── VLM: query BEFORE loading Kimodo to avoid concurrent GPU memory usage ──
+    # VLM only needs the image; skeleton is not required at this stage.
+    raw_vlm_constraints = None
+    if args.condition == "vlm":
+        if args.image is None:
+            parser.error("--image required for condition=vlm")
+        from PIL import Image as PILImage
+        from pipeline.generate_constraints import query_vlm_raw
+        import gc
+
+        image_rgb = np.array(PILImage.open(args.image).convert("RGB"))
+        num_frames_approx = int(args.duration * 30)  # 30fps estimate before model loads
+        raw_vlm_constraints = query_vlm_raw(
+            task=args.task,
+            image_rgb=image_rgb,
+            task_description=args.task_description,
+            vlm_name=args.vlm_name,
+            load_in_4bit=not args.vlm_no_4bit,
+            num_frames=num_frames_approx,
+            output_dir=str(output_dir),
+        )
+        # Free VLM memory before loading Kimodo
+        gc.collect()
+        import torch as _torch
+        _torch.cuda.empty_cache()
+        print("[generate_motion] VLM unloaded. Loading Kimodo ...")
+
+    # ── Load Kimodo ────────────────────────────────────────────────────────
     from kimodo import load_model
     from kimodo.tools import seed_everything
     from kimodo.exports.mujoco import MujocoQposConverter
@@ -172,14 +199,13 @@ def main():
     print(f"[generate_motion] Loading model '{args.kimodo_model}' ...")
     model = load_model(args.kimodo_model, device=device)
 
-    # ── Build constraints (in memory, no JSON / no IK) ─────────────────────
+    # ── Build constraints (skeleton now available) ─────────────────────────
     from pipeline.generate_constraints import build_constraints
 
     num_frames = int(args.duration * model.fps)
     constraint_kwargs = {"num_frames": num_frames}
 
     if args.condition == "gt":
-        # Resolve keyframes for GT (VLM picks its own frame_ids)
         if args.frame_index is not None:
             frame_index = args.frame_index
         else:
@@ -187,8 +213,6 @@ def main():
             frame_index = list(range(num_frames - n, num_frames))
         print(f"[generate_motion] GT constraint frames: {frame_index}")
         constraint_kwargs["frame_index"] = frame_index
-
-    if args.condition == "gt":
         if args.task == "manip_reach_obj":
             if args.cube_world_pos is None:
                 parser.error("--cube-world-pos required for condition=gt with task=manip_reach_obj")
@@ -199,18 +223,7 @@ def main():
             constraint_kwargs["box_world_pos"] = args.box_world_pos
 
     elif args.condition == "vlm":
-        if args.image is None:
-            parser.error("--image required for condition=vlm")
-        from PIL import Image as PILImage
-
-        constraint_kwargs["image_rgb"] = np.array(
-            PILImage.open(args.image).convert("RGB")
-        )
-        constraint_kwargs["task_description"] = args.task_description
-        constraint_kwargs["vlm_name"] = args.vlm_name
-        constraint_kwargs["load_in_4bit"] = not args.vlm_no_4bit
-        constraint_kwargs["num_frames"] = num_frames
-        constraint_kwargs["output_dir"] = str(output_dir)
+        constraint_kwargs["raw_vlm_constraints"] = raw_vlm_constraints
 
     print(f"[generate_motion] Building constraints ...")
     constraint_lst = build_constraints(
