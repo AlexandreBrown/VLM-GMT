@@ -47,7 +47,7 @@ class Qwen35VLM(VLMBase):
 
     def __init__(
         self,
-        model_name: str = "Qwen/Qwen3.5-35B-A3B-FP8",
+        model_name: str = "Qwen/Qwen3.5-27B-FP8",
         device: str = "cuda",
         num_frames: int = 90,
         task: str = "reach_obj",
@@ -65,14 +65,14 @@ class Qwen35VLM(VLMBase):
 
     def load(self) -> None:
         import torch
-        from transformers import AutoModelForCausalLM, AutoProcessor
+        from transformers import AutoModelForImageTextToText, AutoProcessor
 
         print(f"[Qwen35VLM] Loading {self.model_name} ...")
         self._processor = AutoProcessor.from_pretrained(self.model_name)
 
         # FP8 weights are already quantized — torch_dtype="auto" picks them up natively.
-        # bitsandbytes is not used here regardless of load_in_4bit.
-        self._model = AutoModelForCausalLM.from_pretrained(
+        # AutoModelForImageTextToText is the correct class for VL generation models.
+        self._model = AutoModelForImageTextToText.from_pretrained(
             self.model_name, torch_dtype="auto", device_map="auto"
         )
         self._model.eval()

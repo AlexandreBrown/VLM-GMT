@@ -19,7 +19,7 @@ HF_MODEL_IDS = {
 }
 
 
-def load_vlm(name: str = "qwen2.5-vl-72b", **kwargs) -> VLMBase:
+def load_vlm(name: str = "qwen3.5-27b", **kwargs) -> VLMBase:
     if name not in REGISTRY:
         raise ValueError(f"Unknown VLM '{name}'. Available: {list(REGISTRY)}")
     hf_model_id = HF_MODEL_IDS[name]
