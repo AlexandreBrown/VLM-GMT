@@ -140,7 +140,7 @@ def main():
         default="Reach the red cube with your right hand.",
         help="Natural-language task description passed to the VLM",
     )
-    parser.add_argument("--vlm-name", default="qwen2.5-vl-72b")
+    parser.add_argument("--vlm-name", default="qwen3.5-35b-a3b")
     parser.add_argument("--vlm-no-4bit", action="store_true", default=False,
                         help="Disable 4-bit quantization (use bfloat16, requires more VRAM)")
 
