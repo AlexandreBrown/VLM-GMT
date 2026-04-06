@@ -1,0 +1,92 @@
+[
+  {
+    "frame_id": 30,
+    "type": "root2d",
+    "position": [
+      0.5,
+      0.0,
+      0.0
+    ]
+  },
+  {
+    "frame_id": 60,
+    "type": "root2d",
+    "position": [
+      0.5,
+      0.5,
+      0.0
+    ]
+  },
+  {
+    "frame_id": 90,
+    "type": "root2d",
+    "position": [
+      1.0,
+      0.5,
+      0.0
+    ]
+  },
+  {
+    "frame_id": 120,
+    "type": "root2d",
+    "position": [
+      1.0,
+      1.0,
+      0.0
+    ]
+  },
+  {
+    "frame_id": 150,
+    "type": "root2d",
+    "position": [
+      1.5,
+      1.0,
+      0.0
+    ]
+  },
+  {
+    "frame_id": 180,
+    "type": "root2d",
+    "position": [
+      1.5,
+      1.5,
+      0.0
+    ]
+  },
+  {
+    "frame_id": 210,
+    "type": "root2d",
+    "position": [
+      2.0,
+      1.5,
+      0.0
+    ]
+  },
+  {
+    "frame_id": 240,
+    "type": "root2d",
+    "position": [
+      2.0,
+      2.0,
+      0.0
+    ]
+  },
+  {
+    "frame_id": 270,
+    "type": "root2d",
+    "position": [
+      2.5,
+      2.0,
+      0.0
+    ]
+  },
+  {
+    "frame_id": 299,
+    "type": "root2d",
+    "position": [
+      2.5,
+      2.5,
+      0.0
+    ]
+  }
+]
