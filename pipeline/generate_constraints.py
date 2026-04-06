@@ -197,7 +197,7 @@ def constraints_walk_to_obj_gt(skeleton, box_world_pos, frame_index, device: str
     return constraints
 
 
-def constraints_walk_on_green_line_avoid_obs_gt(
+def constraints_navigate_maze_gt(
     skeleton, obs_world_positions: list, line_end_x: float, num_frames: int, device: str
 ) -> list:
     """
@@ -231,14 +231,14 @@ def constraints_walk_on_green_line_avoid_obs_gt(
             x = bx + x_offset
             f = frame_for_x(x)
             # IsaacLab (x=fwd, y=left) → Kimodo (x=left, z=fwd)
-            print(f"[GT walk_on_green_line_avoid_obs] obs ({bx:.2f}, {by:.2f})"
+            print(f"[GT navigate_maze] obs ({bx:.2f}, {by:.2f})"
                   f" {label}: kimodo_z={x:.2f}, kimodo_x={avoidance_y:.2f}, frame={f}")
             constraints.append(make_root2d_constraint(
                 skeleton, x=avoidance_y, z=x, frame_index=f, device=device
             ))
 
     # Final waypoint: center of line end
-    print(f"[GT walk_on_green_line_avoid_obs] final: kimodo_z={line_end_x:.2f}, kimodo_x=0.0, frame={num_frames-1}")
+    print(f"[GT navigate_maze] final: kimodo_z={line_end_x:.2f}, kimodo_x=0.0, frame={num_frames-1}")
     constraints.append(make_root2d_constraint(
         skeleton, x=0.0, z=float(line_end_x), frame_index=num_frames - 1, device=device
     ))
@@ -396,8 +396,8 @@ def build_constraints(task: str, condition: str, skeleton, device: str, **kwargs
             frame_index, device,
         )
 
-    if task == "walk_on_green_line_avoid_obs" and condition == "gt":
-        return constraints_walk_on_green_line_avoid_obs_gt(
+    if task == "navigate_maze" and condition == "gt":
+        return constraints_navigate_maze_gt(
             skeleton,
             [np.array(p, dtype=np.float32) for p in kwargs["obs_world_positions"]],
             kwargs.get("line_end_x", 5.75),

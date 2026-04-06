@@ -60,7 +60,7 @@ VLM-GMT/
 ├── tasks/
 │   ├── manip_reach_obj/                 # Red cube on a table
 │   ├── walk_to_obj/                     # Green box on the ground
-│   └── walk_on_green_line_avoid_obs/    # Green line + 3 obstacles
+│   └── navigate_maze/    # 2 staggering walls (maze-like)
 │       Each task contains: create_scene.py, metrics.py, kimodo_prompt.txt, vlm_prompt.txt
 ├── pipeline/
 │   ├── generate_motion.py               # Constraints → Kimodo → motion.pt  (cluster)
@@ -76,11 +76,11 @@ VLM-GMT/
 │   ├── video_recorder.py                # Optional video capture
 │   └── metrics/
 │       ├── distance_to_target.py        # Supports 2D, 3D, fixed target pos
-│       └── walk_on_line.py              # Trajectory-based line compliance metric
+│       └── navigate_maze.py              # Trajectory-based line compliance metric
 ├── scripts/                             # Per-task command scripts
 │   ├── manip_reach_obj.sh
 │   ├── walk_to_obj.sh
-│   └── walk_on_green_line_avoid_obs.sh
+│   └── navigate_maze.sh
 └── outputs/                             # Generated data (gitignored)
 ```
 
@@ -92,7 +92,7 @@ Each task has a script in `scripts/` with all commands (create scene, capture, g
 |---|---|---|
 | **manip_reach_obj** | `scripts/manip_reach_obj.sh` | `dist(right_wrist, cube) < 0.15m` at episode end |
 | **walk_to_obj** | `scripts/walk_to_obj.sh` | `dist_2d(pelvis, box) < 0.5m` at episode end |
-| **walk_on_green_line_avoid_obs** | `scripts/walk_on_green_line_avoid_obs.sh` | Stays on line (±0.5m Y) AND passes all 3 obstacles |
+| **navigate_maze** | `scripts/navigate_maze.sh` | Avoids both walls laterally AND final x past wall 2 + 0.5m |
 
 ### Pipeline order per task
 

@@ -1,1 +1,0 @@
-A person walks forward along a path while stepping around obstacles in their way.

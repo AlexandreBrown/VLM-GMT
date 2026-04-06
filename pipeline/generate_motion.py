@@ -132,14 +132,12 @@ def main():
     parser.add_argument(
         "--box-world-pos", nargs=3, type=float, metavar=("X", "Y", "Z")
     )
-    # GT: walk_on_green_line_avoid_obs
+    # GT: navigate_maze
     parser.add_argument("--obs1-world-pos", nargs=3, type=float, metavar=("X", "Y", "Z"),
-                        default=[1.5, 0.20, 0.30])
+                        default=[2.0, 0.1, 0.5])
     parser.add_argument("--obs2-world-pos", nargs=3, type=float, metavar=("X", "Y", "Z"),
-                        default=[3.0, -0.20, 0.35])
-    parser.add_argument("--obs3-world-pos", nargs=3, type=float, metavar=("X", "Y", "Z"),
-                        default=[4.5, 0.15, 0.25])
-    parser.add_argument("--line-end-x", type=float, default=5.75,
+                        default=[4.0, -0.1, 0.5])
+    parser.add_argument("--line-end-x", type=float, default=5.5,
                         help="X coordinate of the far end of the green line (metric target)")
 
     # VLM
@@ -230,9 +228,9 @@ def main():
             if args.box_world_pos is None:
                 parser.error("--box-world-pos required for condition=gt with task=walk_to_obj")
             constraint_kwargs["box_world_pos"] = args.box_world_pos
-        elif args.task == "walk_on_green_line_avoid_obs":
+        elif args.task == "navigate_maze":
             constraint_kwargs["obs_world_positions"] = [
-                args.obs1_world_pos, args.obs2_world_pos, args.obs3_world_pos
+                args.obs1_world_pos, args.obs2_world_pos,
             ]
             constraint_kwargs["line_end_x"] = args.line_end_x
 
