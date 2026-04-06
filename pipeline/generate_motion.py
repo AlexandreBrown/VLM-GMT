@@ -117,8 +117,8 @@ def main():
     parser.add_argument(
         "--constraint-last-n-frames",
         type=int,
-        default=20,
-        help="Constrain the last N frames of the motion (default 20). "
+        default=1,
+        help="Constrain the last N frames of the motion (default 1). "
              "Ignored if --frame-index is set.",
     )
     parser.add_argument("--output-dir", required=True)

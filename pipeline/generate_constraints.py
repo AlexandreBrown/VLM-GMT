@@ -185,11 +185,16 @@ def constraints_walk_to_obj_gt(skeleton, box_world_pos, frame_index, device: str
     # Kimodo: x=left, z=forward  →  kimodo_x = isaaclab_y, kimodo_z = isaaclab_x
     kimodo_x = y_isaaclab
     kimodo_z = x_isaaclab
-    last_frame = frame_index if isinstance(frame_index, int) else list(frame_index)[-1]
-    print(f"[GT walk_to_obj] box XY (IsaacLab): ({x_isaaclab:.3f}, {y_isaaclab:.3f})")
-    print(f"  → root2d (Kimodo): x={kimodo_x:.3f}, z={kimodo_z:.3f}  frame={last_frame}")
-    return [make_root2d_constraint(skeleton, x=kimodo_x, z=kimodo_z,
-                                   frame_index=last_frame, device=device)]
+    if isinstance(frame_index, int):
+        frame_index = [frame_index]
+    
+    constraints = []
+    for fi in frame_index:
+        print(f"[GT walk_to_obj] box XY (IsaacLab): ({x_isaaclab:.3f}, {y_isaaclab:.3f})")
+        print(f"  → root2d (Kimodo): x={kimodo_x:.3f}, z={kimodo_z:.3f}  frame={fi}")
+        constraints.append(make_root2d_constraint(skeleton, x=kimodo_x, z=kimodo_z,
+                                   frame_index=fi, device=device))
+    return constraints
 
 
 def constraints_reach_obj_gt(skeleton, cube_world_pos, frame_index, device: str) -> list:
