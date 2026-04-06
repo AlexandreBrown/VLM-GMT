@@ -19,7 +19,7 @@ from protomotions.components.scene_lib import (
 
 
 def create_walk_scene(
-    box_pos: tuple = (1.5, -0.8, 0.25),
+    box_pos: tuple = (1.25, -0.83, 0.25),
     box_width: float = 0.4,
     box_depth: float = 0.4,
     box_height: float = 0.5,
@@ -38,7 +38,9 @@ def create_walk_scene(
     scene = Scene(objects=[box])
     SceneLib.save_scenes_to_file([scene], output)
     print(f"[create_scene] Saved '{output}'")
-    print(f"  box: pos={box_pos}, size={box_width}x{box_depth}x{box_height}m, color={box_color}")
+    print(
+        f"  box: pos={box_pos}, size={box_width}x{box_depth}x{box_height}m, color={box_color}"
+    )
 
 
 def parse_color(s: str) -> tuple:
@@ -47,16 +49,29 @@ def parse_color(s: str) -> tuple:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--box-pos", nargs=3, type=float, default=[1.5, -0.8, 0.25],
-                        metavar=("X", "Y", "Z"))
+    parser.add_argument(
+        "--box-pos",
+        nargs=3,
+        type=float,
+        default=[1.25, -0.8, 0.25],
+        metavar=("X", "Y", "Z"),
+    )
     parser.add_argument("--box-width", type=float, default=0.4)
     parser.add_argument("--box-depth", type=float, default=0.4)
     parser.add_argument("--box-height", type=float, default=0.5)
-    parser.add_argument("--box-color", type=parse_color, default=(0.2, 0.6, 0.2),
-                        help="RGB floats, e.g. '0.2,0.6,0.2'")
+    parser.add_argument(
+        "--box-color",
+        type=parse_color,
+        default=(0.2, 0.6, 0.2),
+        help="RGB floats, e.g. '0.2,0.6,0.2'",
+    )
     parser.add_argument("--output", default="outputs/walk_to_obj_scene.pt")
     args = parser.parse_args()
     create_walk_scene(
-        tuple(args.box_pos), args.box_width, args.box_depth, args.box_height,
-        args.box_color, args.output,
+        tuple(args.box_pos),
+        args.box_width,
+        args.box_depth,
+        args.box_height,
+        args.box_color,
+        args.output,
     )
