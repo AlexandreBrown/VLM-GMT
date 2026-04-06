@@ -3,17 +3,8 @@
     "frame_id": 30,
     "type": "root2d",
     "position": [
-      0.5,
+      0.8,
       -0.5,
-      0.0
-    ]
-  },
-  {
-    "frame_id": 60,
-    "type": "root2d",
-    "position": [
-      1.0,
-      0.5,
       0.0
     ]
   },
@@ -21,17 +12,44 @@
     "frame_id": 90,
     "type": "root2d",
     "position": [
-      1.5,
+      1.8,
+      0.5,
+      0.0
+    ]
+  },
+  {
+    "frame_id": 150,
+    "type": "root2d",
+    "position": [
+      2.8,
       -0.5,
       0.0
     ]
   },
   {
-    "frame_id": 120,
+    "frame_id": 210,
     "type": "root2d",
     "position": [
-      2.0,
+      3.8,
       0.5,
+      0.0
+    ]
+  },
+  {
+    "frame_id": 270,
+    "type": "root2d",
+    "position": [
+      4.8,
+      -0.5,
+      0.0
+    ]
+  },
+  {
+    "frame_id": 299,
+    "type": "root2d",
+    "position": [
+      5.8,
+      0.0,
       0.0
     ]
   }
