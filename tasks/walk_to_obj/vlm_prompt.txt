@@ -1,1 +1,1 @@
-The robot must walk toward the green box visible in the scene and stop when it reaches the box. Identify the 3D position of the green box on the ground and predict a root2d constraint at that position.
+The robot must walk toward the green box visible in the scene and stop when it reaches the box.
