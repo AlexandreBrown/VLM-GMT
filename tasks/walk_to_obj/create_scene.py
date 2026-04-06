@@ -19,11 +19,11 @@ from protomotions.components.scene_lib import (
 
 
 def create_walk_scene(
-    box_pos: tuple = (1.25, -0.83, 0.25),
-    box_width: float = 0.4,
-    box_depth: float = 0.4,
-    box_height: float = 0.5,
-    box_color: tuple = (0.2, 0.6, 0.2),
+    box_pos: tuple,
+    box_width: float,
+    box_depth: float,
+    box_height: float,
+    box_color: tuple,
     output: str = "outputs/walk_to_obj_scene.pt",
 ) -> None:
     box = BoxSceneObject(
@@ -53,7 +53,7 @@ if __name__ == "__main__":
         "--box-pos",
         nargs=3,
         type=float,
-        default=[1.25, -0.8, 0.25],
+        default=[3.0, -1.1, 0.25],
         metavar=("X", "Y", "Z"),
     )
     parser.add_argument("--box-width", type=float, default=0.4)

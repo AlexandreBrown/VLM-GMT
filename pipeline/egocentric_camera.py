@@ -23,11 +23,11 @@ import numpy as np
 # Camera defaults
 EGO_CAM_WIDTH = 640
 EGO_CAM_HEIGHT = 480
-EGO_CAM_FOCAL_LENGTH = 24.0          # mm
-EGO_CAM_HORIZONTAL_APERTURE = 20.955 # mm
-EGO_CAM_CLIPPING = (0.05, 50.0)      # near / far in meters
-EGO_CAM_DEFAULT_PITCH_DEG = 50.0     # degrees downward
-EGO_CAM_OFFSET_FORWARD = 0.08  # meters forward from head center
+EGO_CAM_FOCAL_LENGTH = 24.0  # mm
+EGO_CAM_HORIZONTAL_APERTURE = 20.955  # mm
+EGO_CAM_CLIPPING = (0.05, 50.0)  # near / far in meters
+EGO_CAM_DEFAULT_PITCH_DEG = 50.0  # degrees downward
+EGO_CAM_OFFSET_FORWARD = 0.12  # meters forward from head center
 
 # Key for the sensor in InteractiveScene
 _SCENE_KEY = "egocentric_camera"
@@ -117,9 +117,9 @@ def orient_robot_with_yaw(simulator, yaw_deg: float = 0.0, env_idx: int = 0):
     root_state = robot.data.default_root_state[env_idx].clone().unsqueeze(0)
     root_state[0, :3] = robot.data.root_pos_w[env_idx]
     root_state[0, 3] = math.cos(yaw / 2)  # w
-    root_state[0, 4] = 0.0                 # x
-    root_state[0, 5] = 0.0                 # y
-    root_state[0, 6] = math.sin(yaw / 2)   # z
+    root_state[0, 4] = 0.0  # x
+    root_state[0, 5] = 0.0  # y
+    root_state[0, 6] = math.sin(yaw / 2)  # z
     root_state[0, 7:] = 0.0
 
     env_ids = torch.tensor([env_idx], device=robot.device)
@@ -133,7 +133,7 @@ def orient_robot_toward_objects(simulator, env_idx: int = 0):
     import torch
 
     robot = simulator._robot
-    objects = getattr(simulator, '_object', [])
+    objects = getattr(simulator, "_object", [])
     if not objects:
         return
 
@@ -147,9 +147,9 @@ def orient_robot_toward_objects(simulator, env_idx: int = 0):
     root_state = robot.data.default_root_state[env_idx].clone().unsqueeze(0)
     root_state[0, :3] = robot.data.root_pos_w[env_idx]
     root_state[0, 3] = math.cos(yaw / 2)  # w
-    root_state[0, 4] = 0.0                 # x
-    root_state[0, 5] = 0.0                 # y
-    root_state[0, 6] = math.sin(yaw / 2)   # z
+    root_state[0, 4] = 0.0  # x
+    root_state[0, 5] = 0.0  # y
+    root_state[0, 6] = math.sin(yaw / 2)  # z
     root_state[0, 7:] = 0.0
 
     env_ids = torch.tensor([env_idx], device=robot.device)
