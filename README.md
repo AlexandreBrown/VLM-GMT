@@ -96,12 +96,12 @@ Each task has a script in `scripts/` with all commands (create scene, capture, g
 
 ### Pipeline order per task
 
-1. **Create scene** (local) — generate the `.pt` scene file
-2. **Generate baseline motion** (cluster) — needed before capture
-3. **Capture ego image** (local, from `$PROTOMOTIONS`) — egocentric RGB for VLM
-4. **Generate GT and VLM motions** (cluster)
-5. **Kinematic playback** (local) — visual sanity check
-6. **Eval** (local, from `$PROTOMOTIONS`) — runs GMT policy, computes metrics, saves JSON
+1. **Create scene** (local)
+2. **Generate baseline motion** (cluster)
+3. **Capture ego image** (local, from `$PROTOMOTIONS`) — requires baseline motion.pt
+4. **Generate GT and VLM motions** (cluster) — VLM requires ego.png transferred from local
+5. **Kinematic playback** (local) — optional sanity check
+6. **Eval** (local, from `$PROTOMOTIONS`)
 
 ## Adding a New Task
 

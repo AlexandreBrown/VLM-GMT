@@ -3,14 +3,19 @@
 # Robot reaches a red cube on a table with its right hand.
 # Success: dist(right_wrist, cube) < 0.15m at episode end.
 #
-# Local commands: create scene, capture ego, kinematic playback, eval.
-# Cluster commands: generate_motion (baseline / gt / vlm).
+# Run order:
+#   1. Create scene        (local)
+#   2. Generate baseline   (cluster)
+#   3. Capture ego image   (local)
+#   4. Generate gt + vlm   (cluster)
+#   5. Kinematic playback  (local, optional sanity check)
+#   6. Eval                (local)
 #
 # Edit variables below before running.
 
 # ── Variables ────────────────────────────────────────────────────────────────
-VLMGMT=~/Documents/vlm_project/VLM-GMT          # local path
-PROTOMOTIONS=~/Documents/vlm_project/ProtoMotions  # local path
+VLMGMT=~/Documents/vlm_project/VLM-GMT
+PROTOMOTIONS=~/Documents/vlm_project/ProtoMotions
 CKPT=$PROTOMOTIONS/data/pretrained_models/motion_tracker/g1-bones-deploy/last.ckpt
 
 CUBE_POS="0.6 0.0 0.4"
@@ -20,8 +25,16 @@ python $VLMGMT/tasks/manip_reach_obj/create_scene.py \
     --cube-pos $CUBE_POS \
     --output $VLMGMT/outputs/manip_reach_obj_scene.pt
 
-# ── 2. Capture ego image (local, run from $PROTOMOTIONS) ─────────────────────
-# Requires a baseline motion.pt to exist (generate it first on cluster).
+# ── 2. Generate baseline motion — CLUSTER ────────────────────────────────────
+# VLMGMT=~/kimodo_test/VLM-GMT
+# PROTOMOTIONS=~/kimodo_test/ProtoMotions
+# export HF_HOME=$SCRATCH/huggingface_cache
+python $VLMGMT/pipeline/generate_motion.py \
+    --task manip_reach_obj --condition baseline \
+    --output-dir $VLMGMT/outputs/manip_reach_obj/baseline \
+    --protomotions-root $PROTOMOTIONS
+
+# ── 3. Capture ego image (local, from $PROTOMOTIONS) ─────────────────────────
 cd $PROTOMOTIONS
 python $VLMGMT/pipeline/capture_egocentric.py \
     --experiment-path examples/experiments/mimic/mlp.py \
@@ -29,20 +42,9 @@ python $VLMGMT/pipeline/capture_egocentric.py \
     --robot-name g1 --simulator isaaclab --num-envs 1 \
     --scenes-file $VLMGMT/outputs/manip_reach_obj_scene.pt \
     --output-dir $VLMGMT/outputs/manip_reach_obj \
-    --pitch-deg 50 --robot-yaw-deg 0 --prefix ego_frame
+    --pitch-deg 50 --robot-yaw-deg 0 --prefix ego
 
-# ── 3. Generate motion — CLUSTER ─────────────────────────────────────────────
-# Set cluster paths at top of this block before running on cluster.
-# VLMGMT=~/kimodo_test/VLM-GMT
-# PROTOMOTIONS=~/kimodo_test/ProtoMotions
-# export HF_HOME=$SCRATCH/huggingface_cache
-
-# Baseline
-python $VLMGMT/pipeline/generate_motion.py \
-    --task manip_reach_obj --condition baseline \
-    --output-dir $VLMGMT/outputs/manip_reach_obj/baseline \
-    --protomotions-root $PROTOMOTIONS
-
+# ── 4. Generate gt + vlm motions — CLUSTER ───────────────────────────────────
 # GT
 python $VLMGMT/pipeline/generate_motion.py \
     --task manip_reach_obj --condition gt \
@@ -50,15 +52,15 @@ python $VLMGMT/pipeline/generate_motion.py \
     --output-dir $VLMGMT/outputs/manip_reach_obj/gt \
     --protomotions-root $PROTOMOTIONS
 
-# VLM (scp ego_frame.png to cluster first)
+# VLM (scp ego.png to cluster first)
 python $VLMGMT/pipeline/generate_motion.py \
     --task manip_reach_obj --condition vlm \
-    --image $VLMGMT/outputs/manip_reach_obj/ego_frame.png \
+    --image $VLMGMT/outputs/manip_reach_obj/ego.png \
     --vlm-name qwen2.5-vl-32b \
     --output-dir $VLMGMT/outputs/manip_reach_obj/vlm \
     --protomotions-root $PROTOMOTIONS
 
-# ── 4. Kinematic playback (local, from $PROTOMOTIONS) ────────────────────────
+# ── 5. Kinematic playback (local, from $PROTOMOTIONS) ────────────────────────
 cd $PROTOMOTIONS
 python examples/env_kinematic_playback.py \
     --experiment-path examples/experiments/mimic/mlp.py \
@@ -66,7 +68,7 @@ python examples/env_kinematic_playback.py \
     --robot-name g1 --simulator isaaclab --num-envs 1 \
     --scenes-file $VLMGMT/outputs/manip_reach_obj_scene.pt
 
-# ── 5. Eval (local, from $PROTOMOTIONS) ──────────────────────────────────────
+# ── 6. Eval (local, from $PROTOMOTIONS) ──────────────────────────────────────
 cd $PROTOMOTIONS
 for COND in baseline gt vlm; do
     python $VLMGMT/eval/run_eval.py \
