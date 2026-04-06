@@ -30,22 +30,22 @@ from protomotions.components.scene_lib import (
 # ── Defaults ──────────────────────────────────────────────────────────────────
 # Line: 5.5m long, 1.0m wide, flush with ground by default (painted line).
 # Raise --line-height to create an elevated platform for harder experiments.
-LINE_POS   = (3.0, 0.0, 0.0025)
-LINE_WIDTH = 5.5    # x-axis (forward)
-LINE_DEPTH = 1.0    # y-axis (lateral)
-LINE_HEIGHT = 0.005 # flush with ground (painted look)
+LINE_POS = (3.0, 0.0, 0.0)
+LINE_WIDTH = 5.5  # x-axis (forward)
+LINE_DEPTH = 1.0  # y-axis (lateral)
+LINE_HEIGHT = 0.01  # flush with ground (painted look)
 
 # Obstacle positions and sizes (x_forward, y_left, z_center)
 # Obs 1: slightly left (+y), small
-OBS1_POS  = (1.5,  0.20, 0.30)
+OBS1_POS = (1.5, 0.20, 0.30)
 OBS1_SIZE = (0.30, 0.30, 0.60)  # (width=y, depth=x, height=z)
 
 # Obs 2: slightly right (-y), medium
-OBS2_POS  = (3.0, -0.20, 0.35)
+OBS2_POS = (3.0, -0.20, 0.35)
 OBS2_SIZE = (0.35, 0.35, 0.70)
 
 # Obs 3: slightly left (+y), small
-OBS3_POS  = (4.5,  0.15, 0.25)
+OBS3_POS = (4.5, 0.15, 0.25)
 OBS3_SIZE = (0.25, 0.30, 0.50)
 
 LINE_END_X = LINE_POS[0] + LINE_WIDTH / 2  # 5.75m — used as metric target
@@ -102,7 +102,9 @@ def create_scene(
 
     end_x = line_pos[0] + line_width / 2
     print(f"[create_scene] Saved '{output}'")
-    print(f"  line:  center={line_pos}, {line_width}m long (forward) x {line_depth}m wide (lateral)")
+    print(
+        f"  line:  center={line_pos}, {line_width}m long (forward) x {line_depth}m wide (lateral)"
+    )
     print(f"  obs1:  pos={obs1_pos}, size={obs1_size}")
     print(f"  obs2:  pos={obs2_pos}, size={obs2_size}")
     print(f"  obs3:  pos={obs3_pos}, size={obs3_size}")
@@ -111,16 +113,40 @@ def create_scene(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output", default="outputs/walk_on_green_line_avoid_obs_scene.pt")
-    parser.add_argument("--line-height", type=float, default=LINE_HEIGHT,
-                        help="Line height in meters. Default 0.005 (flush/painted). "
-                             "Set higher (e.g. 0.1) for elevated platform experiments.")
+    parser.add_argument(
+        "--output", default="outputs/walk_on_green_line_avoid_obs_scene.pt"
+    )
+    parser.add_argument(
+        "--line-height",
+        type=float,
+        default=LINE_HEIGHT,
+        help="Line height in meters. Default 0.005 (flush/painted). "
+        "Set higher (e.g. 0.1) for elevated platform experiments.",
+    )
     # Obstacle position overrides (optional)
-    parser.add_argument("--obs1-pos", nargs=3, type=float, default=list(OBS1_POS), metavar=("X", "Y", "Z"))
-    parser.add_argument("--obs2-pos", nargs=3, type=float, default=list(OBS2_POS), metavar=("X", "Y", "Z"))
-    parser.add_argument("--obs3-pos", nargs=3, type=float, default=list(OBS3_POS), metavar=("X", "Y", "Z"))
+    parser.add_argument(
+        "--obs1-pos",
+        nargs=3,
+        type=float,
+        default=list(OBS1_POS),
+        metavar=("X", "Y", "Z"),
+    )
+    parser.add_argument(
+        "--obs2-pos",
+        nargs=3,
+        type=float,
+        default=list(OBS2_POS),
+        metavar=("X", "Y", "Z"),
+    )
+    parser.add_argument(
+        "--obs3-pos",
+        nargs=3,
+        type=float,
+        default=list(OBS3_POS),
+        metavar=("X", "Y", "Z"),
+    )
     args = parser.parse_args()
-    line_z = args.line_height / 2  # center of box sits at half its height
+    line_z = 0.0  # center at ground: box half-embedded, top at height/2
     create_scene(
         line_pos=(LINE_POS[0], LINE_POS[1], line_z),
         line_height=args.line_height,
