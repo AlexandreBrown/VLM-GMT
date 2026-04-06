@@ -1,0 +1,121 @@
+{
+  "task": "walk_on_green_line_avoid_obs",
+  "condition": "gt",
+  "checkpoint": "ProtoMotions/data/pretrained_models/motion_tracker/g1-bones-deploy/last.ckpt",
+  "motion_file": "VLM-GMT/outputs/walk_on_green_line_avoid_obs/gt/motion.pt",
+  "scenes_file": "VLM-GMT/outputs/walk_on_green_line_avoid_obs_scene.pt",
+  "num_episodes": 10,
+  "summary": {
+    "walk_on_line": {
+      "success_rate": 1.0,
+      "mean_value": 1.0,
+      "min_value": 1.0,
+      "max_value": 1.0,
+      "n_episodes": 10
+    }
+  },
+  "episodes": {
+    "walk_on_line": [
+      {
+        "value": 1.0,
+        "success": true,
+        "obstacles_cleared": 3,
+        "total_obstacles": 3,
+        "always_on_line": true,
+        "line_compliance": 1.0,
+        "final_x": 51.276,
+        "steps_in_x_range": 0
+      },
+      {
+        "value": 1.0,
+        "success": true,
+        "obstacles_cleared": 3,
+        "total_obstacles": 3,
+        "always_on_line": true,
+        "line_compliance": 1.0,
+        "final_x": 51.198,
+        "steps_in_x_range": 0
+      },
+      {
+        "value": 1.0,
+        "success": true,
+        "obstacles_cleared": 3,
+        "total_obstacles": 3,
+        "always_on_line": true,
+        "line_compliance": 1.0,
+        "final_x": 51.278,
+        "steps_in_x_range": 0
+      },
+      {
+        "value": 1.0,
+        "success": true,
+        "obstacles_cleared": 3,
+        "total_obstacles": 3,
+        "always_on_line": true,
+        "line_compliance": 1.0,
+        "final_x": 50.782,
+        "steps_in_x_range": 0
+      },
+      {
+        "value": 1.0,
+        "success": true,
+        "obstacles_cleared": 3,
+        "total_obstacles": 3,
+        "always_on_line": true,
+        "line_compliance": 1.0,
+        "final_x": 51.141,
+        "steps_in_x_range": 0
+      },
+      {
+        "value": 1.0,
+        "success": true,
+        "obstacles_cleared": 3,
+        "total_obstacles": 3,
+        "always_on_line": true,
+        "line_compliance": 1.0,
+        "final_x": 49.902,
+        "steps_in_x_range": 0
+      },
+      {
+        "value": 1.0,
+        "success": true,
+        "obstacles_cleared": 3,
+        "total_obstacles": 3,
+        "always_on_line": true,
+        "line_compliance": 1.0,
+        "final_x": 50.077,
+        "steps_in_x_range": 0
+      },
+      {
+        "value": 1.0,
+        "success": true,
+        "obstacles_cleared": 3,
+        "total_obstacles": 3,
+        "always_on_line": true,
+        "line_compliance": 1.0,
+        "final_x": 49.972,
+        "steps_in_x_range": 0
+      },
+      {
+        "value": 1.0,
+        "success": true,
+        "obstacles_cleared": 3,
+        "total_obstacles": 3,
+        "always_on_line": true,
+        "line_compliance": 1.0,
+        "final_x": 51.223,
+        "steps_in_x_range": 0
+      },
+      {
+        "value": 1.0,
+        "success": true,
+        "obstacles_cleared": 3,
+        "total_obstacles": 3,
+        "always_on_line": true,
+        "line_compliance": 1.0,
+        "final_x": 50.079,
+        "steps_in_x_range": 0
+      }
+    ]
+  }
+}

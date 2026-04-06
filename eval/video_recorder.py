@@ -79,7 +79,7 @@ class VideoRecorder:
         path = self.output_dir / filename
         h, w = self._frames[0].shape[:2]
         writer = cv2.VideoWriter(
-            str(path), cv2.VideoWriter_fourcc(*"VP80"), self.fps, (w, h)
+            str(path), cv2.VideoWriter_fourcc(*"0x00000021"), self.fps, (w, h)
         )
         for frame in self._frames:
             writer.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))

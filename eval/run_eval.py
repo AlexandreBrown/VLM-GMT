@@ -355,7 +355,7 @@ def main():
         )
 
     if video_recorder:
-        video_recorder.save(f"{args.condition}.webm")
+        video_recorder.save(f"{args.condition}.mp4")
 
     # Aggregate
     summary = {}
