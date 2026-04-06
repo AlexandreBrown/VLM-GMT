@@ -148,6 +148,8 @@ class QwenVLM(VLMBase):
         import json
 
         clean = re.sub(r"```[a-z]*", "", raw).replace("```", "").strip()
+        # Strip // comments (common LLM habit with JSON)
+        clean = re.sub(r"//[^\n]*", "", clean)
 
         # Try full parse first
         try:

@@ -153,6 +153,8 @@ class Qwen35VLM(VLMBase):
         raw = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
 
         clean = re.sub(r"```[a-z]*", "", raw).replace("```", "").strip()
+        # Strip // comments (common LLM habit with JSON)
+        clean = re.sub(r"//[^\n]*", "", clean)
         try:
             data = json.loads(clean)
         except json.JSONDecodeError:
