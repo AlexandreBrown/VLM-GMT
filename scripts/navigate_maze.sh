@@ -20,8 +20,8 @@ PROTOMOTIONS=~/Documents/vlm_project/ProtoMotions
 CKPT=$PROTOMOTIONS/data/pretrained_models/motion_tracker/g1-bones-deploy/last.ckpt
 
 # Wall inner-edge positions (matching create_scene.py / metrics.py)
-OBS1="2.0 0.1 0.5"
-OBS2="4.0 -0.1 0.5"
+OBS1="1.5 0.1 0.5"
+OBS2="3.0 -0.1 0.5"
 
 # ── 1. Create scene (local) ──────────────────────────────────────────────────
 python $VLMGMT/tasks/navigate_maze/create_scene.py \

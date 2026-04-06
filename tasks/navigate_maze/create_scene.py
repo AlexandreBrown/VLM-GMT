@@ -44,23 +44,23 @@ WALL_HEIGHT = 1.0
 
 # Corridor bounds
 CORRIDOR_X_MIN = -1.0
-CORRIDOR_X_MAX = 6.0
+CORRIDOR_X_MAX = 5.0
 CORRIDOR_Y_MIN = -1.5
 CORRIDOR_Y_MAX = 1.5
-CORRIDOR_LENGTH = CORRIDOR_X_MAX - CORRIDOR_X_MIN  # 7.0m
+CORRIDOR_LENGTH = CORRIDOR_X_MAX - CORRIDOR_X_MIN  # 6.0m
 CORRIDOR_WIDTH = CORRIDOR_Y_MAX - CORRIDOR_Y_MIN    # 3.0m
-CORRIDOR_X_CENTER = (CORRIDOR_X_MIN + CORRIDOR_X_MAX) / 2  # 2.5
+CORRIDOR_X_CENTER = (CORRIDOR_X_MIN + CORRIDOR_X_MAX) / 2  # 2.0
 CORRIDOR_Y_CENTER = 0.0
 
-# Internal wall 1 at x=2.0: blocks top half (y from 0 to +1.5)
+# Internal wall 1 at x=1.5: blocks top half (y from 0 to +1.5)
 # Robot must pass through bottom gap (y from -1.5 to 0)
-WALL1_X = 2.0
+WALL1_X = 1.5
 WALL1_POS = (WALL1_X, CORRIDOR_Y_MAX / 2, WALL_HEIGHT / 2)  # center at y=+0.75
 WALL1_SIZE = (WALL_THIN, CORRIDOR_WIDTH / 2, WALL_HEIGHT)    # spans half the corridor
 
-# Internal wall 2 at x=4.0: blocks bottom half (y from -1.5 to 0)
+# Internal wall 2 at x=3.0: blocks bottom half (y from -1.5 to 0)
 # Robot must pass through top gap (y from 0 to +1.5)
-WALL2_X = 4.0
+WALL2_X = 3.0
 WALL2_POS = (WALL2_X, CORRIDOR_Y_MIN / 2, WALL_HEIGHT / 2)  # center at y=-0.75
 WALL2_SIZE = (WALL_THIN, CORRIDOR_WIDTH / 2, WALL_HEIGHT)
 

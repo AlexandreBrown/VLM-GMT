@@ -134,10 +134,10 @@ def main():
     )
     # GT: navigate_maze
     parser.add_argument("--obs1-world-pos", nargs=3, type=float, metavar=("X", "Y", "Z"),
-                        default=[2.0, 0.1, 0.5])
+                        default=[1.5, 0.1, 0.5])
     parser.add_argument("--obs2-world-pos", nargs=3, type=float, metavar=("X", "Y", "Z"),
-                        default=[4.0, -0.1, 0.5])
-    parser.add_argument("--line-end-x", type=float, default=5.5,
+                        default=[3.0, -0.1, 0.5])
+    parser.add_argument("--line-end-x", type=float, default=4.0,
                         help="X coordinate of the far end of the green line (metric target)")
 
     # VLM
