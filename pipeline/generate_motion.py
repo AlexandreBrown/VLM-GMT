@@ -132,6 +132,15 @@ def main():
     parser.add_argument(
         "--box-world-pos", nargs=3, type=float, metavar=("X", "Y", "Z")
     )
+    # GT: walk_on_green_line_avoid_obs
+    parser.add_argument("--obs1-world-pos", nargs=3, type=float, metavar=("X", "Y", "Z"),
+                        default=[1.5, 0.20, 0.30])
+    parser.add_argument("--obs2-world-pos", nargs=3, type=float, metavar=("X", "Y", "Z"),
+                        default=[3.0, -0.20, 0.35])
+    parser.add_argument("--obs3-world-pos", nargs=3, type=float, metavar=("X", "Y", "Z"),
+                        default=[4.5, 0.15, 0.25])
+    parser.add_argument("--line-end-x", type=float, default=5.75,
+                        help="X coordinate of the far end of the green line (metric target)")
 
     # VLM
     parser.add_argument("--image", help="Egocentric RGB image for VLM condition")
@@ -168,13 +177,13 @@ def main():
     # VLM only needs the image; skeleton is not required at this stage.
     raw_vlm_constraints = None
     if args.condition == "vlm":
-        if args.image is None:
-            parser.error("--image required for condition=vlm")
         from PIL import Image as PILImage
         from pipeline.generate_constraints import query_vlm_raw
         import gc
 
-        image_rgb = np.array(PILImage.open(args.image).convert("RGB"))
+        image_rgb = None
+        if args.image is not None:
+            image_rgb = np.array(PILImage.open(args.image).convert("RGB"))
         num_frames_approx = int(args.duration * 30)  # 30fps estimate before model loads
         raw_vlm_constraints = query_vlm_raw(
             task=args.task,
@@ -221,6 +230,11 @@ def main():
             if args.box_world_pos is None:
                 parser.error("--box-world-pos required for condition=gt with task=walk_to_obj")
             constraint_kwargs["box_world_pos"] = args.box_world_pos
+        elif args.task == "walk_on_green_line_avoid_obs":
+            constraint_kwargs["obs_world_positions"] = [
+                args.obs1_world_pos, args.obs2_world_pos, args.obs3_world_pos
+            ]
+            constraint_kwargs["line_end_x"] = args.line_end_x
 
     elif args.condition == "vlm":
         constraint_kwargs["raw_vlm_constraints"] = raw_vlm_constraints

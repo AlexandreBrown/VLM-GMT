@@ -6,8 +6,6 @@ Evaluating VLM-augmented kinematic constraints for General Motion Tracking in hu
 
 Can off-the-shelf Vision-Language Models generate useful kinematic constraints from egocentric observations? This project tests that by combining [Kimodo](https://research.nvidia.com/labs/sil/projects/kimodo/) (text+constraint → motion) with a pretrained GMT policy on the Unitree G1 via [ProtoMotions](https://github.com/NVlabs/ProtoMotions).
 
-The VLM sees an egocentric image, receives the robot's coordinate system and dimensions in its prompt, and directly outputs 3D constraint positions — no camera calibration or depth estimation needed.
-
 ### Three Conditions (per task)
 
 | Condition | Input to Kimodo | Purpose |
@@ -20,32 +18,23 @@ The VLM sees an egocentric image, receives the robot's coordinate system and dim
 
 ### Dependencies
 
-ProtoMotions is required everywhere (motion generation, simulation, eval). Follow the [ProtoMotions installation guide](https://nvlabs.github.io/ProtoMotions/getting_started/installation.html).
-
 ```bash
 git clone https://github.com/NVlabs/ProtoMotions.git
 uv pip install -e ProtoMotions
 uv pip install dm_control easydict matplotlib
 
 git clone https://github.com/AlexandreBrown/VLM-GMT.git
-
-export PROTOMOTIONS_ROOT=/path/to/ProtoMotions
-export VLMGMT=/path/to/VLM-GMT
 ```
 
-Commands that need IsaacLab (capture, playback, inference, eval) must be run from `$PROTOMOTIONS_ROOT` because ProtoMotions uses relative asset paths.
+Commands that need IsaacLab (capture, playback, eval) must be run from `$PROTOMOTIONS` because ProtoMotions uses relative asset paths.
 
-### IsaacLab (simulation + inference + eval)
+### IsaacLab
 
 Required locally for kinematic playback, GMT inference, eval, and egocentric capture. Follow the [IsaacLab installation guide](https://isaac-sim.github.io/IsaacLab/).
 
-### Kimodo (motion generation)
+### Kimodo (motion generation, cluster only)
 
-Kimodo requires **>=17 GB VRAM**. If running the VLM condition on the same GPU, the VLM adds ~14 GB (total ~31 GB; an A100 40 GB+ is recommended).
-
-```bash
-# Install Kimodo (follow Kimodo docs)
-```
+Kimodo requires >=17 GB VRAM. Follow the Kimodo docs to install.
 
 ### VLM deps (VLM condition only)
 
@@ -58,138 +47,322 @@ uv pip install transformers>=4.50.0 accelerate qwen-vl-utils Pillow
 ```
 VLM-GMT/
 ├── prompts/
-│   └── system.txt                  # Shared VLM system prompt (coord system, robot dims)
+│   └── system.txt                       # Shared VLM system prompt
 ├── tasks/
-│   └── manip_reach_obj/
-│       ├── create_scene.py         # Create scene .pt
-│       ├── vlm_prompt.txt          # Task-specific VLM prompt
-│       └── metrics.py              # Eval metrics
+│   ├── manip_reach_obj/
+│   │   ├── create_scene.py              # Red cube on a table
+│   │   ├── metrics.py                   # dist(right_wrist, cube) < 0.15m
+│   │   ├── kimodo_prompt.txt
+│   │   └── vlm_prompt.txt
+│   ├── walk_to_obj/
+│   │   ├── create_scene.py              # Green box on the ground
+│   │   ├── metrics.py                   # dist_2d(pelvis, box) < 0.5m
+│   │   ├── kimodo_prompt.txt
+│   │   └── vlm_prompt.txt
+│   └── walk_on_green_line_avoid_obs/
+│       ├── create_scene.py              # Green line + 3 obstacle boxes
+│       ├── metrics.py                   # dist_2d(pelvis, line_end) < 0.5m
+│       ├── kimodo_prompt.txt
+│       └── vlm_prompt.txt
 ├── pipeline/
-│   ├── generate_motion.py          # Constraints → Kimodo → motion.pt
-│   ├── generate_constraints.py     # GT / VLM → Kimodo constraints
-│   ├── capture_egocentric.py       # Capture head camera image (requires IsaacLab)
-│   ├── egocentric_camera.py        # Camera sensor utilities
+│   ├── generate_motion.py               # Constraints → Kimodo → motion.pt  (cluster)
+│   ├── generate_constraints.py          # GT / VLM → Kimodo constraint objects
+│   ├── capture_egocentric.py            # Capture G1 head camera image  (local)
+│   ├── egocentric_camera.py             # Camera sensor utilities
 │   └── vlm/
-│       ├── __init__.py             # Registry + load_vlm()
-│       ├── base.py                 # Abstract VLMBase
-│       └── qwen.py                 # Qwen2.5-VL-7B-Instruct
+│       ├── __init__.py                  # Registry + load_vlm()
+│       ├── base.py                      # Abstract VLMBase
+│       └── qwen.py                      # Qwen2.5-VL (7B / 32B / 72B)
 ├── eval/
-│   ├── run_eval.py                 # Run GMT + compute metrics
-│   ├── base_metric.py              # Metric interface
+│   ├── run_eval.py                      # GMT inference + metrics  (local)
+│   ├── video_recorder.py                # Optional video capture
 │   └── metrics/
-│       └── distance_to_target.py   # Distance-based metric
-├── outputs/                        # Generated data (gitignored)
+│       ├── base.py
+│       └── distance_to_target.py        # Supports 2D, 3D, fixed target pos
+├── outputs/                             # Generated data (gitignored)
 └── README.md
 ```
 
-## Pipeline (manip_reach_obj example)
-
-### 1. Create scene
+## Common variables
 
 ```bash
-cd VLM-GMT
-python tasks/manip_reach_obj/create_scene.py \
-    --cube-pos 0.6 0.0 0.4 \
-    --output outputs/manip_reach_obj_scene.pt
+VLMGMT=~/Documents/vlm_project/VLM-GMT          # local
+PROTOMOTIONS=~/Documents/vlm_project/ProtoMotions  # local
+CKPT=$PROTOMOTIONS/data/pretrained_models/motion_tracker/g1-bones-deploy/last.ckpt
+
+# Cluster
+VLMGMT=~/kimodo_test/VLM-GMT
+PROTOMOTIONS=~/kimodo_test/ProtoMotions
+export HF_HOME=$SCRATCH/huggingface_cache
 ```
 
-### 2. Capture egocentric image (requires IsaacLab)
+`generate_motion.py` runs on the **cluster** (needs Kimodo).
+`capture_egocentric.py`, kinematic playback, and eval run **locally** (need IsaacLab).
+`capture_egocentric.py` must be run from `$PROTOMOTIONS` (relative experiment paths).
+
+---
+
+## Task: manip_reach_obj
+
+Robot reaches a red cube on a table with its right hand.
+**Success:** `dist(right_wrist, cube) < 0.15m` at episode end.
+
+### Create scene (local)
 
 ```bash
-cd $PROTOMOTIONS_ROOT
+python $VLMGMT/tasks/manip_reach_obj/create_scene.py \
+    --cube-pos 0.6 0.0 0.4 \
+    --output $VLMGMT/outputs/manip_reach_obj_scene.pt
+```
+
+### Capture ego image (local, from $PROTOMOTIONS)
+
+```bash
+cd $PROTOMOTIONS
 python $VLMGMT/pipeline/capture_egocentric.py \
     --experiment-path examples/experiments/mimic/mlp.py \
-    --motion-file data/motion_for_trackers/g1_bones_seed_mini.pt \
+    --motion-file $VLMGMT/outputs/manip_reach_obj/baseline/motion.pt \
     --robot-name g1 --simulator isaaclab --num-envs 1 \
     --scenes-file $VLMGMT/outputs/manip_reach_obj_scene.pt \
     --output-dir $VLMGMT/outputs/manip_reach_obj \
-    --pitch-deg 50
+    --pitch-deg 50 --robot-yaw-deg 0 --prefix ego_frame
 ```
-**Note: When the image is saved, close the script using CTRL-C (check terminal output) otherwise isaacsim will stay opened.**
 
-### 3. Generate motion (requires Kimodo, >=17 GB VRAM)
+### Generate motion (cluster)
 
 ```bash
-cd VLM-GMT
+# Baseline
+python $VLMGMT/pipeline/generate_motion.py \
+    --task manip_reach_obj --condition baseline \
+    --output-dir $VLMGMT/outputs/manip_reach_obj/baseline \
+    --protomotions-root $PROTOMOTIONS
 
-# Baseline (text only, no constraints)
-python pipeline/generate_motion.py \
-    --condition baseline \
-    --output-dir outputs/manip_reach_obj/baseline \
-    --protomotions-root $PROTOMOTIONS_ROOT
-
-# GT (ground-truth constraint at cube position)
-python pipeline/generate_motion.py \
-    --condition gt \
+# GT
+python $VLMGMT/pipeline/generate_motion.py \
+    --task manip_reach_obj --condition gt \
     --cube-world-pos 0.6 0.0 0.4 \
-    --output-dir outputs/manip_reach_obj/gt \
-    --protomotions-root $PROTOMOTIONS_ROOT
+    --output-dir $VLMGMT/outputs/manip_reach_obj/gt \
+    --protomotions-root $PROTOMOTIONS
 
-# VLM (constraint predicted from egocentric image, >=31 GB VRAM with Qwen2.5-VL-7B)
-python pipeline/generate_motion.py \
-    --condition vlm \
-    --image outputs/manip_reach_obj/ego.png \
-    --task manip_reach_obj \
-    --output-dir outputs/manip_reach_obj/vlm \
-    --protomotions-root $PROTOMOTIONS_ROOT
+# VLM (scp ego_frame.png to cluster first)
+python $VLMGMT/pipeline/generate_motion.py \
+    --task manip_reach_obj --condition vlm \
+    --image $VLMGMT/outputs/manip_reach_obj/ego_frame.png \
+    --vlm-name qwen2.5-vl-32b \
+    --output-dir $VLMGMT/outputs/manip_reach_obj/vlm \
+    --protomotions-root $PROTOMOTIONS
 ```
 
-### 4. Kinematic playback (requires IsaacLab)
+### Kinematic playback (local, from $PROTOMOTIONS)
 
 ```bash
-cd $PROTOMOTIONS_ROOT
+cd $PROTOMOTIONS
 python examples/env_kinematic_playback.py \
     --experiment-path examples/experiments/mimic/mlp.py \
-    --motion-file $VLMGMT/outputs/manip_reach_obj/gt/motion.pt \
+    --motion-file $VLMGMT/outputs/manip_reach_obj/baseline/motion.pt \
     --robot-name g1 --simulator isaaclab --num-envs 1 \
     --scenes-file $VLMGMT/outputs/manip_reach_obj_scene.pt
 ```
 
-### 5. GMT inference (requires IsaacLab)
+### Eval (local, from $PROTOMOTIONS)
 
 ```bash
-cd $PROTOMOTIONS_ROOT
-python protomotions/inference_agent.py \
-    --checkpoint data/pretrained_models/motion_tracker/g1-bones-deploy/last.ckpt \
-    --motion-file $VLMGMT/outputs/manip_reach_obj/gt/motion.pt \
-    --simulator isaaclab --num-envs 1 \
-    --scenes-file $VLMGMT/outputs/manip_reach_obj_scene.pt
-```
-
-### 6. Eval (requires IsaacLab)
-
-```bash
-cd $PROTOMOTIONS_ROOT
+cd $PROTOMOTIONS
 python $VLMGMT/eval/run_eval.py \
-    --checkpoint data/pretrained_models/motion_tracker/g1-bones-deploy/last.ckpt \
-    --motion-file $VLMGMT/outputs/manip_reach_obj/gt/motion.pt \
+    --checkpoint $CKPT \
+    --motion-file $VLMGMT/outputs/manip_reach_obj/baseline/motion.pt \
     --scenes-file $VLMGMT/outputs/manip_reach_obj_scene.pt \
-    --task manip_reach_obj --condition gt \
-    --num-episodes 20 --simulator isaaclab \
-    --protomotions-root $PROTOMOTIONS_ROOT \
-    --output-dir $VLMGMT/outputs/manip_reach_obj/results
+    --task manip_reach_obj --condition baseline \
+    --num-episodes 10 --simulator isaaclab \
+    --output-dir $VLMGMT/outputs/manip_reach_obj/results \
+    --protomotions-root $PROTOMOTIONS
 ```
 
-## VLM Prompt System
+Replace `baseline` with `gt` or `vlm` for other conditions.
 
-Prompts are split into two files:
+---
 
-- **`prompts/system.txt`** — shared across all tasks. Contains coordinate system, robot dimensions, output format, and an example. Has `{num_frames}` and `{max_frame}` placeholders filled at runtime.
-- **`tasks/<task>/vlm_prompt.txt`** — task-specific instruction (e.g., "reach the red cube with your right hand").
+## Task: walk_to_obj
 
-The VLM receives the system prompt as the system message and the task prompt + egocentric image as the user message. It outputs a JSON array of kinematic constraints with 3D world-frame positions directly — no camera calibration needed.
+Robot walks toward a green box offset laterally so baseline (straight walk) misses it.
+**Success:** `dist_2d(pelvis, box) < 0.5m` at episode end.
 
-Override the task prompt at runtime with `--task-description "custom text"` or `--task-description path/to/prompt.txt`.
+### Create scene (local)
+
+```bash
+python $VLMGMT/tasks/walk_to_obj/create_scene.py \
+    --box-pos 3.0 -1.1 0.25 \
+    --output $VLMGMT/outputs/walk_to_obj_scene.pt
+```
+
+### Capture ego image (local, from $PROTOMOTIONS)
+
+```bash
+cd $PROTOMOTIONS
+python $VLMGMT/pipeline/capture_egocentric.py \
+    --experiment-path examples/experiments/mimic/mlp.py \
+    --motion-file $VLMGMT/outputs/walk_to_obj/baseline/motion.pt \
+    --robot-name g1 --simulator isaaclab --num-envs 1 \
+    --scenes-file $VLMGMT/outputs/walk_to_obj_scene.pt \
+    --output-dir $VLMGMT/outputs/walk_to_obj \
+    --pitch-deg 30 --robot-yaw-deg 0 --prefix ego_frame
+```
+
+### Generate motion (cluster)
+
+```bash
+# Baseline
+python $VLMGMT/pipeline/generate_motion.py \
+    --task walk_to_obj --condition baseline \
+    --output-dir $VLMGMT/outputs/walk_to_obj/baseline \
+    --protomotions-root $PROTOMOTIONS
+
+# GT
+python $VLMGMT/pipeline/generate_motion.py \
+    --task walk_to_obj --condition gt \
+    --box-world-pos 3.0 -1.1 0.25 \
+    --output-dir $VLMGMT/outputs/walk_to_obj/gt \
+    --protomotions-root $PROTOMOTIONS
+
+# VLM (scp ego_frame.png to cluster first)
+python $VLMGMT/pipeline/generate_motion.py \
+    --task walk_to_obj --condition vlm \
+    --image $VLMGMT/outputs/walk_to_obj/ego_frame.png \
+    --vlm-name qwen2.5-vl-32b \
+    --output-dir $VLMGMT/outputs/walk_to_obj/vlm \
+    --protomotions-root $PROTOMOTIONS
+```
+
+### Kinematic playback (local, from $PROTOMOTIONS)
+
+```bash
+cd $PROTOMOTIONS
+python examples/env_kinematic_playback.py \
+    --experiment-path examples/experiments/mimic/mlp.py \
+    --motion-file $VLMGMT/outputs/walk_to_obj/baseline/motion.pt \
+    --robot-name g1 --simulator isaaclab --num-envs 1 \
+    --scenes-file $VLMGMT/outputs/walk_to_obj_scene.pt
+```
+
+### Eval (local, from $PROTOMOTIONS)
+
+```bash
+cd $PROTOMOTIONS
+python $VLMGMT/eval/run_eval.py \
+    --checkpoint $CKPT \
+    --motion-file $VLMGMT/outputs/walk_to_obj/baseline/motion.pt \
+    --scenes-file $VLMGMT/outputs/walk_to_obj_scene.pt \
+    --task walk_to_obj --condition baseline \
+    --num-episodes 10 --simulator isaaclab \
+    --output-dir $VLMGMT/outputs/walk_to_obj/results \
+    --protomotions-root $PROTOMOTIONS
+```
+
+Replace `baseline` with `gt` or `vlm` for other conditions.
+
+---
+
+## Task: walk_on_green_line_avoid_obs
+
+Robot walks along a 1m-wide green line and navigates around 3 colored obstacles on it.
+Baseline (straight walk) collides with all obstacles.
+**Success:** pelvis stays within line Y bounds (±0.5m) at all times AND passes all 3 obstacle X positions during the episode.
+
+### Create scene (local)
+
+```bash
+python $VLMGMT/tasks/walk_on_green_line_avoid_obs/create_scene.py \
+    --output $VLMGMT/outputs/walk_on_green_line_avoid_obs_scene.pt
+```
+
+### Capture ego image (local, from $PROTOMOTIONS)
+
+```bash
+cd $PROTOMOTIONS
+python $VLMGMT/pipeline/capture_egocentric.py \
+    --experiment-path examples/experiments/mimic/mlp.py \
+    --motion-file $VLMGMT/outputs/walk_on_green_line_avoid_obs/baseline/motion.pt \
+    --robot-name g1 --simulator isaaclab --num-envs 1 \
+    --scenes-file $VLMGMT/outputs/walk_on_green_line_avoid_obs_scene.pt \
+    --output-dir $VLMGMT/outputs/walk_on_green_line_avoid_obs \
+    --pitch-deg 30 --robot-yaw-deg 0 --prefix ego_frame
+```
+
+### Generate motion (cluster)
+
+```bash
+# Baseline
+python $VLMGMT/pipeline/generate_motion.py \
+    --task walk_on_green_line_avoid_obs --condition baseline \
+    --output-dir $VLMGMT/outputs/walk_on_green_line_avoid_obs/baseline \
+    --protomotions-root $PROTOMOTIONS
+
+# GT (uses default obstacle positions matching create_scene.py defaults)
+python $VLMGMT/pipeline/generate_motion.py \
+    --task walk_on_green_line_avoid_obs --condition gt \
+    --output-dir $VLMGMT/outputs/walk_on_green_line_avoid_obs/gt \
+    --protomotions-root $PROTOMOTIONS
+
+# VLM (scp ego_frame.png to cluster first)
+python $VLMGMT/pipeline/generate_motion.py \
+    --task walk_on_green_line_avoid_obs --condition vlm \
+    --image $VLMGMT/outputs/walk_on_green_line_avoid_obs/ego_frame.png \
+    --vlm-name qwen2.5-vl-32b \
+    --output-dir $VLMGMT/outputs/walk_on_green_line_avoid_obs/vlm \
+    --protomotions-root $PROTOMOTIONS
+```
+
+If you change obstacle positions in `create_scene.py`, pass them explicitly to GT:
+```bash
+python $VLMGMT/pipeline/generate_motion.py \
+    --task walk_on_green_line_avoid_obs --condition gt \
+    --obs1-world-pos 1.5 0.20 0.30 \
+    --obs2-world-pos 3.0 -0.20 0.35 \
+    --obs3-world-pos 4.5 0.15 0.25 \
+    --output-dir $VLMGMT/outputs/walk_on_green_line_avoid_obs/gt \
+    --protomotions-root $PROTOMOTIONS
+```
+
+### Kinematic playback (local, from $PROTOMOTIONS)
+
+```bash
+cd $PROTOMOTIONS
+python examples/env_kinematic_playback.py \
+    --experiment-path examples/experiments/mimic/mlp.py \
+    --motion-file $VLMGMT/outputs/walk_on_green_line_avoid_obs/baseline/motion.pt \
+    --robot-name g1 --simulator isaaclab --num-envs 1 \
+    --scenes-file $VLMGMT/outputs/walk_on_green_line_avoid_obs_scene.pt
+```
+
+### Eval (local, from $PROTOMOTIONS)
+
+```bash
+cd $PROTOMOTIONS
+python $VLMGMT/eval/run_eval.py \
+    --checkpoint $CKPT \
+    --motion-file $VLMGMT/outputs/walk_on_green_line_avoid_obs/baseline/motion.pt \
+    --scenes-file $VLMGMT/outputs/walk_on_green_line_avoid_obs_scene.pt \
+    --task walk_on_green_line_avoid_obs --condition baseline \
+    --num-episodes 10 --simulator isaaclab \
+    --output-dir $VLMGMT/outputs/walk_on_green_line_avoid_obs/results \
+    --protomotions-root $PROTOMOTIONS
+```
+
+Replace `baseline` with `gt` or `vlm` for other conditions.
+
+---
 
 ## Adding a New Task
 
-1. Create `tasks/<task_name>/create_scene.py` (if the task has scene objects)
-2. Create `tasks/<task_name>/vlm_prompt.txt` with the task-specific VLM prompt
-3. Create `tasks/<task_name>/metrics.py` with a `get_metrics()` function returning a list of `Metric` instances
-4. Add a GT constraint recipe in `generate_constraints.py` (if applicable)
+1. Create `tasks/<task_name>/create_scene.py`
+2. Create `tasks/<task_name>/metrics.py` with `get_metrics() → list[Metric]`
+3. Create `tasks/<task_name>/kimodo_prompt.txt` and `vlm_prompt.txt`
+4. Add GT constraint logic to `pipeline/generate_constraints.py`
+5. Add GT arg handling to `pipeline/generate_motion.py`
 
 ## Adding a New VLM
 
 1. Subclass `pipeline/vlm/base.py:VLMBase`
-2. Implement `load()` and `query_constraints(image_rgb, task_description) -> list[dict]`
-3. Register in `pipeline/vlm/__init__.py:REGISTRY`
+2. Implement `load()` and `query_constraints(image_rgb, task_description) → list[dict]`
+   - `image_rgb` may be `None` for text-only tasks
+3. Register in `pipeline/vlm/__init__.py:REGISTRY` and `HF_MODEL_IDS`

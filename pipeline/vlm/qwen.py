@@ -82,34 +82,43 @@ class QwenVLM(VLMBase):
 
     def query_constraints(
         self,
-        image_rgb: np.ndarray,
+        image_rgb: np.ndarray | None = None,
         task_description: str | None = None,
     ) -> list[dict[str, Any]]:
         import torch
 
         assert self._model is not None, "Call load() first."
 
-        pil_img = Image.fromarray(image_rgb)
         system = get_system_prompt(self.num_frames)
         task_text = task_description or get_task_prompt(self.task, self.task_description)
-        user_text = (
-            f"Task: {task_text}\n"
-            "Look at the image carefully. Think step by step:\n"
-            "1. What objects are visible and where are they relative to the robot?\n"
-            "2. What body parts need to be constrained and at which frames to achieve the task?\n"
-            "3. What are the estimated 3D world positions of those targets?\n"
-            "Now output the JSON array of constraints. You MUST output at least 1 constraint."
-        )
+
+        if image_rgb is not None:
+            pil_img = Image.fromarray(image_rgb)
+            user_text = (
+                f"Task: {task_text}\n"
+                "Look at the image carefully. Think step by step:\n"
+                "1. What objects are visible and where are they relative to the robot?\n"
+                "2. What body parts need to be constrained and at which frames to achieve the task?\n"
+                "3. What are the estimated 3D world positions of those targets?\n"
+                "Now output the JSON array of constraints. You MUST output at least 1 constraint."
+            )
+            user_content = [
+                {"type": "image", "image": pil_img},
+                {"type": "text", "text": user_text},
+            ]
+        else:
+            user_text = (
+                f"Task: {task_text}\n"
+                "Think step by step:\n"
+                "1. What body parts need to be constrained and at which frames to achieve the task?\n"
+                "2. What are the estimated 3D world positions of those targets (relative to robot start)?\n"
+                "Now output the JSON array of constraints. You MUST output at least 1 constraint."
+            )
+            user_content = [{"type": "text", "text": user_text}]
 
         messages = [
             {"role": "system", "content": [{"type": "text", "text": system}]},
-            {
-                "role": "user",
-                "content": [
-                    {"type": "image", "image": pil_img},
-                    {"type": "text", "text": user_text},
-                ],
-            },
+            {"role": "user", "content": user_content},
         ]
 
         inputs = self._processor.apply_chat_template(

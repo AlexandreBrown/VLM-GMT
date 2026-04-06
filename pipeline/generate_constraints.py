@@ -197,6 +197,51 @@ def constraints_walk_to_obj_gt(skeleton, box_world_pos, frame_index, device: str
     return constraints
 
 
+def constraints_walk_on_green_line_avoid_obs_gt(
+    skeleton, obs_world_positions: list, line_end_x: float, num_frames: int, device: str
+) -> list:
+    """
+    GT upper bound for walk_on_green_line_avoid_obs: root2d waypoints that guide the
+    robot around each obstacle to the far end of the line.
+
+    Strategy: for each obstacle at (bx, by), place a root2d waypoint at x=bx,
+    y=-sign(by)*0.3 (opposite side of the line). Final waypoint at line end center.
+
+    obs_world_positions: list of [x, y, z] in IsaacLab coordinates (x=fwd, y=left)
+    line_end_x: x coordinate of the far end of the line (target)
+    num_frames: total motion frames (used to compute frame indices from x positions)
+    """
+    import math
+
+    constraints = []
+    sorted_obs = sorted(obs_world_positions, key=lambda p: float(p[0]))
+    total_x = line_end_x + 0.5  # slight overshoot for frame scaling
+
+    for obs_pos in sorted_obs:
+        bx = float(obs_pos[0])  # forward
+        by = float(obs_pos[1])  # left
+
+        # Go to opposite lateral side, 0.3m offset
+        sign = math.copysign(1.0, by) if abs(by) > 0.01 else 1.0
+        waypoint_y = -sign * 0.3  # isaaclab y (left)
+
+        frame_idx = max(1, min(int(bx / total_x * num_frames), num_frames - 2))
+
+        # IsaacLab (x=fwd, y=left) → Kimodo (x=left, z=fwd)
+        kimodo_x = waypoint_y
+        kimodo_z = bx
+        print(f"[GT walk_on_green_line_avoid_obs] obs ({bx:.2f}, {by:.2f})"
+              f" → waypoint y={waypoint_y:.2f}, frame={frame_idx}")
+        constraints.append(make_root2d_constraint(skeleton, x=kimodo_x, z=kimodo_z,
+                                                  frame_index=frame_idx, device=device))
+
+    # Final waypoint: center of line end
+    print(f"[GT walk_on_green_line_avoid_obs] final waypoint x={line_end_x:.2f}, y=0.0, frame={num_frames-1}")
+    constraints.append(make_root2d_constraint(skeleton, x=0.0, z=float(line_end_x),
+                                              frame_index=num_frames - 1, device=device))
+    return constraints
+
+
 def constraints_reach_obj_gt(skeleton, cube_world_pos, frame_index, device: str) -> list:
     """
     GT upper bound for reach_obj: right hand constrained to cube world position.
@@ -346,6 +391,15 @@ def build_constraints(task: str, condition: str, skeleton, device: str, **kwargs
         return constraints_walk_to_obj_gt(
             skeleton, np.array(kwargs["box_world_pos"], dtype=np.float32),
             frame_index, device,
+        )
+
+    if task == "walk_on_green_line_avoid_obs" and condition == "gt":
+        return constraints_walk_on_green_line_avoid_obs_gt(
+            skeleton,
+            [np.array(p, dtype=np.float32) for p in kwargs["obs_world_positions"]],
+            kwargs.get("line_end_x", 5.75),
+            kwargs["num_frames"],
+            device,
         )
 
     raise ValueError(f"Unknown task/condition: {task}/{condition}")

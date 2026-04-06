@@ -1,1 +1,1 @@
-The robot must reach the red cube on the table and keep its hand at the cube once reached.
+The robot must reach the red cube on the table with its right hand and keep its hand at the cube once reached. Identify the 3D position of the red cube in the scene and predict a right-hand constraint at that position.

@@ -39,6 +39,7 @@ class DistanceToTarget(Metric):
         use_min: bool = False,
         use_2d: bool = False,
         overlay_label: str | None = None,
+        fixed_target_pos: list[float] | None = None,
     ):
         self.name = name
         self.link_name = link_name
@@ -47,6 +48,7 @@ class DistanceToTarget(Metric):
         self.use_min = use_min
         self.use_2d = use_2d
         self.overlay_label = overlay_label
+        self.fixed_target_pos = fixed_target_pos  # [x, y, z] in world frame; overrides object_index
 
         self._link_index = None      # resolved on first update
         self._distances = []         # distance at each step
@@ -74,8 +76,11 @@ class DistanceToTarget(Metric):
         # Robot link position: (num_envs, 3)
         link_pos = env.simulator._robot.data.body_pos_w[:, self._link_index, :]
 
-        # Scene object position from simulator (already in world frame): (num_envs, 3)
-        obj_pos = env.simulator._object[self.object_index].data.root_pos_w
+        # Target position: fixed point or scene object
+        if self.fixed_target_pos is not None:
+            obj_pos = torch.tensor(self.fixed_target_pos, dtype=link_pos.dtype, device=link_pos.device).unsqueeze(0)
+        else:
+            obj_pos = env.simulator._object[self.object_index].data.root_pos_w
 
         if self.use_2d:
             dist = torch.norm(link_pos[:, :2] - obj_pos[:, :2], dim=-1)
