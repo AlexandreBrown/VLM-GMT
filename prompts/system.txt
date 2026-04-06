@@ -43,7 +43,7 @@ Maximum 20 constraints per type.
 
 --- Output format ---
 
-Output ONLY a valid JSON array. No explanation, no markdown fences.
+Output ONLY a valid JSON array. No explanation, no markdown fences, no comments.
 Each element must have exactly these keys:
   "type":     one of the constraint types above (string)
   "frame_id": target frame index, 0 to {max_frame} (int)

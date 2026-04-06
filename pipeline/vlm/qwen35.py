@@ -80,46 +80,56 @@ class Qwen35VLM(VLMBase):
 
     def query_constraints(
         self,
-        image_rgb: np.ndarray,
+        image_rgb: np.ndarray | None = None,
         task_description: str | None = None,
     ) -> list[dict[str, Any]]:
         import torch
 
         assert self._model is not None, "Call load() first."
 
-        pil_img = Image.fromarray(image_rgb)
-        buf = io.BytesIO()
-        pil_img.save(buf, format="JPEG")
-        b64 = base64.b64encode(buf.getvalue()).decode()
-
         system = get_system_prompt(self.num_frames)
         task_text = task_description or get_task_prompt(self.task, self.task_description)
-        user = (
-            f"Task: {task_text}\n"
-            "Look at the image carefully. Think step by step:\n"
-            "1. What objects are visible and where are they relative to the robot?\n"
-            "2. What body parts need to be constrained and at which frames to achieve the task?\n"
-            "3. What are the estimated 3D world positions of those targets?\n"
-            "Now output the JSON array of constraints. You MUST output at least 1 constraint."
-        )
+
+        if image_rgb is not None:
+            pil_img = Image.fromarray(image_rgb)
+            buf = io.BytesIO()
+            pil_img.save(buf, format="JPEG")
+            b64 = base64.b64encode(buf.getvalue()).decode()
+            user = (
+                f"Task: {task_text}\n"
+                "Look at the image carefully. Think step by step:\n"
+                "1. What objects are visible and where are they relative to the robot?\n"
+                "2. What body parts need to be constrained and at which frames to achieve the task?\n"
+                "3. What are the estimated 3D world positions of those targets?\n"
+                "Now output the JSON array of constraints."
+            )
+            user_content = [
+                {"type": "image", "image": f"data:image/jpeg;base64,{b64}"},
+                {"type": "text", "text": user},
+            ]
+        else:
+            pil_img = None
+            user = (
+                f"Task: {task_text}\n"
+                "Think step by step:\n"
+                "1. What body parts need to be constrained and at which frames to achieve the task?\n"
+                "2. What are the estimated 3D world positions of those targets (relative to robot start)?\n"
+                "Now output the JSON array of constraints."
+            )
+            user_content = [{"type": "text", "text": user}]
 
         messages = [
             {"role": "system", "content": system},
-            {
-                "role": "user",
-                "content": [
-                    {"type": "image", "image": f"data:image/jpeg;base64,{b64}"},
-                    {"type": "text", "text": user},
-                ],
-            },
+            {"role": "user", "content": user_content},
         ]
 
         text = self._processor.apply_chat_template(
             messages, tokenize=False, add_generation_prompt=True
         )
-        inputs = self._processor(
-            text=[text], images=[pil_img], return_tensors="pt"
-        ).to(self.device)
+        proc_kwargs = {"text": [text], "return_tensors": "pt"}
+        if pil_img is not None:
+            proc_kwargs["images"] = [pil_img]
+        inputs = self._processor(**proc_kwargs).to(self.device)
 
         with torch.no_grad():
             output_ids = self._model.generate(**inputs, max_new_tokens=4096)

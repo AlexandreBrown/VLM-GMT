@@ -100,7 +100,7 @@ class QwenVLM(VLMBase):
                 "1. What objects are visible and where are they relative to the robot?\n"
                 "2. What body parts need to be constrained and at which frames to achieve the task?\n"
                 "3. What are the estimated 3D world positions of those targets?\n"
-                "Now output the JSON array of constraints. You MUST output at least 1 constraint."
+                "Now output the JSON array of constraints."
             )
             user_content = [
                 {"type": "image", "image": pil_img},
@@ -112,7 +112,7 @@ class QwenVLM(VLMBase):
                 "Think step by step:\n"
                 "1. What body parts need to be constrained and at which frames to achieve the task?\n"
                 "2. What are the estimated 3D world positions of those targets (relative to robot start)?\n"
-                "Now output the JSON array of constraints. You MUST output at least 1 constraint."
+                "Now output the JSON array of constraints."
             )
             user_content = [{"type": "text", "text": user_text}]
 
