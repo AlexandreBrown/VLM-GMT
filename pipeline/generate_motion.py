@@ -137,10 +137,10 @@ def main():
     parser.add_argument("--image", help="Egocentric RGB image for VLM condition")
     parser.add_argument(
         "--task-description",
-        default="Reach the red cube with your right hand.",
-        help="Natural-language task description passed to the VLM",
+        default=None,
+        help="Override VLM task description. If not set, loads from tasks/<task>/vlm_prompt.txt",
     )
-    parser.add_argument("--vlm-name", default="qwen2.5-vl-72b")  # 4-bit ~36GB, fits in 48GB L40S
+    parser.add_argument("--vlm-name", default="qwen2.5-vl-32b")  # 4-bit ~16GB, fits in 48GB L40S
     parser.add_argument("--vlm-no-4bit", action="store_true", default=False,
                         help="Disable 4-bit quantization (use bfloat16, requires more VRAM)")
 

@@ -14,12 +14,12 @@ HF_MODEL_IDS = {
     "qwen2.5-vl-7b":    "Qwen/Qwen2.5-VL-7B-Instruct",
     "qwen2.5-vl-32b":   "Qwen/Qwen2.5-VL-32B-Instruct",
     "qwen2.5-vl-72b":   "Qwen/Qwen2.5-VL-72B-Instruct",
-    "qwen3.5-27b":      "Qwen/Qwen3.5-27B-FP8",
-    "qwen3.5-35b-a3b":  "Qwen/Qwen3.5-35B-A3B-FP8",
+    "qwen3.5-27b":      "Qwen/Qwen3.5-27B-FP8",    # requires flash-linear-attention + causal-conv1d
+    "qwen3.5-35b-a3b":  "Qwen/Qwen3.5-35B-A3B-FP8",  # requires flash-linear-attention + causal-conv1d
 }
 
 
-def load_vlm(name: str = "qwen2.5-vl-72b", **kwargs) -> VLMBase:
+def load_vlm(name: str = "qwen2.5-vl-32b", **kwargs) -> VLMBase:
     if name not in REGISTRY:
         raise ValueError(f"Unknown VLM '{name}'. Available: {list(REGISTRY)}")
     hf_model_id = HF_MODEL_IDS[name]
