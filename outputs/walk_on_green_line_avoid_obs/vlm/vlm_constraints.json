@@ -3,7 +3,7 @@
     "frame_id": 30,
     "type": "root2d",
     "position": [
-      0.8,
+      1.0,
       -0.5,
       0.0
     ]
@@ -12,7 +12,7 @@
     "frame_id": 90,
     "type": "root2d",
     "position": [
-      1.8,
+      2.0,
       0.5,
       0.0
     ]
@@ -21,7 +21,7 @@
     "frame_id": 150,
     "type": "root2d",
     "position": [
-      2.8,
+      3.0,
       -0.5,
       0.0
     ]
@@ -30,7 +30,7 @@
     "frame_id": 210,
     "type": "root2d",
     "position": [
-      3.8,
+      4.0,
       0.5,
       0.0
     ]
@@ -39,7 +39,7 @@
     "frame_id": 270,
     "type": "root2d",
     "position": [
-      4.8,
+      5.0,
       -0.5,
       0.0
     ]
@@ -48,7 +48,7 @@
     "frame_id": 299,
     "type": "root2d",
     "position": [
-      5.8,
+      6.0,
       0.0,
       0.0
     ]
