@@ -53,7 +53,7 @@ if __name__ == "__main__":
         "--box-pos",
         nargs=3,
         type=float,
-        default=[3.0, -1.1, 0.25],
+        default=[1.12, -0.8, 0.25],
         metavar=("X", "Y", "Z"),
     )
     parser.add_argument("--box-width", type=float, default=0.4)

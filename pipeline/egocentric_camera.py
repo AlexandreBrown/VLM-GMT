@@ -27,7 +27,7 @@ EGO_CAM_FOCAL_LENGTH = 24.0  # mm
 EGO_CAM_HORIZONTAL_APERTURE = 20.955  # mm
 EGO_CAM_CLIPPING = (0.05, 50.0)  # near / far in meters
 EGO_CAM_DEFAULT_PITCH_DEG = 50.0  # degrees downward
-EGO_CAM_OFFSET_FORWARD = 0.12  # meters forward from head center
+EGO_CAM_OFFSET_FORWARD = 0.15  # meters forward from head center
 
 # Key for the sensor in InteractiveScene
 _SCENE_KEY = "egocentric_camera"
