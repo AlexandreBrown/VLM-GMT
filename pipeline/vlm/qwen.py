@@ -111,7 +111,7 @@ class QwenVLM(VLMBase):
                 f"Task: {task_text}\n"
                 "Think step by step:\n"
                 "1. What body parts need to be constrained and at which frames to achieve the task?\n"
-                "2. What are the estimated 3D world positions of those targets (relative to robot start)?\n"
+                "2. What are the estimated 3D world positions of those targets?\n"
                 "Now output the JSON array of constraints."
             )
             user_content = [{"type": "text", "text": user_text}]
