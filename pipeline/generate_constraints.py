@@ -201,44 +201,47 @@ def constraints_walk_on_green_line_avoid_obs_gt(
     skeleton, obs_world_positions: list, line_end_x: float, num_frames: int, device: str
 ) -> list:
     """
-    GT upper bound for walk_on_green_line_avoid_obs: root2d waypoints that guide the
-    robot around each obstacle to the far end of the line.
+    GT upper bound: two root2d waypoints per obstacle + final waypoint at line end.
 
-    Strategy: for each obstacle at (bx, by), place a root2d waypoint at x=bx,
-    y=-sign(by)*0.3 (opposite side of the line). Final waypoint at line end center.
+    For each obstacle at (bx, by):
+      Constraint A — x = bx - 0.4 (before obs): robot already moving to avoidance side.
+      Constraint B — x = bx + 0.5 (past  obs):  robot has clearly cleared the obstacle.
+    Final constraint at (line_end_x, y=0): robot reaches center of line end.
 
-    obs_world_positions: list of [x, y, z] in IsaacLab coordinates (x=fwd, y=left)
-    line_end_x: x coordinate of the far end of the line (target)
-    num_frames: total motion frames (used to compute frame indices from x positions)
+    avoidance_y = -sign(by) * 0.3 in IsaacLab frame (opposite side of the obstacle).
+    Frame indices scale linearly with x / (line_end_x + 1.0).
     """
     import math
 
     constraints = []
     sorted_obs = sorted(obs_world_positions, key=lambda p: float(p[0]))
-    total_x = line_end_x + 0.5  # slight overshoot for frame scaling
+    total_x = line_end_x + 1.0  # denominator for frame scaling
+
+    def frame_for_x(x):
+        return max(1, min(int(x / total_x * num_frames), num_frames - 2))
 
     for obs_pos in sorted_obs:
-        bx = float(obs_pos[0])  # forward
-        by = float(obs_pos[1])  # left
+        bx = float(obs_pos[0])  # forward (isaaclab x)
+        by = float(obs_pos[1])  # left   (isaaclab y)
 
-        # Go to opposite lateral side, 0.3m offset
         sign = math.copysign(1.0, by) if abs(by) > 0.01 else 1.0
-        waypoint_y = -sign * 0.3  # isaaclab y (left)
+        avoidance_y = -sign * 0.3  # isaaclab y: opposite side of obstacle
 
-        frame_idx = max(1, min(int(bx / total_x * num_frames), num_frames - 2))
-
-        # IsaacLab (x=fwd, y=left) → Kimodo (x=left, z=fwd)
-        kimodo_x = waypoint_y
-        kimodo_z = bx
-        print(f"[GT walk_on_green_line_avoid_obs] obs ({bx:.2f}, {by:.2f})"
-              f" → waypoint y={waypoint_y:.2f}, frame={frame_idx}")
-        constraints.append(make_root2d_constraint(skeleton, x=kimodo_x, z=kimodo_z,
-                                                  frame_index=frame_idx, device=device))
+        for x_offset, label in [(-0.4, "before"), (0.5, "past")]:
+            x = bx + x_offset
+            f = frame_for_x(x)
+            # IsaacLab (x=fwd, y=left) → Kimodo (x=left, z=fwd)
+            print(f"[GT walk_on_green_line_avoid_obs] obs ({bx:.2f}, {by:.2f})"
+                  f" {label}: kimodo_z={x:.2f}, kimodo_x={avoidance_y:.2f}, frame={f}")
+            constraints.append(make_root2d_constraint(
+                skeleton, x=avoidance_y, z=x, frame_index=f, device=device
+            ))
 
     # Final waypoint: center of line end
-    print(f"[GT walk_on_green_line_avoid_obs] final waypoint x={line_end_x:.2f}, y=0.0, frame={num_frames-1}")
-    constraints.append(make_root2d_constraint(skeleton, x=0.0, z=float(line_end_x),
-                                              frame_index=num_frames - 1, device=device))
+    print(f"[GT walk_on_green_line_avoid_obs] final: kimodo_z={line_end_x:.2f}, kimodo_x=0.0, frame={num_frames-1}")
+    constraints.append(make_root2d_constraint(
+        skeleton, x=0.0, z=float(line_end_x), frame_index=num_frames - 1, device=device
+    ))
     return constraints
 
 

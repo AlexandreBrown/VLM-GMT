@@ -30,8 +30,8 @@ from protomotions.components.scene_lib import (
 # ── Defaults ──────────────────────────────────────────────────────────────────
 # Line: 1.0m wide, 5.5m long, very thin (0.02m), center at (3.0, 0.0, 0.01)
 LINE_POS   = (3.0, 0.0, 0.01)
-LINE_WIDTH = 1.0    # y-axis
-LINE_DEPTH = 5.5    # x-axis
+LINE_WIDTH = 5.5    # x-axis (forward)
+LINE_DEPTH = 1.0    # y-axis (lateral)
 LINE_HEIGHT = 0.02
 
 # Obstacle positions and sizes (x_forward, y_left, z_center)
@@ -47,7 +47,7 @@ OBS2_SIZE = (0.35, 0.35, 0.70)
 OBS3_POS  = (4.5,  0.15, 0.25)
 OBS3_SIZE = (0.25, 0.30, 0.50)
 
-LINE_END_X = LINE_POS[0] + LINE_DEPTH / 2  # 5.75m — used as metric target
+LINE_END_X = LINE_POS[0] + LINE_WIDTH / 2  # 5.75m — used as metric target
 
 
 def create_scene(
@@ -99,9 +99,9 @@ def create_scene(
     scene = Scene(objects=[line, obs1, obs2, obs3])
     SceneLib.save_scenes_to_file([scene], output)
 
-    end_x = line_pos[0] + line_depth / 2
+    end_x = line_pos[0] + line_width / 2
     print(f"[create_scene] Saved '{output}'")
-    print(f"  line:  center={line_pos}, {line_width}m wide x {line_depth}m long")
+    print(f"  line:  center={line_pos}, {line_width}m long (forward) x {line_depth}m wide (lateral)")
     print(f"  obs1:  pos={obs1_pos}, size={obs1_size}")
     print(f"  obs2:  pos={obs2_pos}, size={obs2_size}")
     print(f"  obs3:  pos={obs3_pos}, size={obs3_size}")

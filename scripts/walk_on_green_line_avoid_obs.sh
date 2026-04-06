@@ -1,7 +1,7 @@
 #!/bin/bash
 # Task: walk_on_green_line_avoid_obs
 # Robot walks along a 1m-wide green line and navigates around 3 colored obstacles on it.
-# Success: pelvis stays within line Y bounds (±0.5m) AND passes all 3 obstacles during episode.
+# Success: pelvis stays within line Y bounds (±0.5m) AND final position is past all 3 obstacles.
 #
 # Run order:
 #   1. Create scene        (local)
@@ -33,6 +33,7 @@ python $VLMGMT/tasks/walk_on_green_line_avoid_obs/create_scene.py \
 # export HF_HOME=$SCRATCH/huggingface_cache
 python $VLMGMT/pipeline/generate_motion.py \
     --task walk_on_green_line_avoid_obs --condition baseline \
+    --duration 10 \
     --output-dir $VLMGMT/outputs/walk_on_green_line_avoid_obs/baseline \
     --protomotions-root $PROTOMOTIONS
 
@@ -47,9 +48,10 @@ python $VLMGMT/pipeline/capture_egocentric.py \
     --pitch-deg 30 --robot-yaw-deg 0 --prefix ego
 
 # ── 4. Generate gt + vlm motions — CLUSTER ───────────────────────────────────
-# GT
+# GT (2 root2d constraints per obstacle: before + past, plus final at line end)
 python $VLMGMT/pipeline/generate_motion.py \
     --task walk_on_green_line_avoid_obs --condition gt \
+    --duration 10 \
     --obs1-world-pos $OBS1 \
     --obs2-world-pos $OBS2 \
     --obs3-world-pos $OBS3 \
@@ -59,6 +61,7 @@ python $VLMGMT/pipeline/generate_motion.py \
 # VLM (scp ego.png to cluster first)
 python $VLMGMT/pipeline/generate_motion.py \
     --task walk_on_green_line_avoid_obs --condition vlm \
+    --duration 10 \
     --image $VLMGMT/outputs/walk_on_green_line_avoid_obs/ego.png \
     --vlm-name qwen2.5-vl-32b \
     --output-dir $VLMGMT/outputs/walk_on_green_line_avoid_obs/vlm \
