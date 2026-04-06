@@ -225,7 +225,7 @@ def constraints_navigate_maze_gt(
         by = float(obs_pos[1])  # left   (isaaclab y)
 
         sign = math.copysign(1.0, by) if abs(by) > 0.01 else 1.0
-        avoidance_y = -sign * 0.3  # isaaclab y: opposite side of obstacle
+        avoidance_y = -sign * 0.6  # isaaclab y: well into the gap (center at ±0.75)
 
         for x_offset, label in [(-0.4, "before"), (0.5, "past")]:
             x = bx + x_offset
