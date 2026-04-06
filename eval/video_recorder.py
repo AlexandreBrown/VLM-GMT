@@ -21,7 +21,8 @@ class VideoRecorder:
         if self._font is None:
             try:
                 self._font = ImageFont.truetype(
-                    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 20)
+                    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 20
+                )
             except (OSError, IOError):
                 self._font = ImageFont.load_default()
         return self._font
@@ -29,10 +30,13 @@ class VideoRecorder:
     def new_episode(self):
         self._episode += 1
 
-    def capture_frame(self, third_person_rgb: np.ndarray,
-                      ego_rgb: np.ndarray | None,
-                      metrics: list,
-                      episode_num: int = 0):
+    def capture_frame(
+        self,
+        third_person_rgb: np.ndarray,
+        ego_rgb: np.ndarray | None,
+        metrics: list,
+        episode_num: int = 0,
+    ):
         """Compose one frame: third-person (left) + ego (right) + metric overlays."""
         tp_img = Image.fromarray(third_person_rgb)
 
@@ -49,7 +53,9 @@ class VideoRecorder:
         font = self._get_font()
 
         # Episode label
-        draw.text((10, 10), f"Episode {episode_num + 1}", fill=(255, 255, 255), font=font)
+        draw.text(
+            (10, 10), f"Episode {episode_num + 1}", fill=(255, 255, 255), font=font
+        )
         y_offset = 38
 
         for m in metrics:
@@ -72,9 +78,13 @@ class VideoRecorder:
 
         path = self.output_dir / filename
         h, w = self._frames[0].shape[:2]
-        writer = cv2.VideoWriter(str(path), cv2.VideoWriter_fourcc(*"avc1"), self.fps, (w, h))
+        writer = cv2.VideoWriter(
+            str(path), cv2.VideoWriter_fourcc(*"VP80"), self.fps, (w, h)
+        )
         for frame in self._frames:
             writer.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
         writer.release()
-        print(f"[video] Saved {len(self._frames)} frames ({self._episode} episodes) to {path}")
+        print(
+            f"[video] Saved {len(self._frames)} frames ({self._episode} episodes) to {path}"
+        )
         return str(path)

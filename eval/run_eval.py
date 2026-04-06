@@ -43,7 +43,7 @@ def create_parser():
     parser.add_argument(
         "--record-video",
         action="store_true",
-        default=False,
+        default=True,
         help="Record side-by-side video (third-person + ego) per episode",
     )
     parser.add_argument(
@@ -355,7 +355,7 @@ def main():
         )
 
     if video_recorder:
-        video_recorder.save(f"{args.condition}.mp4")
+        video_recorder.save(f"{args.condition}.webm")
 
     # Aggregate
     summary = {}
