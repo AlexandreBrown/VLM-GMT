@@ -103,7 +103,7 @@ class VideoRecorder:
                     "-vcodec",
                     "libx264",  # Web-safe H.264 codec
                     "-crf",
-                    "20",  # QUALITY CONTROL: 18-23 is the sweet spot. Lower = better quality/bigger file.
+                    "18",  # QUALITY CONTROL: 18-23 is the sweet spot. Lower = better quality/bigger file.
                     "-preset",
                     "fast",  # Encoding speed
                     "-pix_fmt",
