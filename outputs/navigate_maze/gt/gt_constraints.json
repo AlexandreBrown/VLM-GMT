@@ -1,0 +1,86 @@
+[
+  {
+    "type": "root2d",
+    "frame_indices": [
+      66
+    ],
+    "smooth_root_2d": [
+      [
+        -0.6000000238418579,
+        1.100000023841858
+      ]
+    ]
+  },
+  {
+    "type": "root2d",
+    "frame_indices": [
+      120
+    ],
+    "smooth_root_2d": [
+      [
+        -0.6000000238418579,
+        2.0
+      ]
+    ]
+  },
+  {
+    "type": "root2d",
+    "frame_indices": [
+      150
+    ],
+    "smooth_root_2d": [
+      [
+        -0.6000000238418579,
+        2.5
+      ]
+    ]
+  },
+  {
+    "type": "root2d",
+    "frame_indices": [
+      156
+    ],
+    "smooth_root_2d": [
+      [
+        0.6000000238418579,
+        2.5999999046325684
+      ]
+    ]
+  },
+  {
+    "type": "root2d",
+    "frame_indices": [
+      210
+    ],
+    "smooth_root_2d": [
+      [
+        0.6000000238418579,
+        3.5
+      ]
+    ]
+  },
+  {
+    "type": "root2d",
+    "frame_indices": [
+      240
+    ],
+    "smooth_root_2d": [
+      [
+        0.6000000238418579,
+        4.0
+      ]
+    ]
+  },
+  {
+    "type": "root2d",
+    "frame_indices": [
+      299
+    ],
+    "smooth_root_2d": [
+      [
+        0.0,
+        4.0
+      ]
+    ]
+  }
+]
