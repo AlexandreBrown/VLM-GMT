@@ -39,7 +39,7 @@ python $VLMGMT/pipeline/generate_motion.py \
 # GT (fullbody constraint from Kimodo UI export)
 python $VLMGMT/pipeline/generate_motion.py \
     --task kneel_down_1_knee --condition gt \
-    --fullbody-constraint-json $FULLBODY_JSON \
+    --constraint-json $FULLBODY_JSON \
     --output-dir $VLMGMT/outputs/kneel_down_1_knee/gt \
     --protomotions-root $PROTOMOTIONS --vlm-gmt-root $VLMGMT
 

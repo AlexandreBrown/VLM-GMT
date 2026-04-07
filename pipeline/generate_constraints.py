@@ -170,36 +170,23 @@ def make_root2d_constraint(skeleton, x: float, z: float, frame_index: int, devic
     )
 
 # --------------------------------------------------------------------------- #
-# Fullbody constraint loader
+# Generic constraint loader (delegates to kimodo API)
 # --------------------------------------------------------------------------- #
 
-def load_fullbody_constraint_from_json(skeleton, json_path: str, device: str) -> list:
-    """Load a FullBodyConstraintSet from a JSON file exported by the Kimodo UI.
+def load_constraints_from_json(skeleton, json_path: str, device: str) -> list:
+    """Load constraints from a JSON file exported by the Kimodo UI.
 
-    The JSON contains local_joints_rot (axis-angle), root_positions, smooth_root_2d,
-    and frame_indices. FullBodyConstraintSet.from_dict() handles FK internally.
+    Supports any constraint type (fullbody, root2d, end-effector, etc.)
+    via kimodo.constraints.load_constraints_lst.
     """
-    import json
     from pathlib import Path
-    from kimodo.constraints import FullBodyConstraintSet
+    from kimodo.constraints import load_constraints_lst
 
     path = Path(json_path)
     if not path.exists():
-        raise FileNotFoundError(f"Fullbody constraint file not found: {path}")
+        raise FileNotFoundError(f"Constraint file not found: {path}")
 
-    with open(path) as f:
-        data = json.load(f)
-
-    constraints = []
-    for entry in data:
-        if entry.get("type") != "fullbody":
-            raise ValueError(f"Expected type 'fullbody', got '{entry.get('type')}'")
-        c = FullBodyConstraintSet.from_dict(skeleton, entry)
-        c = c.to(device=device)
-        print(f"[GT fullbody] frames={entry['frame_indices']}, "
-              f"root_pos={entry['root_positions']}")
-        constraints.append(c)
-    return constraints
+    return load_constraints_lst(str(path), skeleton, device=device)
 
 
 # --------------------------------------------------------------------------- #
@@ -484,8 +471,8 @@ def build_constraints(task: str, condition: str, skeleton, device: str, **kwargs
         )
 
     if task == "kneel_down_1_knee" and condition == "gt":
-        return load_fullbody_constraint_from_json(
-            skeleton, kwargs["fullbody_constraint_json"], device,
+        return load_constraints_from_json(
+            skeleton, kwargs["constraint_json"], device,
         )
 
     raise ValueError(f"Unknown task/condition: {task}/{condition}")

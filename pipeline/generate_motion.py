@@ -140,7 +140,7 @@ def main():
     parser.add_argument("--line-end-x", type=float, default=4.0,
                         help="X coordinate of the far end of the green line (metric target)")
     # GT: kneel_down_1_knee (fullbody constraint from Kimodo UI export)
-    parser.add_argument("--fullbody-constraint-json",
+    parser.add_argument("--constraint-json",
                         help="Path to fullbody constraint JSON file (exported from Kimodo UI)")
 
     # VLM
@@ -238,9 +238,9 @@ def main():
             ]
             constraint_kwargs["line_end_x"] = args.line_end_x
         elif args.task == "kneel_down_1_knee":
-            if args.fullbody_constraint_json is None:
-                parser.error("--fullbody-constraint-json required for condition=gt with task=kneel_down_1_knee")
-            constraint_kwargs["fullbody_constraint_json"] = args.fullbody_constraint_json
+            if args.constraint_json is None:
+                parser.error("--constraint-json required for condition=gt with task=kneel_down_1_knee")
+            constraint_kwargs["constraint_json"] = args.constraint_json
 
     elif args.condition == "vlm":
         constraint_kwargs["raw_vlm_constraints"] = raw_vlm_constraints
@@ -255,39 +255,10 @@ def main():
         print("[generate_motion] No constraints (baseline).")
 
     # Log constraints to JSON for comparison across conditions
-    if args.condition == "gt":
-        import json as _json
-        gt_log = []
-        for c in constraint_lst:
-            frame_ids = c.frame_indices.tolist()
-            ctype = c.__class__.__name__
-            if "Root2D" in ctype:
-                for fi, root2d in zip(frame_ids, c.smooth_root_2d.cpu().tolist()):
-                    # root2d is [kimodo_x, kimodo_z] = [isaaclab_y, isaaclab_x]
-                    gt_log.append({"type": "root2d", "frame_id": fi,
-                                   "position": [root2d[1], root2d[0], 0.0]})
-            elif "FullBody" in ctype:
-                for fi in frame_ids:
-                    gt_log.append({"type": "fullbody", "frame_id": fi})
-            else:
-                # Limb constraint: extract end-effector position from global_joints_positions
-                # Map class name to type string
-                type_map = {"RightHand": "right-hand", "LeftHand": "left-hand",
-                            "RightFoot": "right-foot", "LeftFoot": "left-foot"}
-                constraint_type = next((v for k, v in type_map.items() if k in ctype), ctype)
-                # Last joint in the constrained chain is the end effector
-                _, pos_joint_names = model.skeleton.expand_joint_names(c.joint_names)
-                ee_name = pos_joint_names[-1]
-                ee_idx = model.skeleton.bone_index[ee_name]
-                for i, fi in enumerate(frame_ids):
-                    pos_kimodo = c.global_joints_positions[i, ee_idx].cpu().tolist()
-                    pos_isaac = [pos_kimodo[2], pos_kimodo[0], pos_kimodo[1]]
-                    gt_log.append({"type": constraint_type, "frame_id": fi,
-                                   "position": [round(v, 4) for v in pos_isaac]})
-        gt_path = output_dir / "gt_constraints.json"
-        with open(gt_path, "w") as f:
-            _json.dump(gt_log, f, indent=2)
-        print(f"[generate_motion] Saved GT constraints to {gt_path}")
+    if args.condition == "gt" and constraint_lst:
+        from kimodo.constraints import save_constraints_lst
+        gt_path = str(output_dir / "gt_constraints.json")
+        save_constraints_lst(gt_path, constraint_lst)
 
     # ── Generate motion ────────────────────────────────────────────────────
     if args.seed is not None:
