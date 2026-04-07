@@ -1,0 +1,34 @@
+[
+  {
+    "frame_id": 45,
+    "type": "fullbody",
+    "positions": {
+      "left_knee": [
+        -0.2,
+        0.0,
+        0.0
+      ],
+      "right_knee": [
+        0.2,
+        0.0,
+        0.0
+      ]
+    }
+  },
+  {
+    "frame_id": 45,
+    "type": "fullbody",
+    "positions": {
+      "left_hand": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "right_hand": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  }
+]
