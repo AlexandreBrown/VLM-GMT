@@ -96,11 +96,8 @@ class QwenVLM(VLMBase):
             pil_img = Image.fromarray(image_rgb)
             user_text = (
                 f"Task: {task_text}\n"
-                "Look at the image carefully. Think step by step:\n"
-                "1. What objects are visible and where are they relative to the robot?\n"
-                "2. What body parts need to be constrained and at which frames to achieve the task?\n"
-                "3. What are the estimated 3D world positions of those targets?\n"
-                "Now output the JSON array of constraints."
+                "Now output the JSON array containing the kinematic constraints you believe would help achieve the task.\n"
+                "You MUST output an array with a least one constraint, even if you think there are no constraints needed.\n"
             )
             user_content = [
                 {"type": "image", "image": pil_img},
@@ -108,11 +105,7 @@ class QwenVLM(VLMBase):
             ]
         else:
             user_text = (
-                f"Task: {task_text}\n"
-                "Think step by step:\n"
-                "1. What body parts need to be constrained and at which frames to achieve the task?\n"
-                "2. What are the estimated 3D world positions of those targets?\n"
-                "Now output the JSON array of constraints."
+                f"Task: {task_text}"
             )
             user_content = [{"type": "text", "text": user_text}]
 
