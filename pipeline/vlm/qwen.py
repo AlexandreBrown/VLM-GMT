@@ -159,10 +159,18 @@ class QwenVLM(VLMBase):
             ctype = str(item["type"])
             entry = {"frame_id": int(item["frame_id"]), "type": ctype}
             if ctype == "fullbody":
-                entry["positions"] = {
-                    str(k): [float(v) for v in pos]
-                    for k, pos in item["positions"].items()
-                }
+                positions = {}
+                valid = True
+                for k, pos in item["positions"].items():
+                    if isinstance(pos, (list, tuple)) and len(pos) == 3:
+                        positions[str(k)] = [float(v) for v in pos]
+                    else:
+                        print(f"[QwenVLM] Skipping fullbody constraint: joint '{k}' has invalid position {pos!r} (expected [x,y,z])")
+                        valid = False
+                        break
+                if not valid:
+                    continue
+                entry["positions"] = positions
             else:
                 entry["position"] = [float(v) for v in item["position"]]
             parsed.append(entry)
