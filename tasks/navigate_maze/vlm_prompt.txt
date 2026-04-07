@@ -1,1 +1,1 @@
-Navigate safely to the end of the maze without colliding with any colored walls.
+The robot must navigate safely to the end of the maze without colliding with any colored walls in the way.

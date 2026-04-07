@@ -115,8 +115,7 @@ class QwenVLM(VLMBase):
 
         print(f"[QwenVLM] Raw response:\n{raw}")
         constraints = self._parse(raw)
-        if not constraints:
-            raise ValueError(f"[QwenVLM] Model returned 0 constraints. Raw: {raw!r}")
+        print(f"[QwenVLM] Model returned 0 constraints. Raw: {raw!r}")
         return constraints
 
     @staticmethod

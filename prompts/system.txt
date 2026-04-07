@@ -31,9 +31,9 @@ Output ONLY a valid JSON array. No explanation, no markdown fences, no comments.
 Each element must have exactly these keys:
   "type":     one of the constraint types above (string)
   "frame_id": target frame index, 0 to {max_frame} (int)
-  "position": [x, y, z] in world coordinates, meters (list of 3 floats)
+  "position": precise [x, y, z] in world coordinates, meters (list of 3 floats)
 
-Examples (illustrative only, do not copy values):
+Examples:
 
 [{{"frame_id": 67, "type": "right-hand", "position": [0.81, -0.31, 0.74]}}]
 
