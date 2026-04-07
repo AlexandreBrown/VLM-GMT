@@ -4,7 +4,7 @@ Motion is generated at 30 fps. Total frames: {num_frames} (indices 0 to {max_fra
 
 Output format:
 
-Output ONLY a valid JSON array. No explanation, no markdown fences, no comments, not [{} // some comments].
+Output ONLY a valid JSON array. No explanation, no markdown fences, no comments, not [{{}} // some comments].
 Each element must have exactly these keys:
   "type":     one of the constraint types above (string)
   "frame_id": target frame index, 0 to {max_frame} (int)
