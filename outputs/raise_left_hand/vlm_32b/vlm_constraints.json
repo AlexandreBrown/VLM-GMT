@@ -1,0 +1,20 @@
+[
+  {
+    "frame_id": 0,
+    "type": "left-hand",
+    "position": [
+      0.0,
+      0.0,
+      1.8
+    ]
+  },
+  {
+    "frame_id": 89,
+    "type": "left-hand",
+    "position": [
+      0.0,
+      0.0,
+      1.8
+    ]
+  }
+]
