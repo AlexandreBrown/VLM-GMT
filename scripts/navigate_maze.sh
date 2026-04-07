@@ -57,13 +57,22 @@ python $VLMGMT/pipeline/generate_motion.py \
     --output-dir $VLMGMT/outputs/navigate_maze/gt \
     --protomotions-root $PROTOMOTIONS --vlm-gmt-root $VLMGMT
 
-# VLM (scp ego.png to cluster first)
+# VLM 32B (scp ego.png to cluster first)
 python $VLMGMT/pipeline/generate_motion.py \
     --task navigate_maze --condition vlm \
     --duration 10 \
     --image $VLMGMT/outputs/navigate_maze/ego.png \
     --vlm-name qwen2.5-vl-32b --pitch-deg 30 \
-    --output-dir $VLMGMT/outputs/navigate_maze/vlm \
+    --output-dir $VLMGMT/outputs/navigate_maze/vlm_32b \
+    --protomotions-root $PROTOMOTIONS --vlm-gmt-root $VLMGMT
+
+# VLM 7B
+python $VLMGMT/pipeline/generate_motion.py \
+    --task navigate_maze --condition vlm \
+    --duration 10 \
+    --image $VLMGMT/outputs/navigate_maze/ego.png \
+    --vlm-name qwen2.5-vl-7b --pitch-deg 30 \
+    --output-dir $VLMGMT/outputs/navigate_maze/vlm_7b \
     --protomotions-root $PROTOMOTIONS --vlm-gmt-root $VLMGMT
 
 # ── 5. Kinematic playback (local, from $PROTOMOTIONS) ────────────────────────
@@ -76,7 +85,7 @@ python examples/env_kinematic_playback.py \
 
 # ── 6. Eval (local, from $PROTOMOTIONS) ──────────────────────────────────────
 cd $PROTOMOTIONS
-for COND in baseline gt vlm; do
+for COND in baseline gt vlm_7b vlm_32b; do
     python $VLMGMT/eval/run_eval.py \
         --checkpoint $CKPT \
         --motion-file $VLMGMT/outputs/navigate_maze/${COND}/motion.pt \

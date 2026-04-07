@@ -42,16 +42,23 @@ python $VLMGMT/pipeline/generate_motion.py \
     --output-dir $VLMGMT/outputs/raise_left_hand/gt \
     --protomotions-root $PROTOMOTIONS --vlm-gmt-root $VLMGMT
 
-# VLM (text-only, no --image)
+# VLM 32B (text-only, no --image)
 python $VLMGMT/pipeline/generate_motion.py \
     --task raise_left_hand --condition vlm \
     --vlm-name qwen2.5-vl-32b \
-    --output-dir $VLMGMT/outputs/raise_left_hand/vlm \
+    --output-dir $VLMGMT/outputs/raise_left_hand/vlm_32b \
+    --protomotions-root $PROTOMOTIONS --vlm-gmt-root $VLMGMT
+
+# VLM 7B (text-only, no --image)
+python $VLMGMT/pipeline/generate_motion.py \
+    --task raise_left_hand --condition vlm \
+    --vlm-name qwen2.5-vl-7b \
+    --output-dir $VLMGMT/outputs/raise_left_hand/vlm_7b \
     --protomotions-root $PROTOMOTIONS --vlm-gmt-root $VLMGMT
 
 # ── 4. Eval (local, from $PROTOMOTIONS) ──────────────────────────────────────
 cd $PROTOMOTIONS
-for COND in baseline gt vlm; do
+for COND in baseline gt vlm_7b vlm_32b; do
     python $VLMGMT/eval/run_eval.py \
         --checkpoint $CKPT \
         --motion-file $VLMGMT/outputs/raise_left_hand/${COND}/motion.pt \
