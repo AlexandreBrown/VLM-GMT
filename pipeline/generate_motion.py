@@ -266,6 +266,9 @@ def main():
                     # root2d is [kimodo_x, kimodo_z] = [isaaclab_y, isaaclab_x]
                     gt_log.append({"type": "root2d", "frame_id": fi,
                                    "position": [root2d[1], root2d[0], 0.0]})
+            elif "FullBody" in ctype:
+                for fi in frame_ids:
+                    gt_log.append({"type": "fullbody", "frame_id": fi})
             else:
                 # Limb constraint: extract end-effector position from global_joints_positions
                 # Map class name to type string
