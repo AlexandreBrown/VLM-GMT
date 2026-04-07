@@ -260,9 +260,9 @@ def constraints_reach_obj_gt(skeleton, cube_world_pos, frame_index, device: str)
     return [make_limb_constraint(skeleton, "right-hand", target, frame_index, device)]
 
 
-def query_vlm_raw(task: str, image_rgb, task_description, vlm_name: str,
+def query_vlm_raw(task: str, image_rgb, vlm_name: str,
                    load_in_4bit: bool, num_frames: int, output_dir: str,
-                   vlm_gmt_root: str = None) -> list:
+                   vlm_gmt_root: str) -> list:
     """Run the VLM and return raw constraint dicts. No skeleton required.
 
     Call this BEFORE loading Kimodo to avoid concurrent GPU memory usage.
@@ -272,11 +272,8 @@ def query_vlm_raw(task: str, image_rgb, task_description, vlm_name: str,
     from pathlib import Path
     from pipeline.vlm import load_vlm
 
-    if vlm_gmt_root is None:
-        raise ValueError("vlm_gmt_root must be provided")
     vlm = load_vlm(vlm_name, vlm_gmt_root=vlm_gmt_root, num_frames=num_frames,
-                    task=task, task_description=task_description,
-                    load_in_4bit=load_in_4bit)
+                    task=task, load_in_4bit=load_in_4bit)
     raw_constraints = vlm.query_constraints(image_rgb)
     print(f"[VLM] predicted {len(raw_constraints)} constraint(s):")
 
@@ -290,13 +287,13 @@ def query_vlm_raw(task: str, image_rgb, task_description, vlm_name: str,
     return raw_constraints
 
 
-def constraints_vlm(skeleton, task, image_rgb, task_description, vlm_name,
+def constraints_vlm(skeleton, task, image_rgb, vlm_name,
                      num_frames, output_dir, device: str, load_in_4bit: bool = True,
                      vlm_gmt_root: str = None) -> list:
     """VLM predicts 3D constraint positions from an egocentric image.
 
     Loads system prompt from prompts/system.txt and task prompt from
-    tasks/<task>/vlm_prompt.txt (or uses task_description override).
+    tasks/<task>/vlm_prompt.txt.
     Saves raw VLM predictions to <output_dir>/vlm_constraints.json.
     """
     import json
@@ -306,8 +303,7 @@ def constraints_vlm(skeleton, task, image_rgb, task_description, vlm_name,
     if vlm_gmt_root is None:
         raise ValueError("vlm_gmt_root must be provided")
     vlm = load_vlm(vlm_name, vlm_gmt_root=vlm_gmt_root, num_frames=num_frames,
-                    task=task, task_description=task_description,
-                    load_in_4bit=load_in_4bit)
+                    task=task, load_in_4bit=load_in_4bit)
     raw_constraints = vlm.query_constraints(image_rgb)
     print(f"[VLM] predicted {len(raw_constraints)} constraint(s):")
 
@@ -378,7 +374,6 @@ def build_constraints(task: str, condition: str, skeleton, device: str, **kwargs
         return constraints_vlm(
             skeleton, task,
             kwargs["image_rgb"],
-            kwargs.get("task_description"),
             kwargs.get("vlm_name", "qwen2.5-vl-32b"),
             kwargs["num_frames"],
             kwargs.get("output_dir"),

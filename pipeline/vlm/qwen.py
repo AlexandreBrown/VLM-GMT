@@ -15,10 +15,6 @@ from PIL import Image
 from .base import VLMBase
 
 
-def _load_prompt(path: str | Path) -> str:
-    return Path(path).read_text().strip()
-
-
 class QwenVLM(VLMBase):
 
     def __init__(
@@ -29,7 +25,6 @@ class QwenVLM(VLMBase):
         load_in_4bit: bool = True,
         num_frames: int = 90,
         task: str = "reach_obj",
-        task_description: str | None = None,
         vlm_gmt_root: str | Path = None,
     ):
         if vlm_gmt_root is None:
@@ -41,7 +36,6 @@ class QwenVLM(VLMBase):
         self.load_in_4bit = load_in_4bit
         self.num_frames = num_frames
         self.task = task
-        self.task_description = task_description
         self._model = None
         self._processor = None
 
@@ -65,49 +59,38 @@ class QwenVLM(VLMBase):
         self._model.eval()
         print("[QwenVLM] Ready.")
 
-    def _get_system_prompt(self) -> str:
-        text = _load_prompt(self.vlm_gmt_root / "prompts" / "system.txt")
+    def _load_system_prompt(self) -> str:
+        path = self.vlm_gmt_root / "prompts" / "system.txt"
+        if not path.exists():
+            raise FileNotFoundError(f"System prompt not found at {path}")
+        text = path.read_text().strip()
         return text.format(num_frames=self.num_frames, max_frame=self.num_frames - 1)
 
-    def _get_task_prompt(self) -> str:
-        if self.task_description:
-            p = Path(self.task_description)
-            if p.is_file():
-                return _load_prompt(p)
-            return self.task_description
+    def _load_task_prompt(self) -> str:
         path = self.vlm_gmt_root / "tasks" / self.task / "vlm_prompt.txt"
         if not path.exists():
-            raise FileNotFoundError(f"No VLM prompt for task '{self.task}' at {path}")
-        return _load_prompt(path)
+            raise FileNotFoundError(f"VLM prompt not found at {path}")
+        return path.read_text().strip()
 
     def query_constraints(
         self,
         image_rgb: np.ndarray | None = None,
-        task_description: str | None = None,
     ) -> list[dict[str, Any]]:
         import torch
 
         assert self._model is not None, "Call load() first."
 
-        system = self._get_system_prompt()
-        task_text = task_description or self._get_task_prompt()
+        system = self._load_system_prompt()
+        task_prompt = self._load_task_prompt()
 
         if image_rgb is not None:
             pil_img = Image.fromarray(image_rgb)
-            user_text = (
-                f"Task: {task_text}\n"
-                "Now output the JSON array containing the kinematic constraints you believe would help achieve the task.\n"
-                "You MUST output an array with a least one constraint, even if you think there are no constraints needed.\n"
-            )
             user_content = [
                 {"type": "image", "image": pil_img},
-                {"type": "text", "text": user_text},
+                {"type": "text", "text": task_prompt},
             ]
         else:
-            user_text = (
-                f"Task: {task_text}"
-            )
-            user_content = [{"type": "text", "text": user_text}]
+            user_content = [{"type": "text", "text": task_prompt}]
 
         messages = [
             {"role": "system", "content": [{"type": "text", "text": system}]},

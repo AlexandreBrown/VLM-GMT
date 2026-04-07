@@ -142,11 +142,6 @@ def main():
 
     # VLM
     parser.add_argument("--image", help="Egocentric RGB image for VLM condition")
-    parser.add_argument(
-        "--task-description",
-        default=None,
-        help="Override VLM task description. If not set, loads from tasks/<task>/vlm_prompt.txt",
-    )
     parser.add_argument("--vlm-name", default="qwen2.5-vl-32b")  # 4-bit ~16GB, fits in 48GB L40S
     parser.add_argument("--vlm-no-4bit", action="store_true", default=False,
                         help="Disable 4-bit quantization (use bfloat16, requires more VRAM)")
@@ -189,7 +184,6 @@ def main():
         raw_vlm_constraints = query_vlm_raw(
             task=args.task,
             image_rgb=image_rgb,
-            task_description=args.task_description,
             vlm_name=args.vlm_name,
             load_in_4bit=not args.vlm_no_4bit,
             num_frames=num_frames_approx,
