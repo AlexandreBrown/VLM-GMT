@@ -79,7 +79,7 @@ class NavigateMazeMetric(Metric):
         self._distance_traveled = 0.0
 
     def _resolve_link_index(self, env) -> int:
-        body_names = env.simulator._body_names
+        body_names = list(env.simulator._robot.data.body_names)
         if self.link_name not in body_names:
             raise ValueError(
                 f"Link '{self.link_name}' not found. Available: {body_names}"

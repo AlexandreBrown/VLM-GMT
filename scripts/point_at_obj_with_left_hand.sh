@@ -76,7 +76,7 @@ for COND in baseline gt vlm; do
         --motion-file $VLMGMT/outputs/point_at_obj_with_left_hand/${COND}/motion.pt \
         --scenes-file $VLMGMT/outputs/point_at_obj_with_left_hand_scene.pt \
         --task point_at_obj_with_left_hand --condition ${COND} \
-        --num-episodes 50 --simulator isaaclab \
+        --num-episodes 10 --simulator isaaclab \
         --output-dir $VLMGMT/outputs/point_at_obj_with_left_hand/results \
         --protomotions-root $PROTOMOTIONS --vlm-gmt-root $VLMGMT
 done

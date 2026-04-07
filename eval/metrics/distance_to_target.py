@@ -60,8 +60,10 @@ class DistanceToTarget(Metric):
         self._link_index = None      # re-resolve each episode (safe)
 
     def _resolve_link_index(self, env) -> int:
-        """Find the rigid body index for self.link_name."""
-        body_names = env.simulator._body_names  # list of str
+        """Find the rigid body index for self.link_name in simulator ordering."""
+        # Use _robot.data.body_names (IsaacLab ordering) since we index into
+        # _robot.data.body_pos_w directly. NOT _body_names (ProtoMotions ordering).
+        body_names = list(env.simulator._robot.data.body_names)
         if self.link_name not in body_names:
             raise ValueError(
                 f"Link '{self.link_name}' not found in robot bodies.\n"
