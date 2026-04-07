@@ -385,7 +385,7 @@ def build_constraints(task: str, condition: str, skeleton, device: str, **kwargs
     # GT conditions are task-specific
     frame_index = kwargs.get("frame_index", 45)
 
-    if task in ("manip_reach_obj", "point_at_obj_with_right_hand") and condition == "gt":
+    if task in ("manip_reach_obj", "point_at_obj_with_right_hand", "raise_right_hand") and condition == "gt":
         return constraints_reach_obj_gt(
             skeleton, np.array(kwargs["cube_world_pos"], dtype=np.float32),
             frame_index, device,
