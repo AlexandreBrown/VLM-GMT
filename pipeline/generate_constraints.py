@@ -201,43 +201,46 @@ def constraints_navigate_maze_gt(
     skeleton, obs_world_positions: list, line_end_x: float, num_frames: int, device: str
 ) -> list:
     """
-    GT upper bound: two root2d waypoints per obstacle + final waypoint at line end.
+    GT upper bound: three root2d waypoints per wall + final waypoint.
 
-    For each obstacle at (bx, by):
-      Constraint A — x = bx - 0.4 (before obs): robot already moving to avoidance side.
-      Constraint B — x = bx + 0.5 (past  obs):  robot has clearly cleared the obstacle.
-    Final constraint at (line_end_x, y=0): robot reaches center of line end.
+    For each wall at (bx, by):
+      A — x = bx - 0.4,  y = avoidance   (approach: move to gap side)
+      B — x = bx + 0.5,  y = avoidance   (clear: still on gap side, past wall)
+      C — x = bx + 1.0,  y = avoidance   (hold: extra room before turning for next wall)
+    Final constraint at (line_end_x, y=0): robot reaches end.
 
-    avoidance_y = -sign(by) * 0.3 in IsaacLab frame (opposite side of the obstacle).
+    The extra "hold" waypoint gives the GMT tracker margin to catch up
+    before the robot needs to turn for the next wall.
+
+    avoidance_y = -sign(by) * 0.6: well into the gap (gap center at ±0.75).
     Frame indices scale linearly with x / (line_end_x + 1.0).
     """
     import math
 
     constraints = []
     sorted_obs = sorted(obs_world_positions, key=lambda p: float(p[0]))
-    total_x = line_end_x + 1.0  # denominator for frame scaling
+    total_x = line_end_x + 1.0
 
     def frame_for_x(x):
         return max(1, min(int(x / total_x * num_frames), num_frames - 2))
 
     for obs_pos in sorted_obs:
-        bx = float(obs_pos[0])  # forward (isaaclab x)
-        by = float(obs_pos[1])  # left   (isaaclab y)
+        bx = float(obs_pos[0])
+        by = float(obs_pos[1])
 
         sign = math.copysign(1.0, by) if abs(by) > 0.01 else 1.0
-        avoidance_y = -sign * 0.6  # isaaclab y: well into the gap (center at ±0.75)
+        avoidance_y = -sign * 0.6
 
-        for x_offset, label in [(-0.4, "before"), (0.5, "past")]:
+        for x_offset, label in [(-0.4, "approach"), (0.5, "clear"), (1.0, "hold")]:
             x = bx + x_offset
             f = frame_for_x(x)
-            # IsaacLab (x=fwd, y=left) → Kimodo (x=left, z=fwd)
-            print(f"[GT navigate_maze] obs ({bx:.2f}, {by:.2f})"
+            print(f"[GT navigate_maze] wall ({bx:.2f}, {by:.2f})"
                   f" {label}: kimodo_z={x:.2f}, kimodo_x={avoidance_y:.2f}, frame={f}")
             constraints.append(make_root2d_constraint(
                 skeleton, x=avoidance_y, z=x, frame_index=f, device=device
             ))
 
-    # Final waypoint: center of line end
+    # Final: center of corridor end
     print(f"[GT navigate_maze] final: kimodo_z={line_end_x:.2f}, kimodo_x=0.0, frame={num_frames-1}")
     constraints.append(make_root2d_constraint(
         skeleton, x=0.0, z=float(line_end_x), frame_index=num_frames - 1, device=device
