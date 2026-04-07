@@ -391,6 +391,10 @@ def build_constraints(task: str, condition: str, skeleton, device: str, **kwargs
             frame_index, device,
         )
 
+    if task == "point_at_obj_with_left_hand" and condition == "gt":
+        target = isaaclab_to_kimodo(np.array(kwargs["cube_world_pos"], dtype=np.float32))
+        return [make_limb_constraint(skeleton, "left-hand", target, frame_index, device)]
+
     if task == "walk_to_obj" and condition == "gt":
         return constraints_walk_to_obj_gt(
             skeleton, np.array(kwargs["box_world_pos"], dtype=np.float32),
