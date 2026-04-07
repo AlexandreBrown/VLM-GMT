@@ -27,6 +27,7 @@ class Qwen35VLM(VLMBase):
         model_name: str = "Qwen/Qwen3.5-27B-FP8",
         device: str = "cuda",
         num_frames: int = 90,
+        pitch_deg: float = 50.0,
         task: str = "reach_obj",
         load_in_4bit: bool = False,
         vlm_gmt_root: str | Path = None,
@@ -37,6 +38,7 @@ class Qwen35VLM(VLMBase):
         self.model_name = model_name
         self.device = device
         self.num_frames = num_frames
+        self.pitch_deg = pitch_deg
         self.task = task
         self.load_in_4bit = load_in_4bit
         self._model = None
@@ -59,7 +61,7 @@ class Qwen35VLM(VLMBase):
         if not path.exists():
             raise FileNotFoundError(f"System prompt not found at {path}")
         text = path.read_text().strip()
-        return text.format(num_frames=self.num_frames, max_frame=self.num_frames - 1)
+        return text.format(num_frames=self.num_frames, max_frame=self.num_frames - 1, pitch_deg=self.pitch_deg)
 
     def _load_task_prompt(self) -> str:
         path = self.vlm_gmt_root / "tasks" / self.task / "vlm_prompt.txt"

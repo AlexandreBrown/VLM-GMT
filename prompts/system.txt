@@ -15,6 +15,13 @@ Robot reference dimensions:
   Head / camera height:       ~1.2 m
   Arm reach (shoulder to hand): ~0.6 m
 
+Egocentric camera (head-mounted):
+  Resolution: 640x480 px
+  Focal length: 24.0 mm
+  Horizontal aperture: 20.955 mm
+  Downward pitch: {pitch_deg} degrees (0 = horizontal, 90 = straight down)
+  Offset: 0.15 m forward from head center
+
 Motion is generated at 30 fps. Total frames: {num_frames} (indices 0 to {max_frame}).
 
 Constraint types (each anchors a body part to a 3D world position at a specific frame):

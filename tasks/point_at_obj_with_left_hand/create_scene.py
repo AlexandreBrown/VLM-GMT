@@ -24,9 +24,9 @@ from protomotions.components.scene_lib import (
     SceneLib,
 )
 
-# Object at ~0.7m forward, 0.2m to the RIGHT, chest height (~0.9m)
+# Object at ~0.6m forward, 0.2m to the RIGHT, chest height (~0.9m)
 # Placed right so naive "raise left hand" misses — robot must reach across
-OBJ_POS = (0.7, -0.2, 0.9)
+OBJ_POS = (0.6, -0.2, 0.9)
 OBJ_SIZE = 0.08
 
 PEDESTAL_WIDTH = 0.12
@@ -64,8 +64,11 @@ def create_scene(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--obj-pos", nargs=3, type=float, default=list(OBJ_POS),
-                        metavar=("X", "Y", "Z"))
-    parser.add_argument("--output", default="outputs/point_at_obj_with_left_hand_scene.pt")
+    parser.add_argument(
+        "--obj-pos", nargs=3, type=float, default=list(OBJ_POS), metavar=("X", "Y", "Z")
+    )
+    parser.add_argument(
+        "--output", default="outputs/point_at_obj_with_left_hand_scene.pt"
+    )
     args = parser.parse_args()
     create_scene(obj_pos=tuple(args.obj_pos), output=args.output)

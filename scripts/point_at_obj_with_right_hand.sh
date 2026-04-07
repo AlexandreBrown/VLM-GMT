@@ -18,7 +18,7 @@ VLMGMT=~/Documents/vlm_project/VLM-GMT
 PROTOMOTIONS=~/Documents/vlm_project/ProtoMotions
 CKPT=$PROTOMOTIONS/data/pretrained_models/motion_tracker/g1-bones-deploy/last.ckpt
 
-OBJ_POS="0.7 0.2 0.9"
+OBJ_POS="0.6 0.2 0.9"
 
 # ── 1. Create scene (local) ──────────────────────────────────────────────────
 python $VLMGMT/tasks/point_at_obj_with_right_hand/create_scene.py \
@@ -56,7 +56,7 @@ python $VLMGMT/pipeline/generate_motion.py \
 python $VLMGMT/pipeline/generate_motion.py \
     --task point_at_obj_with_right_hand --condition vlm \
     --image $VLMGMT/outputs/point_at_obj_with_right_hand/ego.png \
-    --vlm-name qwen2.5-vl-32b \
+    --vlm-name qwen2.5-vl-32b --pitch-deg 50 \
     --output-dir $VLMGMT/outputs/point_at_obj_with_right_hand/vlm \
     --protomotions-root $PROTOMOTIONS --vlm-gmt-root $VLMGMT
 

@@ -62,7 +62,7 @@ python $VLMGMT/pipeline/generate_motion.py \
     --task navigate_maze --condition vlm \
     --duration 10 \
     --image $VLMGMT/outputs/navigate_maze/ego.png \
-    --vlm-name qwen2.5-vl-32b \
+    --vlm-name qwen2.5-vl-32b --pitch-deg 30 \
     --output-dir $VLMGMT/outputs/navigate_maze/vlm \
     --protomotions-root $PROTOMOTIONS --vlm-gmt-root $VLMGMT
 

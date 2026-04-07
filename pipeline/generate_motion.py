@@ -145,6 +145,8 @@ def main():
     parser.add_argument("--vlm-name", default="qwen2.5-vl-32b")  # 4-bit ~16GB, fits in 48GB L40S
     parser.add_argument("--vlm-no-4bit", action="store_true", default=False,
                         help="Disable 4-bit quantization (use bfloat16, requires more VRAM)")
+    parser.add_argument("--pitch-deg", type=float, default=50.0,
+                        help="Ego camera pitch in degrees (passed to VLM system prompt)")
     parser.add_argument("--vlm-gmt-root", required=True,
                         help="Path to VLM-GMT root directory.")
 
@@ -187,6 +189,7 @@ def main():
             vlm_name=args.vlm_name,
             load_in_4bit=not args.vlm_no_4bit,
             num_frames=num_frames_approx,
+            pitch_deg=args.pitch_deg,
             output_dir=str(output_dir),
             vlm_gmt_root=str(vlm_gmt_root),
         )

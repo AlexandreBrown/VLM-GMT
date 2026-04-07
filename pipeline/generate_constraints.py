@@ -261,8 +261,8 @@ def constraints_reach_obj_gt(skeleton, cube_world_pos, frame_index, device: str)
 
 
 def query_vlm_raw(task: str, image_rgb, vlm_name: str,
-                   load_in_4bit: bool, num_frames: int, output_dir: str,
-                   vlm_gmt_root: str) -> list:
+                   load_in_4bit: bool, num_frames: int, pitch_deg: float,
+                   output_dir: str, vlm_gmt_root: str) -> list:
     """Run the VLM and return raw constraint dicts. No skeleton required.
 
     Call this BEFORE loading Kimodo to avoid concurrent GPU memory usage.
@@ -273,7 +273,7 @@ def query_vlm_raw(task: str, image_rgb, vlm_name: str,
     from pipeline.vlm import load_vlm
 
     vlm = load_vlm(vlm_name, vlm_gmt_root=vlm_gmt_root, num_frames=num_frames,
-                    task=task, load_in_4bit=load_in_4bit)
+                    pitch_deg=pitch_deg, task=task, load_in_4bit=load_in_4bit)
     raw_constraints = vlm.query_constraints(image_rgb)
     print(f"[VLM] predicted {len(raw_constraints)} constraint(s):")
 

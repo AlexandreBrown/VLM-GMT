@@ -56,7 +56,7 @@ python $VLMGMT/pipeline/generate_motion.py \
 python $VLMGMT/pipeline/generate_motion.py \
     --task walk_to_obj --condition vlm \
     --image $VLMGMT/outputs/walk_to_obj/ego.png \
-    --vlm-name qwen2.5-vl-32b \
+    --vlm-name qwen2.5-vl-32b --pitch-deg 30 \
     --output-dir $VLMGMT/outputs/walk_to_obj/vlm \
     --protomotions-root $PROTOMOTIONS --vlm-gmt-root $VLMGMT
 

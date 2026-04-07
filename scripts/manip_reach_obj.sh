@@ -56,7 +56,7 @@ python $VLMGMT/pipeline/generate_motion.py \
 python $VLMGMT/pipeline/generate_motion.py \
     --task manip_reach_obj --condition vlm \
     --image $VLMGMT/outputs/manip_reach_obj/ego.png \
-    --vlm-name qwen2.5-vl-32b \
+    --vlm-name qwen2.5-vl-32b --pitch-deg 50 \
     --output-dir $VLMGMT/outputs/manip_reach_obj/vlm \
     --protomotions-root $PROTOMOTIONS --vlm-gmt-root $VLMGMT
 
