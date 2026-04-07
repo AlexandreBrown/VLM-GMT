@@ -150,6 +150,8 @@ def main():
     parser.add_argument("--vlm-name", default="qwen2.5-vl-32b")  # 4-bit ~16GB, fits in 48GB L40S
     parser.add_argument("--vlm-no-4bit", action="store_true", default=False,
                         help="Disable 4-bit quantization (use bfloat16, requires more VRAM)")
+    parser.add_argument("--vlm-gmt-root", required=True,
+                        help="Path to VLM-GMT root directory.")
 
     args = parser.parse_args()
 
@@ -157,9 +159,10 @@ def main():
     protomotions_root = Path(args.protomotions_root).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    vlm_gmt_root = Path(args.vlm_gmt_root).resolve()
     # Add VLM-GMT root to sys.path for pipeline imports
-    vlm_gmt_root = Path(__file__).resolve().parent.parent
-    sys.path.insert(0, str(vlm_gmt_root))
+    if str(vlm_gmt_root) not in sys.path:
+        sys.path.insert(0, str(vlm_gmt_root))
 
     # Load kimodo text prompt from file if not provided
     if args.prompt is None:
@@ -191,6 +194,7 @@ def main():
             load_in_4bit=not args.vlm_no_4bit,
             num_frames=num_frames_approx,
             output_dir=str(output_dir),
+            vlm_gmt_root=str(vlm_gmt_root),
         )
         # Free VLM memory before loading Kimodo
         gc.collect()

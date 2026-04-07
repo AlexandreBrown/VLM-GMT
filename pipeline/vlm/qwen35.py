@@ -19,28 +19,9 @@ from PIL import Image
 
 from .base import VLMBase
 
-VLM_GMT_ROOT = Path(__file__).resolve().parent.parent.parent
 
-
-def load_prompt(path: str | Path) -> str:
+def _load_prompt(path: str | Path) -> str:
     return Path(path).read_text().strip()
-
-
-def get_system_prompt(num_frames: int) -> str:
-    text = load_prompt(VLM_GMT_ROOT / "prompts" / "system.txt")
-    return text.format(num_frames=num_frames, max_frame=num_frames - 1)
-
-
-def get_task_prompt(task: str, override: str | None = None) -> str:
-    if override:
-        p = Path(override)
-        if p.is_file():
-            return load_prompt(p)
-        return override
-    path = VLM_GMT_ROOT / "tasks" / task / "vlm_prompt.txt"
-    if not path.exists():
-        raise FileNotFoundError(f"No VLM prompt for task '{task}' at {path}")
-    return load_prompt(path)
 
 
 class Qwen35VLM(VLMBase):
@@ -53,7 +34,11 @@ class Qwen35VLM(VLMBase):
         task: str = "reach_obj",
         task_description: str | None = None,
         load_in_4bit: bool = False,  # not needed for FP8 variant
+        vlm_gmt_root: str | Path = None,
     ):
+        if vlm_gmt_root is None:
+            raise ValueError("vlm_gmt_root must be provided to Qwen35VLM")
+        self.vlm_gmt_root = Path(vlm_gmt_root)
         self.model_name = model_name
         self.device = device
         self.num_frames = num_frames
@@ -78,6 +63,21 @@ class Qwen35VLM(VLMBase):
         self._model.eval()
         print("[Qwen35VLM] Ready.")
 
+    def _get_system_prompt(self) -> str:
+        text = _load_prompt(self.vlm_gmt_root / "prompts" / "system.txt")
+        return text.format(num_frames=self.num_frames, max_frame=self.num_frames - 1)
+
+    def _get_task_prompt(self) -> str:
+        if self.task_description:
+            p = Path(self.task_description)
+            if p.is_file():
+                return _load_prompt(p)
+            return self.task_description
+        path = self.vlm_gmt_root / "tasks" / self.task / "vlm_prompt.txt"
+        if not path.exists():
+            raise FileNotFoundError(f"No VLM prompt for task '{self.task}' at {path}")
+        return _load_prompt(path)
+
     def query_constraints(
         self,
         image_rgb: np.ndarray | None = None,
@@ -87,8 +87,8 @@ class Qwen35VLM(VLMBase):
 
         assert self._model is not None, "Call load() first."
 
-        system = get_system_prompt(self.num_frames)
-        task_text = task_description or get_task_prompt(self.task, self.task_description)
+        system = self._get_system_prompt()
+        task_text = task_description or self._get_task_prompt()
 
         if image_rgb is not None:
             pil_img = Image.fromarray(image_rgb)

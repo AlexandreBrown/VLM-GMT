@@ -63,6 +63,11 @@ def create_parser():
         required=True,
         help="Path to ProtoMotions root directory (scripts use relative asset paths).",
     )
+    parser.add_argument(
+        "--vlm-gmt-root",
+        required=True,
+        help="Path to VLM-GMT root directory.",
+    )
     return parser
 
 
@@ -93,9 +98,12 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(name)s: %(messag
 log = logging.getLogger(__name__)
 
 
-def load_task_metrics(task_name: str):
+def load_task_metrics(task_name: str, vlm_gmt_root: Path):
     """Dynamically load get_metrics() from tasks/<task_name>/metrics.py."""
-    vlm_gmt_root = Path(__file__).resolve().parent.parent
+    # Ensure VLM-GMT root is on sys.path so task metrics can import eval.metrics etc.
+    vlm_gmt_root_str = str(vlm_gmt_root)
+    if vlm_gmt_root_str not in sys.path:
+        sys.path.insert(0, vlm_gmt_root_str)
     metrics_path = vlm_gmt_root / "tasks" / task_name / "metrics.py"
     if not metrics_path.exists():
         raise FileNotFoundError(
@@ -193,6 +201,9 @@ def main():
     global args
     args = parser.parse_args()
 
+    # Resolve VLM-GMT root from CLI arg or default to parent of eval/
+    vlm_gmt_root = Path(args.vlm_gmt_root).resolve()
+
     # ProtoMotions uses relative asset paths — must run from its root
     import os
 
@@ -252,8 +263,8 @@ def main():
     # Patch scene with egocentric camera if recording video
     ego_camera = None
     if args.record_video and args.simulator == "isaaclab":
-        vlm_gmt_root = Path(__file__).resolve().parent.parent
-        sys.path.insert(0, str(vlm_gmt_root))
+        if str(vlm_gmt_root) not in sys.path:
+            sys.path.insert(0, str(vlm_gmt_root))
         from pipeline.egocentric_camera import (
             patch_scene_with_egocentric_camera,
             get_egocentric_camera,
@@ -307,7 +318,7 @@ def main():
     agent.load(str(checkpoint), load_env=False)
 
     # Load task metrics
-    metrics = load_task_metrics(args.task)
+    metrics = load_task_metrics(args.task, vlm_gmt_root=vlm_gmt_root)
     log.info(
         f"Loaded {len(metrics)} metrics for task '{args.task}': {[m.name for m in metrics]}"
     )

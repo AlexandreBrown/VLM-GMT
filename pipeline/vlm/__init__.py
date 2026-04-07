@@ -19,10 +19,17 @@ HF_MODEL_IDS = {
 }
 
 
-def load_vlm(name: str = "qwen2.5-vl-32b", **kwargs) -> VLMBase:
+def load_vlm(name: str = "qwen2.5-vl-32b", *, vlm_gmt_root: str, **kwargs) -> VLMBase:
+    """Load and initialize a VLM by short name.
+
+    Args:
+        name: Short VLM name (e.g. 'qwen2.5-vl-32b').
+        vlm_gmt_root: Path to VLM-GMT root directory (required, no default).
+        **kwargs: Forwarded to the VLM constructor.
+    """
     if name not in REGISTRY:
         raise ValueError(f"Unknown VLM '{name}'. Available: {list(REGISTRY)}")
     hf_model_id = HF_MODEL_IDS[name]
-    vlm = REGISTRY[name](model_name=hf_model_id, **kwargs)
+    vlm = REGISTRY[name](model_name=hf_model_id, vlm_gmt_root=vlm_gmt_root, **kwargs)
     vlm.load()
     return vlm

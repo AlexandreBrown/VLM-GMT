@@ -3,10 +3,6 @@
 Success: dist(right_hand, cube) < 0.15m during the episode.
 """
 
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-
 from eval.metrics import DistanceToTarget
 
 

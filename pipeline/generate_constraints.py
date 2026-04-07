@@ -261,20 +261,21 @@ def constraints_reach_obj_gt(skeleton, cube_world_pos, frame_index, device: str)
 
 
 def query_vlm_raw(task: str, image_rgb, task_description, vlm_name: str,
-                   load_in_4bit: bool, num_frames: int, output_dir: str) -> list:
+                   load_in_4bit: bool, num_frames: int, output_dir: str,
+                   vlm_gmt_root: str = None) -> list:
     """Run the VLM and return raw constraint dicts. No skeleton required.
 
     Call this BEFORE loading Kimodo to avoid concurrent GPU memory usage.
     Returns a list of dicts: [{"type": ..., "position": [...], "frame_id": ...}, ...]
     """
     import json
-    import sys, os
     from pathlib import Path
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from pipeline.vlm import load_vlm
 
-    vlm = load_vlm(vlm_name, num_frames=num_frames, task=task,
-                    task_description=task_description,
+    if vlm_gmt_root is None:
+        raise ValueError("vlm_gmt_root must be provided")
+    vlm = load_vlm(vlm_name, vlm_gmt_root=vlm_gmt_root, num_frames=num_frames,
+                    task=task, task_description=task_description,
                     load_in_4bit=load_in_4bit)
     raw_constraints = vlm.query_constraints(image_rgb)
     print(f"[VLM] predicted {len(raw_constraints)} constraint(s):")
@@ -290,7 +291,8 @@ def query_vlm_raw(task: str, image_rgb, task_description, vlm_name: str,
 
 
 def constraints_vlm(skeleton, task, image_rgb, task_description, vlm_name,
-                     num_frames, output_dir, device: str, load_in_4bit: bool = True) -> list:
+                     num_frames, output_dir, device: str, load_in_4bit: bool = True,
+                     vlm_gmt_root: str = None) -> list:
     """VLM predicts 3D constraint positions from an egocentric image.
 
     Loads system prompt from prompts/system.txt and task prompt from
@@ -298,13 +300,13 @@ def constraints_vlm(skeleton, task, image_rgb, task_description, vlm_name,
     Saves raw VLM predictions to <output_dir>/vlm_constraints.json.
     """
     import json
-    import sys, os
     from pathlib import Path
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from pipeline.vlm import load_vlm
 
-    vlm = load_vlm(vlm_name, num_frames=num_frames, task=task,
-                    task_description=task_description,
+    if vlm_gmt_root is None:
+        raise ValueError("vlm_gmt_root must be provided")
+    vlm = load_vlm(vlm_name, vlm_gmt_root=vlm_gmt_root, num_frames=num_frames,
+                    task=task, task_description=task_description,
                     load_in_4bit=load_in_4bit)
     raw_constraints = vlm.query_constraints(image_rgb)
     print(f"[VLM] predicted {len(raw_constraints)} constraint(s):")
@@ -382,6 +384,7 @@ def build_constraints(task: str, condition: str, skeleton, device: str, **kwargs
             kwargs.get("output_dir"),
             device,
             load_in_4bit=kwargs.get("load_in_4bit", True),
+            vlm_gmt_root=kwargs.get("vlm_gmt_root"),
         )
 
     # GT conditions are task-specific

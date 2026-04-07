@@ -4,10 +4,6 @@ Success: 2D (XY) dist(pelvis, box) < 0.5m at episode end.
 Uses XY-only distance because the robot pelvis is always ~0.8m above the ground box.
 """
 
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-
 from eval.metrics import DistanceToTarget
 
 

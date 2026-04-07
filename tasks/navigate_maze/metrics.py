@@ -11,10 +11,6 @@ avoidance_min_dist = 0.3: a straight walk at y=0 gives dist=0.1 < 0.3 -> fails.
 A correct avoidance at y=-0.3 gives dist=0.4 >= 0.3 -> passes.
 """
 
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-
 from eval.metrics import NavigateMazeMetric
 
 

@@ -32,7 +32,7 @@ python $VLMGMT/tasks/walk_to_obj/create_scene.py \
 python $VLMGMT/pipeline/generate_motion.py \
     --task walk_to_obj --condition baseline \
     --output-dir $VLMGMT/outputs/walk_to_obj/baseline \
-    --protomotions-root $PROTOMOTIONS
+    --protomotions-root $PROTOMOTIONS --vlm-gmt-root $VLMGMT
 
 # ── 3. Capture ego image (local, from $PROTOMOTIONS) ─────────────────────────
 cd $PROTOMOTIONS
@@ -50,7 +50,7 @@ python $VLMGMT/pipeline/generate_motion.py \
     --task walk_to_obj --condition gt \
     --box-world-pos $BOX_POS \
     --output-dir $VLMGMT/outputs/walk_to_obj/gt \
-    --protomotions-root $PROTOMOTIONS
+    --protomotions-root $PROTOMOTIONS --vlm-gmt-root $VLMGMT
 
 # VLM (scp ego.png to cluster first)
 python $VLMGMT/pipeline/generate_motion.py \
@@ -58,7 +58,7 @@ python $VLMGMT/pipeline/generate_motion.py \
     --image $VLMGMT/outputs/walk_to_obj/ego.png \
     --vlm-name qwen2.5-vl-32b \
     --output-dir $VLMGMT/outputs/walk_to_obj/vlm \
-    --protomotions-root $PROTOMOTIONS
+    --protomotions-root $PROTOMOTIONS --vlm-gmt-root $VLMGMT
 
 # ── 5. Kinematic playback (local, from $PROTOMOTIONS) ────────────────────────
 cd $PROTOMOTIONS
@@ -78,5 +78,5 @@ for COND in baseline gt vlm; do
         --task walk_to_obj --condition ${COND} \
         --num-episodes 50 --simulator isaaclab \
         --output-dir $VLMGMT/outputs/walk_to_obj/results \
-        --protomotions-root $PROTOMOTIONS
+        --protomotions-root $PROTOMOTIONS --vlm-gmt-root $VLMGMT
 done
