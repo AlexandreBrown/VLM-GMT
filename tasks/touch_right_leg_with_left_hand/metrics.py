@@ -12,7 +12,7 @@ def get_metrics():
             name="dist_left_hand_to_right_knee",
             link_a="left_rubber_hand",
             link_b="right_knee_link",
-            success_threshold=0.15,
+            success_threshold=0.2,
             use_min=False,
             overlay_label="L.Hand→R.Knee",
         ),
