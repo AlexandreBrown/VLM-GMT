@@ -127,7 +127,7 @@ class KneelDownMetric(Metric):
 
         return MetricResult(
             value=score,
-            success=score > 0,
+            success=score == 1.0,
             info={
                 **{k: round(v, 4) if isinstance(v, float) else v for k, v in final.items()},
                 **{f"check_{k}": v for k, v in checks.items()},
