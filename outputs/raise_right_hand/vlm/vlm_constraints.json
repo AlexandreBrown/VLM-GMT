@@ -1,0 +1,29 @@
+[
+  {
+    "frame_id": 30,
+    "type": "right-hand",
+    "position": [
+      0.15,
+      0.0,
+      1.8
+    ]
+  },
+  {
+    "frame_id": 60,
+    "type": "right-hand",
+    "position": [
+      0.15,
+      0.0,
+      1.8
+    ]
+  },
+  {
+    "frame_id": 90,
+    "type": "right-hand",
+    "position": [
+      0.15,
+      0.0,
+      1.8
+    ]
+  }
+]
