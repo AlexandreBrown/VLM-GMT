@@ -24,21 +24,42 @@ Egocentric camera (head-mounted):
 
 Motion is generated at 30 fps. Total frames: {num_frames} (indices 0 to {max_frame}).
 
-Constraint types (each anchors a body part to a 3D world position at a specific frame):
+Constraint types:
+
+End-effector constraints (anchor a body part to a 3D world position at a specific frame):
   "right-hand"  — right hand (palm/gripper)
   "left-hand"   — left hand
   "right-foot"  — right foot (toe)
   "left-foot"   — left foot
   "root2d"      — robot root (pelvis) XY ground position; Z is ignored
 
+Full-body constraint (specifies the entire body pose at a specific frame):
+  "fullbody"    — all joint positions. Requires "positions" dict mapping joint names to [x, y, z].
+  Joint names (34 joints, in order):
+    pelvis, left_hip_pitch, left_hip_roll, left_hip_yaw, left_knee,
+    left_ankle_pitch, left_ankle_roll, left_toe,
+    right_hip_pitch, right_hip_roll, right_hip_yaw, right_knee,
+    right_ankle_pitch, right_ankle_roll, right_toe,
+    waist_yaw, waist_roll, waist_pitch,
+    left_shoulder_pitch, left_shoulder_roll, left_shoulder_yaw, left_elbow,
+    left_wrist_roll, left_wrist_pitch, left_wrist_yaw, left_hand,
+    right_shoulder_pitch, right_shoulder_roll, right_shoulder_yaw, right_elbow,
+    right_wrist_roll, right_wrist_pitch, right_wrist_yaw, right_hand
+
 Maximum 20 constraints per type.
 
 Output format:
 Output ONLY a valid JSON array. No explanation, no markdown fences, no comments.
-Each element must have exactly these keys:
-  "type":     one of the constraint types above (string)
+
+For end-effector / root2d constraints, each element must have:
+  "type":     one of the end-effector types above (string)
   "frame_id": target frame index, 0 to {max_frame} (int)
   "position": precise [x, y, z] in world coordinates, meters (list of 3 floats)
+
+For fullbody constraints, each element must have:
+  "type":     "fullbody"
+  "frame_id": target frame index, 0 to {max_frame} (int)
+  "positions": dict mapping each joint name to [x, y, z] in world coordinates
 
 Examples:
 

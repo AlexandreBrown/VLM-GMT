@@ -170,6 +170,39 @@ def make_root2d_constraint(skeleton, x: float, z: float, frame_index: int, devic
     )
 
 # --------------------------------------------------------------------------- #
+# Fullbody constraint loader
+# --------------------------------------------------------------------------- #
+
+def load_fullbody_constraint_from_json(skeleton, json_path: str, device: str) -> list:
+    """Load a FullBodyConstraintSet from a JSON file exported by the Kimodo UI.
+
+    The JSON contains local_joints_rot (axis-angle), root_positions, smooth_root_2d,
+    and frame_indices. FullBodyConstraintSet.from_dict() handles FK internally.
+    """
+    import json
+    from pathlib import Path
+    from kimodo.constraints import FullBodyConstraintSet
+
+    path = Path(json_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Fullbody constraint file not found: {path}")
+
+    with open(path) as f:
+        data = json.load(f)
+
+    constraints = []
+    for entry in data:
+        if entry.get("type") != "fullbody":
+            raise ValueError(f"Expected type 'fullbody', got '{entry.get('type')}'")
+        c = FullBodyConstraintSet.from_dict(skeleton, entry)
+        c = c.to(device=device)
+        print(f"[GT fullbody] frames={entry['frame_indices']}, "
+              f"root_pos={entry['root_positions']}")
+        constraints.append(c)
+    return constraints
+
+
+# --------------------------------------------------------------------------- #
 # Task / condition recipes
 # --------------------------------------------------------------------------- #
 
@@ -320,19 +353,59 @@ def constraints_vlm(skeleton, task, image_rgb, vlm_name,
 
 def _build_vlm_constraints_from_raw(skeleton, raw_constraints: list, device: str) -> list:
     """Convert raw VLM dicts to Kimodo constraint objects using the skeleton."""
+    import torch
+    from kimodo.constraints import FullBodyConstraintSet
+    from kimodo.geometry import axis_angle_to_matrix
+
     constraint_objects = []
     for c in raw_constraints:
         ctype = c["type"]
-        pos_isaaclab = np.array(c["position"], dtype=np.float32)
         frame_id = c["frame_id"]
-        print(f"  {ctype} frame={frame_id}  IsaacLab={pos_isaaclab.tolist()}")
-        if ctype == "root2d":
+
+        if ctype == "fullbody":
+            # VLM predicts joint positions in IsaacLab frame. Convert to Kimodo
+            # and build a FullBodyConstraintSet via FK from rest pose with
+            # overridden joint positions.
+            positions = c["positions"]  # dict: joint_name → [x, y, z]
+            print(f"  fullbody frame={frame_id}  joints={len(positions)}")
+            # Build global_joints_positions from VLM predictions
+            n_joints = skeleton.nbjoints
+            root_pos = torch.tensor([[0.0, G1_ROOT_HEIGHT, 0.0]], dtype=torch.float32, device=device)
+            rest_mats = axis_angle_to_matrix(torch.zeros(1, n_joints, 3, device=device))
+            global_rots, global_pos, _ = skeleton.fk(rest_mats, root_pos)
+
+            # Map short VLM names to skeleton bone names
+            vlm_to_skel = {name.replace("_skel", ""): name for name in skeleton.bone_index}
+            for jname, pos_isaac in positions.items():
+                skel_name = vlm_to_skel.get(jname) or vlm_to_skel.get(jname + "_skel")
+                if skel_name and skel_name in skeleton.bone_index:
+                    jidx = skeleton.bone_index[skel_name]
+                    pos_kimodo = isaaclab_to_kimodo(pos_isaac)
+                    global_pos[0, jidx] = torch.tensor(pos_kimodo, dtype=torch.float32, device=device)
+
+            # If VLM provided a pelvis position, use it for root
+            if "pelvis" in positions:
+                pelvis_kimodo = isaaclab_to_kimodo(positions["pelvis"])
+                root_pos = torch.tensor([pelvis_kimodo], dtype=torch.float32, device=device)
+
+            constraint_objects.append(FullBodyConstraintSet(
+                skeleton=skeleton,
+                frame_indices=torch.tensor([frame_id]),
+                global_joints_positions=global_pos,
+                global_joints_rots=global_rots,
+                smooth_root_2d=root_pos[:, [0, 2]],
+            ))
+        elif ctype == "root2d":
+            pos_isaaclab = np.array(c["position"], dtype=np.float32)
+            print(f"  {ctype} frame={frame_id}  IsaacLab={pos_isaaclab.tolist()}")
             constraint_objects.append(
                 make_root2d_constraint(skeleton, x=float(pos_isaaclab[1]),
                                        z=float(pos_isaaclab[0]),
                                        frame_index=frame_id, device=device)
             )
         else:
+            pos_isaaclab = np.array(c["position"], dtype=np.float32)
+            print(f"  {ctype} frame={frame_id}  IsaacLab={pos_isaaclab.tolist()}")
             target = isaaclab_to_kimodo(pos_isaaclab)
             constraint_objects.append(
                 make_limb_constraint(skeleton, ctype, target, frame_id, device)
@@ -385,13 +458,13 @@ def build_constraints(task: str, condition: str, skeleton, device: str, **kwargs
     # GT conditions are task-specific
     frame_index = kwargs.get("frame_index", 45)
 
-    if task in ("manip_reach_obj", "point_at_obj_with_right_hand", "raise_right_hand") and condition == "gt":
+    if task in ("manip_reach_obj", "point_at_obj_with_right_hand", "raise_right_hand", "touch_left_leg_with_right_hand") and condition == "gt":
         return constraints_reach_obj_gt(
             skeleton, np.array(kwargs["cube_world_pos"], dtype=np.float32),
             frame_index, device,
         )
 
-    if task == "point_at_obj_with_left_hand" and condition == "gt":
+    if task in ("point_at_obj_with_left_hand", "raise_left_hand", "touch_right_leg_with_left_hand") and condition == "gt":
         target = isaaclab_to_kimodo(np.array(kwargs["cube_world_pos"], dtype=np.float32))
         return [make_limb_constraint(skeleton, "left-hand", target, frame_index, device)]
 
@@ -408,6 +481,11 @@ def build_constraints(task: str, condition: str, skeleton, device: str, **kwargs
             kwargs.get("line_end_x", 5.75),
             kwargs["num_frames"],
             device,
+        )
+
+    if task == "kneel_down_1_knee" and condition == "gt":
+        return load_fullbody_constraint_from_json(
+            skeleton, kwargs["fullbody_constraint_json"], device,
         )
 
     raise ValueError(f"Unknown task/condition: {task}/{condition}")

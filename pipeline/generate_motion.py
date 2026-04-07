@@ -139,6 +139,9 @@ def main():
                         default=[3.0, -0.1, 0.5])
     parser.add_argument("--line-end-x", type=float, default=4.0,
                         help="X coordinate of the far end of the green line (metric target)")
+    # GT: kneel_down_1_knee (fullbody constraint from Kimodo UI export)
+    parser.add_argument("--fullbody-constraint-json",
+                        help="Path to fullbody constraint JSON file (exported from Kimodo UI)")
 
     # VLM
     parser.add_argument("--image", help="Egocentric RGB image for VLM condition")
@@ -221,7 +224,7 @@ def main():
             frame_index = list(range(num_frames - n, num_frames))
         print(f"[generate_motion] GT constraint frames: {frame_index}")
         constraint_kwargs["frame_index"] = frame_index
-        if args.task in ("manip_reach_obj", "point_at_obj_with_right_hand", "point_at_obj_with_left_hand", "raise_right_hand"):
+        if args.task in ("manip_reach_obj", "point_at_obj_with_right_hand", "point_at_obj_with_left_hand", "raise_right_hand", "raise_left_hand", "touch_left_leg_with_right_hand", "touch_right_leg_with_left_hand"):
             if args.cube_world_pos is None:
                 parser.error(f"--cube-world-pos required for condition=gt with task={args.task}")
             constraint_kwargs["cube_world_pos"] = args.cube_world_pos
@@ -234,6 +237,10 @@ def main():
                 args.obs1_world_pos, args.obs2_world_pos,
             ]
             constraint_kwargs["line_end_x"] = args.line_end_x
+        elif args.task == "kneel_down_1_knee":
+            if args.fullbody_constraint_json is None:
+                parser.error("--fullbody-constraint-json required for condition=gt with task=kneel_down_1_knee")
+            constraint_kwargs["fullbody_constraint_json"] = args.fullbody_constraint_json
 
     elif args.condition == "vlm":
         constraint_kwargs["raw_vlm_constraints"] = raw_vlm_constraints

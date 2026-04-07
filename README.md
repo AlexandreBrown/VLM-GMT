@@ -63,7 +63,11 @@ VLM-GMT/
 │   ├── navigate_maze/                   # 2 staggering walls (maze-like)
 │   ├── point_at_obj_with_right_hand/    # Blue object on pedestal (left), point with right hand
 │   ├── point_at_obj_with_left_hand/     # Blue object on pedestal (right), point with left hand
-│   └── raise_right_hand/               # Text-only: raise right hand above head
+│   ├── raise_right_hand/               # Text-only: raise right hand above head
+│   ├── raise_left_hand/                # Text-only: raise left hand above head
+│   ├── kneel_down_1_knee/             # Text-only: kneel on one knee (fullbody constraint)
+│   ├── touch_left_leg_with_right_hand/ # Text-only: touch left knee with right hand
+│   └── touch_right_leg_with_left_hand/ # Text-only: touch right knee with left hand
 │       Each task contains: create_scene.py, metrics.py, kimodo_prompt.txt, vlm_prompt.txt
 ├── pipeline/
 │   ├── generate_motion.py               # Constraints → Kimodo → motion.pt  (cluster)
@@ -86,7 +90,11 @@ VLM-GMT/
 │   ├── navigate_maze.sh
 │   ├── point_at_obj_with_right_hand.sh
 │   ├── point_at_obj_with_left_hand.sh
-│   └── raise_right_hand.sh
+│   ├── raise_right_hand.sh
+│   ├── raise_left_hand.sh
+│   ├── kneel_down_1_knee.sh
+│   ├── touch_left_leg_with_right_hand.sh
+│   └── touch_right_leg_with_left_hand.sh
 └── outputs/                             # Generated data (gitignored)
 ```
 
@@ -102,6 +110,10 @@ Each task has a script in `scripts/` with all commands (create scene, capture, g
 | **point_at_obj_with_right_hand** | `scripts/point_at_obj_with_right_hand.sh` | `dist(right_hand, obj) < 0.15m` at episode end |
 | **point_at_obj_with_left_hand** | `scripts/point_at_obj_with_left_hand.sh` | `dist(left_hand, obj) < 0.15m` at episode end |
 | **raise_right_hand** | `scripts/raise_right_hand.sh` | `right_hand_z > 1.3m` at episode end (text-only) |
+| **raise_left_hand** | `scripts/raise_left_hand.sh` | `left_hand_z > 1.3m` at episode end (text-only) |
+| **kneel_down_1_knee** | `scripts/kneel_down_1_knee.sh` | `pelvis_z < 0.5m` at episode end (text-only, fullbody constraint) |
+| **touch_left_leg_with_right_hand** | `scripts/touch_left_leg_with_right_hand.sh` | `dist(right_hand, left_knee) < 0.15m` (text-only) |
+| **touch_right_leg_with_left_hand** | `scripts/touch_right_leg_with_left_hand.sh` | `dist(left_hand, right_knee) < 0.15m` (text-only) |
 
 ### Pipeline order per task
 

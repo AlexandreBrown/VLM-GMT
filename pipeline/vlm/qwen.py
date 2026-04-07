@@ -154,11 +154,16 @@ class QwenVLM(VLMBase):
         if isinstance(data, dict):
             data = [data]
 
-        return [
-            {
-                "frame_id": int(item["frame_id"]),
-                "type": str(item["type"]),
-                "position": [float(v) for v in item["position"]],
-            }
-            for item in data
-        ]
+        parsed = []
+        for item in data:
+            ctype = str(item["type"])
+            entry = {"frame_id": int(item["frame_id"]), "type": ctype}
+            if ctype == "fullbody":
+                entry["positions"] = {
+                    str(k): [float(v) for v in pos]
+                    for k, pos in item["positions"].items()
+                }
+            else:
+                entry["position"] = [float(v) for v in item["position"]]
+            parsed.append(entry)
+        return parsed

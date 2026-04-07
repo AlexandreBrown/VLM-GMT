@@ -16,7 +16,8 @@ class LinkHeightMetric(Metric):
     Args:
         name:              Metric name.
         link_name:         Robot body link to track.
-        height_threshold:  Minimum Z (meters) for success.
+        height_threshold:  Z threshold (meters) for success.
+        check_below:       If True, success = z < threshold. If False, success = z > threshold.
         use_mean:          If True, success based on mean Z over episode (sustained).
                            If False, success based on final Z only.
     """
@@ -28,14 +29,17 @@ class LinkHeightMetric(Metric):
         name: str,
         link_name: str,
         height_threshold: float,
+        check_below: bool = False,
         use_mean: bool = False,
         overlay_label: str | None = None,
     ):
         self.name = name
         self.link_name = link_name
         self.height_threshold = height_threshold
+        self.check_below = check_below
         self.use_mean = use_mean
         self.overlay_label = overlay_label
+        self.higher_is_better = not check_below
 
         self._link_index = None
         self._heights = []
@@ -64,7 +68,9 @@ class LinkHeightMetric(Metric):
             return None
         z = self._heights[-1]
         label = self.overlay_label or self.name
-        return f"{label}: {z:.2f}m (need >{self.height_threshold:.2f})", z > self.height_threshold
+        op = "<" if self.check_below else ">"
+        ok = z < self.height_threshold if self.check_below else z > self.height_threshold
+        return f"{label}: {z:.2f}m (need {op}{self.height_threshold:.2f})", ok
 
     def compute(self) -> MetricResult:
         if not self._heights:
@@ -75,9 +81,10 @@ class LinkHeightMetric(Metric):
         max_z = max(self._heights)
         eval_z = mean_z if self.use_mean else final_z
 
+        success = eval_z < self.height_threshold if self.check_below else eval_z > self.height_threshold
         return MetricResult(
             value=eval_z,
-            success=eval_z > self.height_threshold,
+            success=success,
             info={
                 "final_z": round(final_z, 4),
                 "mean_z": round(mean_z, 4),

@@ -1,0 +1,1 @@
+The robot must raise its left hand straight up above its head and keep it there.
