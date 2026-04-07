@@ -1,1 +1,1 @@
-A person walks forward along a path while stepping around obstacles in their way.
+A person walks forward through a corridor, turning to avoid walls in their path.
