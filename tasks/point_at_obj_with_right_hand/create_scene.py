@@ -27,8 +27,9 @@ from protomotions.components.scene_lib import (
     SceneLib,
 )
 
-# Object at ~0.5m forward, 0.3m to the right, chest height (~0.9m)
-OBJ_POS = (0.5, -0.3, 0.9)
+# Object at ~0.7m forward, 0.2m to the LEFT, chest height (~0.9m)
+# Placed left so naive "raise right hand" misses — robot must reach across
+OBJ_POS = (0.7, 0.2, 0.9)
 OBJ_SIZE = 0.08
 
 PEDESTAL_WIDTH = 0.12

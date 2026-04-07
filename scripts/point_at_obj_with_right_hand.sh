@@ -18,7 +18,7 @@ VLMGMT=~/Documents/vlm_project/VLM-GMT
 PROTOMOTIONS=~/Documents/vlm_project/ProtoMotions
 CKPT=$PROTOMOTIONS/data/pretrained_models/motion_tracker/g1-bones-deploy/last.ckpt
 
-OBJ_POS="0.5 -0.3 0.9"
+OBJ_POS="0.7 0.2 0.9"
 
 # ── 1. Create scene (local) ──────────────────────────────────────────────────
 python $VLMGMT/tasks/point_at_obj_with_right_hand/create_scene.py \
