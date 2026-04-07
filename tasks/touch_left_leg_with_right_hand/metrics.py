@@ -11,7 +11,7 @@ def get_metrics():
         LinkToLinkDistance(
             name="dist_right_hand_to_left_knee",
             link_a="right_rubber_hand",
-            link_b="left_knee",
+            link_b="left_knee_link",
             success_threshold=0.15,
             use_min=False,
             overlay_label="R.Hand→L.Knee",
