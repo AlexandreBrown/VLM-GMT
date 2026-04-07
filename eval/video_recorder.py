@@ -70,21 +70,64 @@ class VideoRecorder:
         self._frames.append(np.array(combined))
 
     def save(self, filename: str) -> str | None:
-        """Write all accumulated frames to a single mp4."""
+        """Write all accumulated frames to a single mp4 optimized for web and size."""
         if not self._frames:
             return None
 
         import cv2
+        import subprocess
+        import os
 
         path = self.output_dir / filename
+        temp_path = self.output_dir / f"temp_{filename}"
+
         h, w = self._frames[0].shape[:2]
+
+        # 1. Fast write to a temporary file using the universally supported mp4v
         writer = cv2.VideoWriter(
-            str(path), cv2.VideoWriter_fourcc(*"0x00000021"), self.fps, (w, h)
+            str(temp_path), cv2.VideoWriter_fourcc(*"mp4v"), self.fps, (w, h)
         )
         for frame in self._frames:
             writer.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
         writer.release()
-        print(
-            f"[video] Saved {len(self._frames)} frames ({self._episode} episodes) to {path}"
-        )
-        return str(path)
+
+        # 2. Compress with FFmpeg for web-compatibility, high quality, and low file size
+        print(f"[video] Compressing {len(self._frames)} frames for web playback...")
+        try:
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-y",  # Overwrite if exists
+                    "-i",
+                    str(temp_path),  # Input file
+                    "-vcodec",
+                    "libx264",  # Web-safe H.264 codec
+                    "-crf",
+                    "20",  # QUALITY CONTROL: 18-23 is the sweet spot. Lower = better quality/bigger file.
+                    "-preset",
+                    "fast",  # Encoding speed
+                    "-pix_fmt",
+                    "yuv420p",  # CRITICAL: Ensures playback in Chrome/Safari/Firefox
+                    str(path),  # Final output file
+                ],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.STDOUT,
+            )
+
+            # 3. Clean up the temporary file
+            if temp_path.exists():
+                temp_path.unlink()
+
+            print(f"[video] Saved ({self._episode} episodes) to {path}")
+            return str(path)
+
+        except FileNotFoundError:
+            print("[video] ERROR: FFmpeg is not installed or not in PATH.")
+            print(f"[video] The uncompressed video was kept at: {temp_path}")
+            return str(temp_path)
+        except subprocess.CalledProcessError as e:
+            print(
+                f"[video] FFmpeg compression failed. Uncompressed video kept at: {temp_path}"
+            )
+            return str(temp_path)
