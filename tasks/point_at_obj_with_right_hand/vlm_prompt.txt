@@ -1,0 +1,1 @@
+The robot must point at the blue object with its right hand.

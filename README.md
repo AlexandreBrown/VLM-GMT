@@ -60,7 +60,8 @@ VLM-GMT/
 ├── tasks/
 │   ├── manip_reach_obj/                 # Red cube on a table
 │   ├── walk_to_obj/                     # Green box on the ground
-│   └── navigate_maze/    # 2 staggering walls (maze-like)
+│   ├── navigate_maze/                   # 2 staggering walls (maze-like)
+│   └── point_at_obj_with_right_hand/    # Blue object on pedestal, point with right hand
 │       Each task contains: create_scene.py, metrics.py, kimodo_prompt.txt, vlm_prompt.txt
 ├── pipeline/
 │   ├── generate_motion.py               # Constraints → Kimodo → motion.pt  (cluster)
@@ -80,7 +81,8 @@ VLM-GMT/
 ├── scripts/                             # Per-task command scripts
 │   ├── manip_reach_obj.sh
 │   ├── walk_to_obj.sh
-│   └── navigate_maze.sh
+│   ├── navigate_maze.sh
+│   └── point_at_obj_with_right_hand.sh
 └── outputs/                             # Generated data (gitignored)
 ```
 
@@ -93,6 +95,7 @@ Each task has a script in `scripts/` with all commands (create scene, capture, g
 | **manip_reach_obj** | `scripts/manip_reach_obj.sh` | `dist(right_wrist, cube) < 0.15m` at episode end |
 | **walk_to_obj** | `scripts/walk_to_obj.sh` | `dist_2d(pelvis, box) < 0.5m` at episode end |
 | **navigate_maze** | `scripts/navigate_maze.sh` | Avoids both walls laterally AND final x past wall 2 + 0.5m |
+| **point_at_obj_with_right_hand** | `scripts/point_at_obj_with_right_hand.sh` | `dist(right_hand, obj) < 0.15m` at episode end |
 
 ### Pipeline order per task
 

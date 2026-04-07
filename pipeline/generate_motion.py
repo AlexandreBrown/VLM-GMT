@@ -218,9 +218,9 @@ def main():
             frame_index = list(range(num_frames - n, num_frames))
         print(f"[generate_motion] GT constraint frames: {frame_index}")
         constraint_kwargs["frame_index"] = frame_index
-        if args.task == "manip_reach_obj":
+        if args.task in ("manip_reach_obj", "point_at_obj_with_right_hand"):
             if args.cube_world_pos is None:
-                parser.error("--cube-world-pos required for condition=gt with task=manip_reach_obj")
+                parser.error(f"--cube-world-pos required for condition=gt with task={args.task}")
             constraint_kwargs["cube_world_pos"] = args.cube_world_pos
         elif args.task == "walk_to_obj":
             if args.box_world_pos is None:
