@@ -1,0 +1,421 @@
+{
+  "task": "raise_left_hand",
+  "condition": "vlm_32b",
+  "checkpoint": "ProtoMotions/data/pretrained_models/motion_tracker/g1-bones-deploy/last.ckpt",
+  "motion_file": "VLM-GMT/outputs/raise_left_hand/vlm_32b/motion.pt",
+  "scenes_file": "VLM-GMT/outputs/raise_left_hand_scene.pt",
+  "num_episodes": 50,
+  "summary": {
+    "left_hand_height": {
+      "success_rate": 1.0,
+      "mean_value": 1.5248308515548705,
+      "min_value": 1.5162867307662964,
+      "max_value": 1.528863787651062,
+      "n_episodes": 50
+    }
+  },
+  "episodes": {
+    "left_hand_height": [
+      {
+        "value": 1.5230631828308105,
+        "success": true,
+        "final_z": 1.5231,
+        "mean_z": 1.5841,
+        "max_z": 1.6293,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5277920961380005,
+        "success": true,
+        "final_z": 1.5278,
+        "mean_z": 1.5885,
+        "max_z": 1.6381,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.526681661605835,
+        "success": true,
+        "final_z": 1.5267,
+        "mean_z": 1.5881,
+        "max_z": 1.6392,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5265040397644043,
+        "success": true,
+        "final_z": 1.5265,
+        "mean_z": 1.587,
+        "max_z": 1.6253,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5269663333892822,
+        "success": true,
+        "final_z": 1.527,
+        "mean_z": 1.5841,
+        "max_z": 1.5986,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.523376703262329,
+        "success": true,
+        "final_z": 1.5234,
+        "mean_z": 1.5859,
+        "max_z": 1.6359,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5248034000396729,
+        "success": true,
+        "final_z": 1.5248,
+        "mean_z": 1.587,
+        "max_z": 1.6386,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5244743824005127,
+        "success": true,
+        "final_z": 1.5245,
+        "mean_z": 1.5867,
+        "max_z": 1.6288,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5231761932373047,
+        "success": true,
+        "final_z": 1.5232,
+        "mean_z": 1.5873,
+        "max_z": 1.6312,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5277135372161865,
+        "success": true,
+        "final_z": 1.5277,
+        "mean_z": 1.587,
+        "max_z": 1.6402,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.525458574295044,
+        "success": true,
+        "final_z": 1.5255,
+        "mean_z": 1.5873,
+        "max_z": 1.6305,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.526468276977539,
+        "success": true,
+        "final_z": 1.5265,
+        "mean_z": 1.5875,
+        "max_z": 1.643,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5241291522979736,
+        "success": true,
+        "final_z": 1.5241,
+        "mean_z": 1.5867,
+        "max_z": 1.6311,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5260756015777588,
+        "success": true,
+        "final_z": 1.5261,
+        "mean_z": 1.5877,
+        "max_z": 1.6086,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5234782695770264,
+        "success": true,
+        "final_z": 1.5235,
+        "mean_z": 1.5852,
+        "max_z": 1.6228,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.524683952331543,
+        "success": true,
+        "final_z": 1.5247,
+        "mean_z": 1.586,
+        "max_z": 1.6462,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5272302627563477,
+        "success": true,
+        "final_z": 1.5272,
+        "mean_z": 1.5869,
+        "max_z": 1.6013,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5228114128112793,
+        "success": true,
+        "final_z": 1.5228,
+        "mean_z": 1.5844,
+        "max_z": 1.6351,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5273187160491943,
+        "success": true,
+        "final_z": 1.5273,
+        "mean_z": 1.5905,
+        "max_z": 1.6218,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5243182182312012,
+        "success": true,
+        "final_z": 1.5243,
+        "mean_z": 1.5853,
+        "max_z": 1.6249,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5225317478179932,
+        "success": true,
+        "final_z": 1.5225,
+        "mean_z": 1.5859,
+        "max_z": 1.6094,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5229612588882446,
+        "success": true,
+        "final_z": 1.523,
+        "mean_z": 1.5879,
+        "max_z": 1.6274,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5212254524230957,
+        "success": true,
+        "final_z": 1.5212,
+        "mean_z": 1.5843,
+        "max_z": 1.6267,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5261964797973633,
+        "success": true,
+        "final_z": 1.5262,
+        "mean_z": 1.5873,
+        "max_z": 1.6213,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5221827030181885,
+        "success": true,
+        "final_z": 1.5222,
+        "mean_z": 1.5866,
+        "max_z": 1.6221,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5242035388946533,
+        "success": true,
+        "final_z": 1.5242,
+        "mean_z": 1.5895,
+        "max_z": 1.6451,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.525904893875122,
+        "success": true,
+        "final_z": 1.5259,
+        "mean_z": 1.5887,
+        "max_z": 1.6466,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.528863787651062,
+        "success": true,
+        "final_z": 1.5289,
+        "mean_z": 1.5881,
+        "max_z": 1.6302,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.525963306427002,
+        "success": true,
+        "final_z": 1.526,
+        "mean_z": 1.586,
+        "max_z": 1.6053,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5229887962341309,
+        "success": true,
+        "final_z": 1.523,
+        "mean_z": 1.5874,
+        "max_z": 1.628,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5259723663330078,
+        "success": true,
+        "final_z": 1.526,
+        "mean_z": 1.5864,
+        "max_z": 1.6335,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5162867307662964,
+        "success": true,
+        "final_z": 1.5163,
+        "mean_z": 1.5855,
+        "max_z": 1.6254,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5238442420959473,
+        "success": true,
+        "final_z": 1.5238,
+        "mean_z": 1.5884,
+        "max_z": 1.6179,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5226131677627563,
+        "success": true,
+        "final_z": 1.5226,
+        "mean_z": 1.5858,
+        "max_z": 1.628,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5255272388458252,
+        "success": true,
+        "final_z": 1.5255,
+        "mean_z": 1.5873,
+        "max_z": 1.6135,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5269410610198975,
+        "success": true,
+        "final_z": 1.5269,
+        "mean_z": 1.5866,
+        "max_z": 1.6105,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5270166397094727,
+        "success": true,
+        "final_z": 1.527,
+        "mean_z": 1.5886,
+        "max_z": 1.6312,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5270200967788696,
+        "success": true,
+        "final_z": 1.527,
+        "mean_z": 1.5869,
+        "max_z": 1.6249,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.524402379989624,
+        "success": true,
+        "final_z": 1.5244,
+        "mean_z": 1.5861,
+        "max_z": 1.6017,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.520803689956665,
+        "success": true,
+        "final_z": 1.5208,
+        "mean_z": 1.5869,
+        "max_z": 1.6348,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5234336853027344,
+        "success": true,
+        "final_z": 1.5234,
+        "mean_z": 1.5887,
+        "max_z": 1.6255,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5258398056030273,
+        "success": true,
+        "final_z": 1.5258,
+        "mean_z": 1.5848,
+        "max_z": 1.6297,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5253372192382812,
+        "success": true,
+        "final_z": 1.5253,
+        "mean_z": 1.5873,
+        "max_z": 1.6429,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5246860980987549,
+        "success": true,
+        "final_z": 1.5247,
+        "mean_z": 1.5865,
+        "max_z": 1.6279,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5272895097732544,
+        "success": true,
+        "final_z": 1.5273,
+        "mean_z": 1.5868,
+        "max_z": 1.6389,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5258336067199707,
+        "success": true,
+        "final_z": 1.5258,
+        "mean_z": 1.5893,
+        "max_z": 1.6313,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5227751731872559,
+        "success": true,
+        "final_z": 1.5228,
+        "mean_z": 1.5864,
+        "max_z": 1.6158,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.5210585594177246,
+        "success": true,
+        "final_z": 1.5211,
+        "mean_z": 1.5862,
+        "max_z": 1.6026,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.528327226638794,
+        "success": true,
+        "final_z": 1.5283,
+        "mean_z": 1.5865,
+        "max_z": 1.6031,
+        "threshold": 1.3
+      },
+      {
+        "value": 1.52698814868927,
+        "success": true,
+        "final_z": 1.527,
+        "mean_z": 1.5878,
+        "max_z": 1.6262,
+        "threshold": 1.3
+      }
+    ]
+  }
+}
