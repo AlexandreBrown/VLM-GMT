@@ -1,0 +1,930 @@
+{
+  "task": "walk_to_obj",
+  "condition": "baseline",
+  "checkpoint": "ProtoMotions/data/pretrained_models/motion_tracker/g1-bones-deploy/last.ckpt",
+  "motion_file": "VLM-GMT/outputs/walk_to_obj/baseline/motion.pt",
+  "scenes_file": "VLM-GMT/outputs/walk_to_obj_scene.pt",
+  "num_episodes": 50,
+  "summary": {
+    "dist_pelvis_to_box_2d": {
+      "success_rate": 0.0,
+      "mean_value": 1.443119444847107,
+      "min_value": 1.2686362266540527,
+      "max_value": 1.6013680696487427,
+      "n_episodes": 50
+    },
+    "dist_pelvis_to_box_2d_min": {
+      "success_rate": 0.0,
+      "mean_value": 1.443119444847107,
+      "min_value": 1.2686362266540527,
+      "max_value": 1.6013680696487427,
+      "n_episodes": 50
+    }
+  },
+  "episodes": {
+    "dist_pelvis_to_box_2d": [
+      {
+        "value": 1.5531234741210938,
+        "success": false,
+        "final_dist": 1.5531234741210938,
+        "min_dist": 1.5531234741210938,
+        "max_dist": 3.2345995903015137,
+        "mean_dist": 2.201295406431765,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.3048664331436157,
+        "success": false,
+        "final_dist": 1.3048664331436157,
+        "min_dist": 1.3048664331436157,
+        "max_dist": 3.193131685256958,
+        "mean_dist": 1.9611587532468744,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5373162031173706,
+        "success": false,
+        "final_dist": 1.5373162031173706,
+        "min_dist": 1.5373162031173706,
+        "max_dist": 3.2224366664886475,
+        "mean_dist": 2.1422383463060535,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4349523782730103,
+        "success": false,
+        "final_dist": 1.4349523782730103,
+        "min_dist": 1.4349523782730103,
+        "max_dist": 3.2192583084106445,
+        "mean_dist": 2.118644370420559,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.6013680696487427,
+        "success": false,
+        "final_dist": 1.6013680696487427,
+        "min_dist": 1.6013680696487427,
+        "max_dist": 3.1914658546447754,
+        "mean_dist": 2.2036192658785225,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.3371495008468628,
+        "success": false,
+        "final_dist": 1.3371495008468628,
+        "min_dist": 1.3371495008468628,
+        "max_dist": 3.231633186340332,
+        "mean_dist": 2.071953026024071,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4612752199172974,
+        "success": false,
+        "final_dist": 1.4612752199172974,
+        "min_dist": 1.4612752199172974,
+        "max_dist": 3.2286009788513184,
+        "mean_dist": 2.16363253867304,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.505484700202942,
+        "success": false,
+        "final_dist": 1.505484700202942,
+        "min_dist": 1.505484700202942,
+        "max_dist": 3.178929090499878,
+        "mean_dist": 2.1435507229856543,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5711290836334229,
+        "success": false,
+        "final_dist": 1.5711290836334229,
+        "min_dist": 1.5711290836334229,
+        "max_dist": 3.2281672954559326,
+        "mean_dist": 2.187849521636963,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5002108812332153,
+        "success": false,
+        "final_dist": 1.5002108812332153,
+        "min_dist": 1.5002108812332153,
+        "max_dist": 3.1591384410858154,
+        "mean_dist": 2.140392005443573,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4562997817993164,
+        "success": false,
+        "final_dist": 1.4562997817993164,
+        "min_dist": 1.4562997817993164,
+        "max_dist": 3.2152891159057617,
+        "mean_dist": 2.1180117057787404,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.3395251035690308,
+        "success": false,
+        "final_dist": 1.3395251035690308,
+        "min_dist": 1.3395251035690308,
+        "max_dist": 3.1892385482788086,
+        "mean_dist": 2.0269650599441014,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4327447414398193,
+        "success": false,
+        "final_dist": 1.4327447414398193,
+        "min_dist": 1.4327447414398193,
+        "max_dist": 3.1991066932678223,
+        "mean_dist": 2.111916580715695,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.440260887145996,
+        "success": false,
+        "final_dist": 1.440260887145996,
+        "min_dist": 1.440260887145996,
+        "max_dist": 3.2407805919647217,
+        "mean_dist": 2.1423954931465357,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4096430540084839,
+        "success": false,
+        "final_dist": 1.4096430540084839,
+        "min_dist": 1.4096430540084839,
+        "max_dist": 3.1974196434020996,
+        "mean_dist": 2.104974730594738,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.3564505577087402,
+        "success": false,
+        "final_dist": 1.3564505577087402,
+        "min_dist": 1.3564505577087402,
+        "max_dist": 3.1639115810394287,
+        "mean_dist": 2.030667520052678,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5647855997085571,
+        "success": false,
+        "final_dist": 1.5647855997085571,
+        "min_dist": 1.5647855997085571,
+        "max_dist": 3.254808187484741,
+        "mean_dist": 2.1973113312914565,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.3646690845489502,
+        "success": false,
+        "final_dist": 1.3646690845489502,
+        "min_dist": 1.3646690845489502,
+        "max_dist": 3.1910269260406494,
+        "mean_dist": 2.0535737574100494,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4289414882659912,
+        "success": false,
+        "final_dist": 1.4289414882659912,
+        "min_dist": 1.4289414882659912,
+        "max_dist": 3.1685054302215576,
+        "mean_dist": 2.0922342901294297,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4337234497070312,
+        "success": false,
+        "final_dist": 1.4337234497070312,
+        "min_dist": 1.4337234497070312,
+        "max_dist": 3.244342803955078,
+        "mean_dist": 2.1288330522743433,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5543272495269775,
+        "success": false,
+        "final_dist": 1.5543272495269775,
+        "min_dist": 1.5543272495269775,
+        "max_dist": 3.2504723072052,
+        "mean_dist": 2.175572101328824,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5546650886535645,
+        "success": false,
+        "final_dist": 1.5546650886535645,
+        "min_dist": 1.5546650886535645,
+        "max_dist": 3.252279043197632,
+        "mean_dist": 2.2160112865873285,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.445355772972107,
+        "success": false,
+        "final_dist": 1.445355772972107,
+        "min_dist": 1.445355772972107,
+        "max_dist": 3.172102212905884,
+        "mean_dist": 2.0813452810854525,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5663155317306519,
+        "success": false,
+        "final_dist": 1.5663155317306519,
+        "min_dist": 1.5663155317306519,
+        "max_dist": 3.1898648738861084,
+        "mean_dist": 2.172246613212534,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.3249233961105347,
+        "success": false,
+        "final_dist": 1.3249233961105347,
+        "min_dist": 1.3249233961105347,
+        "max_dist": 3.230696439743042,
+        "mean_dist": 2.0642894208431244,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4361547231674194,
+        "success": false,
+        "final_dist": 1.4361547231674194,
+        "min_dist": 1.4361547231674194,
+        "max_dist": 3.225283622741699,
+        "mean_dist": 2.147733925967603,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4222368001937866,
+        "success": false,
+        "final_dist": 1.4222368001937866,
+        "min_dist": 1.4222368001937866,
+        "max_dist": 3.1498262882232666,
+        "mean_dist": 2.0734256771770685,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4638723134994507,
+        "success": false,
+        "final_dist": 1.4638723134994507,
+        "min_dist": 1.4638723134994507,
+        "max_dist": 3.19235897064209,
+        "mean_dist": 2.1547478332712844,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4486933946609497,
+        "success": false,
+        "final_dist": 1.4486933946609497,
+        "min_dist": 1.4486933946609497,
+        "max_dist": 3.201799154281616,
+        "mean_dist": 2.091170199014045,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5107520818710327,
+        "success": false,
+        "final_dist": 1.5107520818710327,
+        "min_dist": 1.5107520818710327,
+        "max_dist": 3.181035280227661,
+        "mean_dist": 2.128978225830439,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4721238613128662,
+        "success": false,
+        "final_dist": 1.4721238613128662,
+        "min_dist": 1.4721238613128662,
+        "max_dist": 3.1926655769348145,
+        "mean_dist": 2.120827302739427,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5842210054397583,
+        "success": false,
+        "final_dist": 1.5842210054397583,
+        "min_dist": 1.5842210054397583,
+        "max_dist": 3.1940691471099854,
+        "mean_dist": 2.197727745449221,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5490015745162964,
+        "success": false,
+        "final_dist": 1.5490015745162964,
+        "min_dist": 1.5490015745162964,
+        "max_dist": 3.2599844932556152,
+        "mean_dist": 2.1823225544916616,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5380421876907349,
+        "success": false,
+        "final_dist": 1.5380421876907349,
+        "min_dist": 1.5380421876907349,
+        "max_dist": 3.2110888957977295,
+        "mean_dist": 2.186290773990992,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.3164069652557373,
+        "success": false,
+        "final_dist": 1.3164069652557373,
+        "min_dist": 1.3164069652557373,
+        "max_dist": 3.2248330116271973,
+        "mean_dist": 2.054359602767068,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.3810029029846191,
+        "success": false,
+        "final_dist": 1.3810029029846191,
+        "min_dist": 1.3810029029846191,
+        "max_dist": 3.157066822052002,
+        "mean_dist": 2.0225983697014884,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.2986410856246948,
+        "success": false,
+        "final_dist": 1.2986410856246948,
+        "min_dist": 1.2986410856246948,
+        "max_dist": 3.221494436264038,
+        "mean_dist": 2.0019317277379938,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.3612580299377441,
+        "success": false,
+        "final_dist": 1.3612580299377441,
+        "min_dist": 1.3612580299377441,
+        "max_dist": 3.1879642009735107,
+        "mean_dist": 2.06191090313164,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.3569679260253906,
+        "success": false,
+        "final_dist": 1.3569679260253906,
+        "min_dist": 1.3569679260253906,
+        "max_dist": 3.234055995941162,
+        "mean_dist": 2.073717429025753,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.455857515335083,
+        "success": false,
+        "final_dist": 1.455857515335083,
+        "min_dist": 1.455857515335083,
+        "max_dist": 3.2413582801818848,
+        "mean_dist": 2.1212348809113375,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5388764142990112,
+        "success": false,
+        "final_dist": 1.5388764142990112,
+        "min_dist": 1.5388764142990112,
+        "max_dist": 3.2230587005615234,
+        "mean_dist": 2.2059413718210683,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.3617022037506104,
+        "success": false,
+        "final_dist": 1.3617022037506104,
+        "min_dist": 1.3617022037506104,
+        "max_dist": 3.180957317352295,
+        "mean_dist": 2.0299752346567206,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.376160740852356,
+        "success": false,
+        "final_dist": 1.376160740852356,
+        "min_dist": 1.376160740852356,
+        "max_dist": 3.20266056060791,
+        "mean_dist": 2.069332722876523,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4364181756973267,
+        "success": false,
+        "final_dist": 1.4364181756973267,
+        "min_dist": 1.4364181756973267,
+        "max_dist": 3.193387508392334,
+        "mean_dist": 2.0978902731392837,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.314748764038086,
+        "success": false,
+        "final_dist": 1.314748764038086,
+        "min_dist": 1.314748764038086,
+        "max_dist": 3.1621663570404053,
+        "mean_dist": 1.9991309352823206,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5389145612716675,
+        "success": false,
+        "final_dist": 1.5389145612716675,
+        "min_dist": 1.5389145612716675,
+        "max_dist": 3.253633737564087,
+        "mean_dist": 2.209277620186677,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4533792734146118,
+        "success": false,
+        "final_dist": 1.4533792734146118,
+        "min_dist": 1.4533792734146118,
+        "max_dist": 3.203700065612793,
+        "mean_dist": 2.110604580189731,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.2686362266540527,
+        "success": false,
+        "final_dist": 1.2686362266540527,
+        "min_dist": 1.2686362266540527,
+        "max_dist": 3.209658145904541,
+        "mean_dist": 1.9846772817341056,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.361698865890503,
+        "success": false,
+        "final_dist": 1.361698865890503,
+        "min_dist": 1.361698865890503,
+        "max_dist": 3.1980955600738525,
+        "mean_dist": 2.066693663597107,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4306979179382324,
+        "success": false,
+        "final_dist": 1.4306979179382324,
+        "min_dist": 1.4306979179382324,
+        "max_dist": 3.1898014545440674,
+        "mean_dist": 2.116156471742166,
+        "threshold": 0.5
+      }
+    ],
+    "dist_pelvis_to_box_2d_min": [
+      {
+        "value": 1.5531234741210938,
+        "success": false,
+        "final_dist": 1.5531234741210938,
+        "min_dist": 1.5531234741210938,
+        "max_dist": 3.2345995903015137,
+        "mean_dist": 2.201295406431765,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.3048664331436157,
+        "success": false,
+        "final_dist": 1.3048664331436157,
+        "min_dist": 1.3048664331436157,
+        "max_dist": 3.193131685256958,
+        "mean_dist": 1.9611587532468744,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5373162031173706,
+        "success": false,
+        "final_dist": 1.5373162031173706,
+        "min_dist": 1.5373162031173706,
+        "max_dist": 3.2224366664886475,
+        "mean_dist": 2.1422383463060535,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4349523782730103,
+        "success": false,
+        "final_dist": 1.4349523782730103,
+        "min_dist": 1.4349523782730103,
+        "max_dist": 3.2192583084106445,
+        "mean_dist": 2.118644370420559,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.6013680696487427,
+        "success": false,
+        "final_dist": 1.6013680696487427,
+        "min_dist": 1.6013680696487427,
+        "max_dist": 3.1914658546447754,
+        "mean_dist": 2.2036192658785225,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.3371495008468628,
+        "success": false,
+        "final_dist": 1.3371495008468628,
+        "min_dist": 1.3371495008468628,
+        "max_dist": 3.231633186340332,
+        "mean_dist": 2.071953026024071,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4612752199172974,
+        "success": false,
+        "final_dist": 1.4612752199172974,
+        "min_dist": 1.4612752199172974,
+        "max_dist": 3.2286009788513184,
+        "mean_dist": 2.16363253867304,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.505484700202942,
+        "success": false,
+        "final_dist": 1.505484700202942,
+        "min_dist": 1.505484700202942,
+        "max_dist": 3.178929090499878,
+        "mean_dist": 2.1435507229856543,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5711290836334229,
+        "success": false,
+        "final_dist": 1.5711290836334229,
+        "min_dist": 1.5711290836334229,
+        "max_dist": 3.2281672954559326,
+        "mean_dist": 2.187849521636963,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5002108812332153,
+        "success": false,
+        "final_dist": 1.5002108812332153,
+        "min_dist": 1.5002108812332153,
+        "max_dist": 3.1591384410858154,
+        "mean_dist": 2.140392005443573,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4562997817993164,
+        "success": false,
+        "final_dist": 1.4562997817993164,
+        "min_dist": 1.4562997817993164,
+        "max_dist": 3.2152891159057617,
+        "mean_dist": 2.1180117057787404,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.3395251035690308,
+        "success": false,
+        "final_dist": 1.3395251035690308,
+        "min_dist": 1.3395251035690308,
+        "max_dist": 3.1892385482788086,
+        "mean_dist": 2.0269650599441014,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4327447414398193,
+        "success": false,
+        "final_dist": 1.4327447414398193,
+        "min_dist": 1.4327447414398193,
+        "max_dist": 3.1991066932678223,
+        "mean_dist": 2.111916580715695,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.440260887145996,
+        "success": false,
+        "final_dist": 1.440260887145996,
+        "min_dist": 1.440260887145996,
+        "max_dist": 3.2407805919647217,
+        "mean_dist": 2.1423954931465357,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4096430540084839,
+        "success": false,
+        "final_dist": 1.4096430540084839,
+        "min_dist": 1.4096430540084839,
+        "max_dist": 3.1974196434020996,
+        "mean_dist": 2.104974730594738,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.3564505577087402,
+        "success": false,
+        "final_dist": 1.3564505577087402,
+        "min_dist": 1.3564505577087402,
+        "max_dist": 3.1639115810394287,
+        "mean_dist": 2.030667520052678,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5647855997085571,
+        "success": false,
+        "final_dist": 1.5647855997085571,
+        "min_dist": 1.5647855997085571,
+        "max_dist": 3.254808187484741,
+        "mean_dist": 2.1973113312914565,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.3646690845489502,
+        "success": false,
+        "final_dist": 1.3646690845489502,
+        "min_dist": 1.3646690845489502,
+        "max_dist": 3.1910269260406494,
+        "mean_dist": 2.0535737574100494,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4289414882659912,
+        "success": false,
+        "final_dist": 1.4289414882659912,
+        "min_dist": 1.4289414882659912,
+        "max_dist": 3.1685054302215576,
+        "mean_dist": 2.0922342901294297,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4337234497070312,
+        "success": false,
+        "final_dist": 1.4337234497070312,
+        "min_dist": 1.4337234497070312,
+        "max_dist": 3.244342803955078,
+        "mean_dist": 2.1288330522743433,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5543272495269775,
+        "success": false,
+        "final_dist": 1.5543272495269775,
+        "min_dist": 1.5543272495269775,
+        "max_dist": 3.2504723072052,
+        "mean_dist": 2.175572101328824,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5546650886535645,
+        "success": false,
+        "final_dist": 1.5546650886535645,
+        "min_dist": 1.5546650886535645,
+        "max_dist": 3.252279043197632,
+        "mean_dist": 2.2160112865873285,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.445355772972107,
+        "success": false,
+        "final_dist": 1.445355772972107,
+        "min_dist": 1.445355772972107,
+        "max_dist": 3.172102212905884,
+        "mean_dist": 2.0813452810854525,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5663155317306519,
+        "success": false,
+        "final_dist": 1.5663155317306519,
+        "min_dist": 1.5663155317306519,
+        "max_dist": 3.1898648738861084,
+        "mean_dist": 2.172246613212534,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.3249233961105347,
+        "success": false,
+        "final_dist": 1.3249233961105347,
+        "min_dist": 1.3249233961105347,
+        "max_dist": 3.230696439743042,
+        "mean_dist": 2.0642894208431244,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4361547231674194,
+        "success": false,
+        "final_dist": 1.4361547231674194,
+        "min_dist": 1.4361547231674194,
+        "max_dist": 3.225283622741699,
+        "mean_dist": 2.147733925967603,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4222368001937866,
+        "success": false,
+        "final_dist": 1.4222368001937866,
+        "min_dist": 1.4222368001937866,
+        "max_dist": 3.1498262882232666,
+        "mean_dist": 2.0734256771770685,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4638723134994507,
+        "success": false,
+        "final_dist": 1.4638723134994507,
+        "min_dist": 1.4638723134994507,
+        "max_dist": 3.19235897064209,
+        "mean_dist": 2.1547478332712844,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4486933946609497,
+        "success": false,
+        "final_dist": 1.4486933946609497,
+        "min_dist": 1.4486933946609497,
+        "max_dist": 3.201799154281616,
+        "mean_dist": 2.091170199014045,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5107520818710327,
+        "success": false,
+        "final_dist": 1.5107520818710327,
+        "min_dist": 1.5107520818710327,
+        "max_dist": 3.181035280227661,
+        "mean_dist": 2.128978225830439,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4721238613128662,
+        "success": false,
+        "final_dist": 1.4721238613128662,
+        "min_dist": 1.4721238613128662,
+        "max_dist": 3.1926655769348145,
+        "mean_dist": 2.120827302739427,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5842210054397583,
+        "success": false,
+        "final_dist": 1.5842210054397583,
+        "min_dist": 1.5842210054397583,
+        "max_dist": 3.1940691471099854,
+        "mean_dist": 2.197727745449221,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5490015745162964,
+        "success": false,
+        "final_dist": 1.5490015745162964,
+        "min_dist": 1.5490015745162964,
+        "max_dist": 3.2599844932556152,
+        "mean_dist": 2.1823225544916616,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5380421876907349,
+        "success": false,
+        "final_dist": 1.5380421876907349,
+        "min_dist": 1.5380421876907349,
+        "max_dist": 3.2110888957977295,
+        "mean_dist": 2.186290773990992,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.3164069652557373,
+        "success": false,
+        "final_dist": 1.3164069652557373,
+        "min_dist": 1.3164069652557373,
+        "max_dist": 3.2248330116271973,
+        "mean_dist": 2.054359602767068,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.3810029029846191,
+        "success": false,
+        "final_dist": 1.3810029029846191,
+        "min_dist": 1.3810029029846191,
+        "max_dist": 3.157066822052002,
+        "mean_dist": 2.0225983697014884,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.2986410856246948,
+        "success": false,
+        "final_dist": 1.2986410856246948,
+        "min_dist": 1.2986410856246948,
+        "max_dist": 3.221494436264038,
+        "mean_dist": 2.0019317277379938,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.3612580299377441,
+        "success": false,
+        "final_dist": 1.3612580299377441,
+        "min_dist": 1.3612580299377441,
+        "max_dist": 3.1879642009735107,
+        "mean_dist": 2.06191090313164,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.3569679260253906,
+        "success": false,
+        "final_dist": 1.3569679260253906,
+        "min_dist": 1.3569679260253906,
+        "max_dist": 3.234055995941162,
+        "mean_dist": 2.073717429025753,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.455857515335083,
+        "success": false,
+        "final_dist": 1.455857515335083,
+        "min_dist": 1.455857515335083,
+        "max_dist": 3.2413582801818848,
+        "mean_dist": 2.1212348809113375,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5388764142990112,
+        "success": false,
+        "final_dist": 1.5388764142990112,
+        "min_dist": 1.5388764142990112,
+        "max_dist": 3.2230587005615234,
+        "mean_dist": 2.2059413718210683,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.3617022037506104,
+        "success": false,
+        "final_dist": 1.3617022037506104,
+        "min_dist": 1.3617022037506104,
+        "max_dist": 3.180957317352295,
+        "mean_dist": 2.0299752346567206,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.376160740852356,
+        "success": false,
+        "final_dist": 1.376160740852356,
+        "min_dist": 1.376160740852356,
+        "max_dist": 3.20266056060791,
+        "mean_dist": 2.069332722876523,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4364181756973267,
+        "success": false,
+        "final_dist": 1.4364181756973267,
+        "min_dist": 1.4364181756973267,
+        "max_dist": 3.193387508392334,
+        "mean_dist": 2.0978902731392837,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.314748764038086,
+        "success": false,
+        "final_dist": 1.314748764038086,
+        "min_dist": 1.314748764038086,
+        "max_dist": 3.1621663570404053,
+        "mean_dist": 1.9991309352823206,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.5389145612716675,
+        "success": false,
+        "final_dist": 1.5389145612716675,
+        "min_dist": 1.5389145612716675,
+        "max_dist": 3.253633737564087,
+        "mean_dist": 2.209277620186677,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4533792734146118,
+        "success": false,
+        "final_dist": 1.4533792734146118,
+        "min_dist": 1.4533792734146118,
+        "max_dist": 3.203700065612793,
+        "mean_dist": 2.110604580189731,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.2686362266540527,
+        "success": false,
+        "final_dist": 1.2686362266540527,
+        "min_dist": 1.2686362266540527,
+        "max_dist": 3.209658145904541,
+        "mean_dist": 1.9846772817341056,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.361698865890503,
+        "success": false,
+        "final_dist": 1.361698865890503,
+        "min_dist": 1.361698865890503,
+        "max_dist": 3.1980955600738525,
+        "mean_dist": 2.066693663597107,
+        "threshold": 0.5
+      },
+      {
+        "value": 1.4306979179382324,
+        "success": false,
+        "final_dist": 1.4306979179382324,
+        "min_dist": 1.4306979179382324,
+        "max_dist": 3.1898014545440674,
+        "mean_dist": 2.116156471742166,
+        "threshold": 0.5
+      }
+    ]
+  }
+}
