@@ -1,0 +1,371 @@
+{
+  "task": "touch_left_leg_with_right_hand",
+  "condition": "gt",
+  "checkpoint": "ProtoMotions/data/pretrained_models/motion_tracker/g1-bones-deploy/last.ckpt",
+  "motion_file": "VLM-GMT/outputs/touch_left_leg_with_right_hand/gt/motion.pt",
+  "scenes_file": "VLM-GMT/outputs/touch_left_leg_with_right_hand_scene.pt",
+  "num_episodes": 50,
+  "summary": {
+    "dist_right_hand_to_left_knee": {
+      "success_rate": 1.0,
+      "mean_value": 0.17187247157096863,
+      "min_value": 0.15767882764339447,
+      "max_value": 0.1811806708574295,
+      "n_episodes": 50
+    }
+  },
+  "episodes": {
+    "dist_right_hand_to_left_knee": [
+      {
+        "value": 0.15963824093341827,
+        "success": true,
+        "final_dist": 0.1596,
+        "min_dist": 0.1596,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.17578357458114624,
+        "success": true,
+        "final_dist": 0.1758,
+        "min_dist": 0.1728,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.1765614002943039,
+        "success": true,
+        "final_dist": 0.1766,
+        "min_dist": 0.1698,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.16826143860816956,
+        "success": true,
+        "final_dist": 0.1683,
+        "min_dist": 0.1629,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.17918454110622406,
+        "success": true,
+        "final_dist": 0.1792,
+        "min_dist": 0.1712,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.17657512426376343,
+        "success": true,
+        "final_dist": 0.1766,
+        "min_dist": 0.1688,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.17536459863185883,
+        "success": true,
+        "final_dist": 0.1754,
+        "min_dist": 0.1674,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.16612346470355988,
+        "success": true,
+        "final_dist": 0.1661,
+        "min_dist": 0.1641,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.17585867643356323,
+        "success": true,
+        "final_dist": 0.1759,
+        "min_dist": 0.1643,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.1809561848640442,
+        "success": true,
+        "final_dist": 0.181,
+        "min_dist": 0.1732,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.17000287771224976,
+        "success": true,
+        "final_dist": 0.17,
+        "min_dist": 0.1643,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.1603727787733078,
+        "success": true,
+        "final_dist": 0.1604,
+        "min_dist": 0.1604,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.1811806708574295,
+        "success": true,
+        "final_dist": 0.1812,
+        "min_dist": 0.1725,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.16958613693714142,
+        "success": true,
+        "final_dist": 0.1696,
+        "min_dist": 0.1647,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.1794980764389038,
+        "success": true,
+        "final_dist": 0.1795,
+        "min_dist": 0.1715,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.17068921029567719,
+        "success": true,
+        "final_dist": 0.1707,
+        "min_dist": 0.167,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.17073947191238403,
+        "success": true,
+        "final_dist": 0.1707,
+        "min_dist": 0.1663,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.17355529963970184,
+        "success": true,
+        "final_dist": 0.1736,
+        "min_dist": 0.1644,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.16560956835746765,
+        "success": true,
+        "final_dist": 0.1656,
+        "min_dist": 0.1633,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.17973099648952484,
+        "success": true,
+        "final_dist": 0.1797,
+        "min_dist": 0.1684,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.167024165391922,
+        "success": true,
+        "final_dist": 0.167,
+        "min_dist": 0.1655,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.1655239313840866,
+        "success": true,
+        "final_dist": 0.1655,
+        "min_dist": 0.161,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.18086928129196167,
+        "success": true,
+        "final_dist": 0.1809,
+        "min_dist": 0.1797,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.174582377076149,
+        "success": true,
+        "final_dist": 0.1746,
+        "min_dist": 0.1723,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.1801348328590393,
+        "success": true,
+        "final_dist": 0.1801,
+        "min_dist": 0.1713,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.16564908623695374,
+        "success": true,
+        "final_dist": 0.1656,
+        "min_dist": 0.1638,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.16243866086006165,
+        "success": true,
+        "final_dist": 0.1624,
+        "min_dist": 0.1602,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.161187544465065,
+        "success": true,
+        "final_dist": 0.1612,
+        "min_dist": 0.1594,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.17606139183044434,
+        "success": true,
+        "final_dist": 0.1761,
+        "min_dist": 0.1689,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.16366958618164062,
+        "success": true,
+        "final_dist": 0.1637,
+        "min_dist": 0.1637,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.17446672916412354,
+        "success": true,
+        "final_dist": 0.1745,
+        "min_dist": 0.1725,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.16995207965373993,
+        "success": true,
+        "final_dist": 0.17,
+        "min_dist": 0.1665,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.17755761742591858,
+        "success": true,
+        "final_dist": 0.1776,
+        "min_dist": 0.1694,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.17080126702785492,
+        "success": true,
+        "final_dist": 0.1708,
+        "min_dist": 0.1634,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.1722271889448166,
+        "success": true,
+        "final_dist": 0.1722,
+        "min_dist": 0.163,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.16793084144592285,
+        "success": true,
+        "final_dist": 0.1679,
+        "min_dist": 0.1662,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.16843019425868988,
+        "success": true,
+        "final_dist": 0.1684,
+        "min_dist": 0.1617,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.15767882764339447,
+        "success": true,
+        "final_dist": 0.1577,
+        "min_dist": 0.1577,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.171686589717865,
+        "success": true,
+        "final_dist": 0.1717,
+        "min_dist": 0.1604,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.16288143396377563,
+        "success": true,
+        "final_dist": 0.1629,
+        "min_dist": 0.1621,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.17821097373962402,
+        "success": true,
+        "final_dist": 0.1782,
+        "min_dist": 0.1679,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.1807149201631546,
+        "success": true,
+        "final_dist": 0.1807,
+        "min_dist": 0.175,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.16218990087509155,
+        "success": true,
+        "final_dist": 0.1622,
+        "min_dist": 0.1615,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.16624408960342407,
+        "success": true,
+        "final_dist": 0.1662,
+        "min_dist": 0.1614,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.17782847583293915,
+        "success": true,
+        "final_dist": 0.1778,
+        "min_dist": 0.1651,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.17002785205841064,
+        "success": true,
+        "final_dist": 0.17,
+        "min_dist": 0.1661,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.17888155579566956,
+        "success": true,
+        "final_dist": 0.1789,
+        "min_dist": 0.1723,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.1734144687652588,
+        "success": true,
+        "final_dist": 0.1734,
+        "min_dist": 0.1652,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.17962290346622467,
+        "success": true,
+        "final_dist": 0.1796,
+        "min_dist": 0.1753,
+        "threshold": 0.2
+      },
+      {
+        "value": 0.18046247959136963,
+        "success": true,
+        "final_dist": 0.1805,
+        "min_dist": 0.1739,
+        "threshold": 0.2
+      }
+    ]
+  }
+}
