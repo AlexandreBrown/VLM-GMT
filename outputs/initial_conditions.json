@@ -1,0 +1,91 @@
+{
+  "kneel_down_1_knee": {
+    "kneel_down": {
+      "initial_snapshot": {
+        "hands_dist": 0.571646,
+        "left_hand_to_knee": 0.254599,
+        "left_hand_z": 0.435322,
+        "left_knee_z": 0.346137,
+        "pelvis_z": 0.539646,
+        "right_hand_to_knee": 0.404081,
+        "right_hand_z": 0.379871,
+        "right_knee_z": 0.082438
+      },
+      "metric_class": "KneelDownMetric"
+    }
+  },
+  "manip_reach_obj": {
+    "dist_right_hand_to_cube": {
+      "initial_dist": 0.550109,
+      "metric_class": "DistanceToTarget"
+    },
+    "dist_right_hand_to_cube_min": {
+      "initial_dist": 0.550109,
+      "metric_class": "DistanceToTarget"
+    }
+  },
+  "navigate_maze": {
+    "navigate_maze": {
+      "metric_class": "NavigateMazeMetric",
+      "origin_x_world": 50.000603,
+      "wall_world_xs": [
+        51.5,
+        53.0
+      ]
+    }
+  },
+  "point_at_obj_with_left_hand": {
+    "dist_left_hand_to_obj": {
+      "initial_dist": 0.674395,
+      "metric_class": "DistanceToTarget"
+    },
+    "dist_left_hand_to_obj_min": {
+      "initial_dist": 0.674395,
+      "metric_class": "DistanceToTarget"
+    }
+  },
+  "point_at_obj_with_right_hand": {
+    "dist_right_hand_to_obj": {
+      "initial_dist": 0.621652,
+      "metric_class": "DistanceToTarget"
+    },
+    "dist_right_hand_to_obj_min": {
+      "initial_dist": 0.621652,
+      "metric_class": "DistanceToTarget"
+    }
+  },
+  "raise_left_hand": {
+    "left_hand_height": {
+      "initial_z": 0.669209,
+      "metric_class": "LinkHeightMetric"
+    }
+  },
+  "raise_right_hand": {
+    "right_hand_height": {
+      "initial_z": 0.658781,
+      "metric_class": "LinkHeightMetric"
+    }
+  },
+  "touch_left_leg_with_right_hand": {
+    "dist_right_hand_to_left_knee": {
+      "initial_dist": 0.4395,
+      "metric_class": "LinkToLinkDistance"
+    }
+  },
+  "touch_right_leg_with_left_hand": {
+    "dist_left_hand_to_right_knee": {
+      "initial_dist": 0.438788,
+      "metric_class": "LinkToLinkDistance"
+    }
+  },
+  "walk_to_obj": {
+    "dist_pelvis_to_box_2d": {
+      "initial_dist": 3.222095,
+      "metric_class": "DistanceToTarget"
+    },
+    "dist_pelvis_to_box_2d_min": {
+      "initial_dist": 3.222095,
+      "metric_class": "DistanceToTarget"
+    }
+  }
+}

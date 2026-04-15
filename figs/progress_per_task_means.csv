@@ -1,0 +1,11 @@
+task,category,baseline,vlm_7b,vlm_32b,gt
+reach_obj,vision,0.0000,0.0771,0.3982,0.9049
+walk_to_obj,vision,0.6535,0.7515,0.2599,0.8557
+navigate_maze,vision,0.4054,0.4103,0.4051,0.4750
+point_right,vision,0.2239,0.4402,0.7590,0.9168
+point_left,vision,0.2672,0.6968,0.1881,0.9728
+raise_right_hand,text,1.0000,0.9458,1.0000,1.0000
+raise_left_hand,text,1.0000,1.0000,1.0000,1.0000
+kneel_down,text,0.6000,0.4880,0.4920,0.9920
+touch_left_knee,text,0.2557,0.1079,0.0002,1.0000
+touch_right_knee,text,0.0507,0.0090,0.0078,0.8166

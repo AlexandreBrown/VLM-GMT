@@ -43,10 +43,12 @@ class LinkHeightMetric(Metric):
 
         self._link_index = None
         self._heights = []
+        self._initial_z = None
 
     def reset(self) -> None:
         self._link_index = None
         self._heights = []
+        self._initial_z = None
 
     def _resolve_link_index(self, env) -> int:
         body_names = list(env.simulator._robot.data.body_names)
@@ -61,6 +63,8 @@ class LinkHeightMetric(Metric):
             self._link_index = self._resolve_link_index(env)
 
         z = float(env.simulator._robot.data.body_pos_w[0, self._link_index, 2])
+        if self._initial_z is None:
+            self._initial_z = z
         self._heights.append(z)
 
     def get_overlay(self) -> tuple[str, bool] | None:
@@ -89,6 +93,7 @@ class LinkHeightMetric(Metric):
                 "final_z": round(final_z, 4),
                 "mean_z": round(mean_z, 4),
                 "max_z": round(max_z, 4),
+                "initial_z": round(self._initial_z, 4) if self._initial_z is not None else None,
                 "threshold": self.height_threshold,
             },
         )

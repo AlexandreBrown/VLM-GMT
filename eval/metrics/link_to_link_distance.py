@@ -42,11 +42,13 @@ class LinkToLinkDistance(Metric):
         self._index_a = None
         self._index_b = None
         self._distances = []
+        self._initial_dist = None
 
     def reset(self) -> None:
         self._index_a = None
         self._index_b = None
         self._distances = []
+        self._initial_dist = None
 
     def _resolve_link_index(self, env, link_name: str) -> int:
         body_names = list(env.simulator._robot.data.body_names)
@@ -64,7 +66,10 @@ class LinkToLinkDistance(Metric):
         pos_a = env.simulator._robot.data.body_pos_w[:, self._index_a, :]
         pos_b = env.simulator._robot.data.body_pos_w[:, self._index_b, :]
         dist = torch.norm(pos_a - pos_b, dim=-1)
-        self._distances.append(dist[0].item())
+        d = dist[0].item()
+        if self._initial_dist is None:
+            self._initial_dist = d
+        self._distances.append(d)
 
     def get_overlay(self) -> tuple[str, bool] | None:
         if not self._distances:
@@ -87,6 +92,8 @@ class LinkToLinkDistance(Metric):
             info={
                 "final_dist": round(final_dist, 4),
                 "min_dist": round(min_dist, 4),
+                "max_dist": round(max(self._distances), 4),
+                "initial_dist": round(self._initial_dist, 4) if self._initial_dist is not None else None,
                 "threshold": self.success_threshold,
             },
         )

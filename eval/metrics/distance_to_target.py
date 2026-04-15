@@ -53,11 +53,13 @@ class DistanceToTarget(Metric):
         self._link_index = None      # resolved on first update
         self._distances = []         # distance at each step
         self._final_dist = None
+        self._initial_dist = None    # recorded on first update
 
     def reset(self) -> None:
         self._distances = []
         self._final_dist = None
         self._link_index = None      # re-resolve each episode (safe)
+        self._initial_dist = None
 
     def _resolve_link_index(self, env) -> int:
         """Find the rigid body index for self.link_name in simulator ordering."""
@@ -88,7 +90,10 @@ class DistanceToTarget(Metric):
             dist = torch.norm(link_pos[:, :2] - obj_pos[:, :2], dim=-1)
         else:
             dist = torch.norm(link_pos - obj_pos, dim=-1)  # (num_envs,)
-        self._distances.append(dist[0].item())
+        d = dist[0].item()
+        if self._initial_dist is None:
+            self._initial_dist = d
+        self._distances.append(d)
 
     def get_overlay(self) -> tuple[str, bool] | None:
         if self.use_min or not self._distances:
@@ -113,6 +118,7 @@ class DistanceToTarget(Metric):
                 "min_dist": min_dist,
                 "max_dist": max(self._distances),
                 "mean_dist": sum(self._distances) / len(self._distances),
+                "initial_dist": self._initial_dist,
                 "threshold": self.success_threshold,
             },
         )

@@ -47,6 +47,12 @@ def create_parser():
         help="Record side-by-side video (third-person + ego) per episode",
     )
     parser.add_argument(
+        "--no-video",
+        action="store_true",
+        default=False,
+        help="Disable video recording and ego-camera scene patching. Overrides --record-video.",
+    )
+    parser.add_argument(
         "--pitch-deg",
         type=float,
         default=50.0,
@@ -67,6 +73,17 @@ def create_parser():
         "--vlm-gmt-root",
         required=True,
         help="Path to VLM-GMT root directory.",
+    )
+    parser.add_argument(
+        "--capture-initial-only",
+        action="store_true",
+        default=False,
+        help="Load env, reset, record initial metric values, append to --initial-output, exit.",
+    )
+    parser.add_argument(
+        "--initial-output",
+        default=None,
+        help="Path to the aggregated initial_conditions.json (required with --capture-initial-only).",
     )
     return parser
 
@@ -201,6 +218,10 @@ def main():
     global args
     args = parser.parse_args()
 
+    # --no-video overrides --record-video. Capture-only mode implies no video.
+    if args.no_video or args.capture_initial_only:
+        args.record_video = False
+
     # Resolve VLM-GMT root from CLI arg or default to parent of eval/
     vlm_gmt_root = Path(args.vlm_gmt_root).resolve()
 
@@ -322,6 +343,48 @@ def main():
     log.info(
         f"Loaded {len(metrics)} metrics for task '{args.task}': {[m.name for m in metrics]}"
     )
+
+    # ── Capture initial conditions only: reset env, one metric.update(), write, exit ──
+    if args.capture_initial_only:
+        assert args.initial_output is not None, "--capture-initial-only requires --initial-output"
+        scene_lib_obj = env.scene_lib
+        env_ids = torch.arange(env.num_envs, device=env.device)
+        env.reset(env_ids)
+        for m in metrics:
+            m.reset()
+            m.update(env, scene_lib_obj)
+
+        task_entry = {}
+        for m in metrics:
+            entry = {"metric_class": type(m).__name__}
+            if hasattr(m, "_initial_dist") and m._initial_dist is not None:
+                entry["initial_dist"] = round(float(m._initial_dist), 6)
+            if hasattr(m, "_initial_z") and m._initial_z is not None:
+                entry["initial_z"] = round(float(m._initial_z), 6)
+            if hasattr(m, "_wall_xs") and m._wall_xs is not None:
+                entry["wall_world_xs"] = [round(float(w), 6) for w in m._wall_xs]
+                entry["origin_x_world"] = round(float(m._origin_x), 6)
+            if hasattr(m, "_snapshots") and m._snapshots:
+                entry["initial_snapshot"] = {
+                    k: round(float(v), 6) if isinstance(v, float) else v
+                    for k, v in m._snapshots[0].items()
+                }
+            task_entry[m.name] = entry
+
+        out_path = Path(args.initial_output)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        existing = {}
+        if out_path.exists():
+            existing = json.loads(out_path.read_text())
+        existing[args.task] = task_entry
+        out_path.write_text(json.dumps(existing, indent=2, sort_keys=True))
+        log.info(f"Captured initial conditions for task '{args.task}':")
+        for mn, e in task_entry.items():
+            log.info(f"  {mn}: {e}")
+        log.info(f"Wrote {out_path}")
+        if hasattr(env.simulator, "shutdown"):
+            env.simulator.shutdown()
+        return
 
     # Set up video recording
     video_recorder = None
