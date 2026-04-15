@@ -1,6 +1,6 @@
 """Metrics for touch_left_leg_with_right_hand task.
 
-Success: dist(right_rubber_hand, left_knee) < 0.15m at episode end.
+Success: dist(right_rubber_hand, left_knee_link) < 0.20m at episode end.
 """
 
 from eval.metrics import LinkToLinkDistance

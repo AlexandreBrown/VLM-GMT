@@ -1,14 +1,12 @@
 """Metrics for navigate_maze task.
 
-Success: robot avoids both internal walls AND final pelvis x past wall 2 + 0.5m.
+Simple metric: score = walls_cleared / total_walls.
+A wall is cleared when the pelvis final world x is past the wall's world x
+by pass_x_margin.
 
-Obstacle positions are near the wall inner edges (y~0) with a small offset
-to indicate which side the wall is on:
-  Wall 1: (1.5, +0.1) — wall blocks y>0, edge at y=0
-  Wall 2: (3.0, -0.1) — wall blocks y<0, edge at y=0
-
-avoidance_min_dist = 0.3: a straight walk at y=0 gives dist=0.1 < 0.3 -> fails.
-A correct avoidance at y=-0.3 gives dist=0.4 >= 0.3 -> passes.
+Scene object indices (see tasks/navigate_maze/create_scene.py):
+  0: north boundary, 1: south, 2: west, 3: east
+  4: wall 1, 5: wall 2
 """
 
 from eval.metrics import NavigateMazeMetric
@@ -19,15 +17,7 @@ def get_metrics():
         NavigateMazeMetric(
             name="navigate_maze",
             link_name="pelvis",
-            line_x_min=-1.0,
-            line_x_max=6.0,
-            line_y_half_width=100.0,  # no lateral constraint, just avoidance
-            obstacle_positions=[
-                (1.5,  0.1),  # wall 1 inner edge (blocks y>0)
-                (3.0, -0.1),  # wall 2 inner edge (blocks y<0)
-            ],
-            avoidance_min_dist=0.3,
-            x_window=0.5,
+            obstacle_indices=(4, 5),
             pass_x_margin=0.5,
         ),
     ]

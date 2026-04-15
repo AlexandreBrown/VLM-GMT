@@ -19,852 +19,702 @@
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.248,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.938,
-        "passed_last_wall": true
+        "final_px_world": 51.137,
+        "final_px_local": 1.077,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.949
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.242,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.947,
-        "passed_last_wall": true
+        "final_px_world": 51.248,
+        "final_px_local": 1.222,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.868
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.236,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.908,
-        "passed_last_wall": true
+        "final_px_world": 51.23,
+        "final_px_local": 1.182,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.935
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.212,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.878,
-        "passed_last_wall": true
+        "final_px_world": 51.219,
+        "final_px_local": 1.239,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.85
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.257,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.968,
-        "passed_last_wall": true
+        "final_px_world": 51.12,
+        "final_px_local": 1.085,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 2.082
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.237,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 2.064,
-        "passed_last_wall": true
+        "final_px_world": 51.249,
+        "final_px_local": 1.247,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.97
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.248,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.932,
-        "passed_last_wall": true
+        "final_px_world": 51.278,
+        "final_px_local": 1.233,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 2.013
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.25,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.944,
-        "passed_last_wall": true
+        "final_px_world": 51.268,
+        "final_px_local": 1.248,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.952
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.208,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.951,
-        "passed_last_wall": true
+        "final_px_world": 51.273,
+        "final_px_local": 1.272,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.909
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.196,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.889,
-        "passed_last_wall": true
+        "final_px_world": 51.251,
+        "final_px_local": 1.254,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.959
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.186,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.953,
-        "passed_last_wall": true
+        "final_px_world": 51.22,
+        "final_px_local": 1.237,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.884
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.272,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 2.035,
-        "passed_last_wall": true
+        "final_px_world": 51.115,
+        "final_px_local": 1.134,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 2.117
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.259,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.999,
-        "passed_last_wall": true
+        "final_px_world": 51.129,
+        "final_px_local": 1.134,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.899
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.254,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.881,
-        "passed_last_wall": true
+        "final_px_world": 51.264,
+        "final_px_local": 1.291,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 2.01
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.115,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 2.051,
-        "passed_last_wall": true
+        "final_px_world": 51.273,
+        "final_px_local": 1.302,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.933
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.261,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.971,
-        "passed_last_wall": true
+        "final_px_world": 51.219,
+        "final_px_local": 1.238,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 2.044
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.211,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.871,
-        "passed_last_wall": true
+        "final_px_world": 51.169,
+        "final_px_local": 1.146,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 2.028
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.266,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 2.084,
-        "passed_last_wall": true
+        "final_px_world": 51.265,
+        "final_px_local": 1.28,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.943
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.155,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 2.088,
-        "passed_last_wall": true
+        "final_px_world": 51.258,
+        "final_px_local": 1.258,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.941
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.151,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 2.095,
-        "passed_last_wall": true
+        "final_px_world": 51.283,
+        "final_px_local": 1.296,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 2.038
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.265,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.928,
-        "passed_last_wall": true
+        "final_px_world": 51.198,
+        "final_px_local": 1.145,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.945
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.225,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.908,
-        "passed_last_wall": true
+        "final_px_world": 51.217,
+        "final_px_local": 1.209,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.866
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.258,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.92,
-        "passed_last_wall": true
+        "final_px_world": 51.235,
+        "final_px_local": 1.211,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 2.035
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.13,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 2.045,
-        "passed_last_wall": true
+        "final_px_world": 51.25,
+        "final_px_local": 1.246,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.856
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.241,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.91,
-        "passed_last_wall": true
+        "final_px_world": 51.242,
+        "final_px_local": 1.264,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 2.096
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.248,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.869,
-        "passed_last_wall": true
+        "final_px_world": 51.251,
+        "final_px_local": 1.228,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.931
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.244,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.876,
-        "passed_last_wall": true
+        "final_px_world": 51.249,
+        "final_px_local": 1.243,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.944
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.233,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.984,
-        "passed_last_wall": true
+        "final_px_world": 51.253,
+        "final_px_local": 1.29,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.939
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.243,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.881,
-        "passed_last_wall": true
+        "final_px_world": 51.22,
+        "final_px_local": 1.224,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.816
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.212,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 2.003,
-        "passed_last_wall": true
+        "final_px_world": 51.214,
+        "final_px_local": 1.187,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.959
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.247,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.979,
-        "passed_last_wall": true
+        "final_px_world": 51.178,
+        "final_px_local": 1.188,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.942
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.248,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 2.041,
-        "passed_last_wall": true
+        "final_px_world": 51.138,
+        "final_px_local": 1.078,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 2.082
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.243,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.97,
-        "passed_last_wall": true
+        "final_px_world": 51.197,
+        "final_px_local": 1.212,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.952
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.259,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 2.014,
-        "passed_last_wall": true
+        "final_px_world": 51.186,
+        "final_px_local": 1.164,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.935
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.267,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.983,
-        "passed_last_wall": true
+        "final_px_world": 51.15,
+        "final_px_local": 1.161,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.913
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.247,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.91,
-        "passed_last_wall": true
+        "final_px_world": 51.272,
+        "final_px_local": 1.3,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.943
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.202,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.936,
-        "passed_last_wall": true
+        "final_px_world": 51.137,
+        "final_px_local": 1.082,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 2.098
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.255,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 2.032,
-        "passed_last_wall": true
+        "final_px_world": 51.257,
+        "final_px_local": 1.239,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.998
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.202,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.971,
-        "passed_last_wall": true
+        "final_px_world": 51.152,
+        "final_px_local": 1.103,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.994
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.251,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.933,
-        "passed_last_wall": true
+        "final_px_world": 51.184,
+        "final_px_local": 1.181,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.997
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.284,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 2.07,
-        "passed_last_wall": true
+        "final_px_world": 51.22,
+        "final_px_local": 1.19,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.933
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.194,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.922,
-        "passed_last_wall": true
+        "final_px_world": 51.258,
+        "final_px_local": 1.215,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.945
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.254,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.893,
-        "passed_last_wall": true
+        "final_px_world": 51.155,
+        "final_px_local": 1.109,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.975
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.151,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.984,
-        "passed_last_wall": true
+        "final_px_world": 51.144,
+        "final_px_local": 1.102,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 2.091
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.26,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.943,
-        "passed_last_wall": true
+        "final_px_world": 51.165,
+        "final_px_local": 1.187,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 2.013
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.269,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.926,
-        "passed_last_wall": true
+        "final_px_world": 51.252,
+        "final_px_local": 1.224,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 2.023
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.231,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.995,
-        "passed_last_wall": true
+        "final_px_world": 51.265,
+        "final_px_local": 1.243,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 2.048
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.233,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.887,
-        "passed_last_wall": true
+        "final_px_world": 51.218,
+        "final_px_local": 1.209,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.975
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.25,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 2.072,
-        "passed_last_wall": true
+        "final_px_world": 51.262,
+        "final_px_local": 1.229,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.931
       },
       {
         "value": 0.0,
         "success": false,
-        "obstacles_avoided": 0,
-        "total_obstacles": 2,
-        "walls_cleared": 2,
-        "per_wall_clearance": [
-          null,
-          null
+        "walls_cleared": 0,
+        "total_walls": 2,
+        "wall_world_xs": [
+          51.5,
+          53.0
         ],
-        "avoidance_threshold": 0.3,
-        "final_x": 51.21,
-        "success_x_threshold": 3.5,
-        "distance_to_success": 0.0,
-        "distance_traveled": 1.827,
-        "passed_last_wall": true
+        "final_px_world": 51.232,
+        "final_px_local": 1.177,
+        "pass_x_margin": 0.5,
+        "distance_traveled": 1.784
       }
     ]
   }
